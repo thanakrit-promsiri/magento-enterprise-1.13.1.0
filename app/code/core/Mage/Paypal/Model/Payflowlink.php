@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Paypal
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 /**
@@ -38,6 +38,11 @@ class Mage_Paypal_Model_Payflowlink extends Mage_Paypal_Model_Payflowpro
      * Default layout template
      */
     const LAYOUT_TEMPLATE = 'minLayout';
+
+    /**
+     * Mobile layout template
+     */
+    const MOBILE_LAYOUT_TEMPLATE = 'mobile';
 
     /**
      * Controller for callback urls
@@ -142,6 +147,20 @@ class Mage_Paypal_Model_Payflowlink extends Mage_Paypal_Model_Payflowpro
     }
 
     /**
+     * Return iframe template value depending on config
+     *
+     * @return string
+     */
+    public function getTemplate()
+    {
+        if ($this->getConfigData('mobile_optimized')) {
+            return self::MOBILE_LAYOUT_TEMPLATE;
+        } else {
+            return self::LAYOUT_TEMPLATE;
+        }
+    }
+
+    /**
      * Instantiate state and set it to state object
      *
      * @param string $paymentAction
@@ -192,7 +211,7 @@ class Mage_Paypal_Model_Payflowlink extends Mage_Paypal_Model_Payflowpro
      * Fill response with data.
      *
      * @param array $postData
-     * @return Mage_Paypal_Model_Payflowlink
+     * @return $this
      */
     public function setResponseData(array $postData)
     {
@@ -285,7 +304,7 @@ class Mage_Paypal_Model_Payflowlink extends Mage_Paypal_Model_Payflowpro
 
         try {
             if ($canSendNewOrderEmail) {
-                $order->sendNewOrderEmail();
+                $order->queueNewOrderEmail();
             }
             Mage::getModel('sales/quote')
                 ->load($order->getQuoteId())
@@ -341,7 +360,7 @@ class Mage_Paypal_Model_Payflowlink extends Mage_Paypal_Model_Payflowpro
             Mage::throwException($response->getRespmsg());
         }
 
-        $amountCompared = ($response->getAmt() == $order->getPayment()->getBaseAmountAuthorized()) ? true : false;
+        $amountCompared = $response->getAmt() == $order->getPayment()->getBaseAmountAuthorized();
         if (!$order->getId()
             || $order->getState() != Mage_Sales_Model_Order::STATE_PENDING_PAYMENT
             || !$amountCompared
@@ -440,19 +459,21 @@ class Mage_Paypal_Model_Payflowlink extends Mage_Paypal_Model_Payflowpro
     {
         $request = Mage::getModel('paypal/payflow_request');
         $cscEditable = $this->getConfigData('csc_editable');
+        $bnCode = Mage::getModel('paypal/config')->getBuildNotationCode();
         $request
             ->setUser($this->getConfigData('user', $this->_getStoreId()))
             ->setVendor($this->getConfigData('vendor', $this->_getStoreId()))
             ->setPartner($this->getConfigData('partner', $this->_getStoreId()))
             ->setPwd($this->getConfigData('pwd', $this->_getStoreId()))
             ->setVerbosity($this->getConfigData('verbosity', $this->_getStoreId()))
+            ->setData('BNCODE', $bnCode)
             ->setTender(self::TENDER_CC)
             ->setCancelurl($this->_getCallbackUrl('cancelPayment'))
             ->setErrorurl($this->_getCallbackUrl('returnUrl'))
             ->setSilentpost('TRUE')
             ->setSilentposturl($this->_getCallbackUrl('silentPost'))
             ->setReturnurl($this->_getCallbackUrl('returnUrl'))
-            ->setTemplate(self::LAYOUT_TEMPLATE)
+            ->setTemplate($this->getTemplate())
             ->setDisablereceipt('TRUE')
             ->setCscrequired($cscEditable && $this->getConfigData('csc_required') ? 'TRUE' : 'FALSE')
             ->setCscedit($cscEditable ? 'TRUE' : 'FALSE')
@@ -560,7 +581,7 @@ class Mage_Paypal_Model_Payflowlink extends Mage_Paypal_Model_Payflowpro
      * @deprecated since 1.6.2.0
      * @param Varien_Object $payment
      * @param  $amount
-     * @return Mage_Paypal_Model_Payflowlink
+     * @return $this
      */
     protected function _initialize(Varien_Object $payment, $amount)
     {
@@ -586,7 +607,7 @@ class Mage_Paypal_Model_Payflowlink extends Mage_Paypal_Model_Payflowpro
      * @param mixed $amount
      * @param Mage_Paypal_Model_Payment_Transaction $transaction
      * @param string $txnId
-     * @return Mage_Paypal_Model_Payflowlink
+     * @return $this
      */
     protected function _authorize(Varien_Object $payment, $amount, $transaction, $txnId)
     {
@@ -609,7 +630,7 @@ class Mage_Paypal_Model_Payflowlink extends Mage_Paypal_Model_Payflowpro
      * @deprecated since 1.6.2.0
      * @param Mage_Paypal_Model_Payment_Transaction $transaction
      * @param mixed $amount
-     * @return Mage_Paypal_Model_Payflowlink
+     * @return $this
      */
     protected function _checkTransaction($transaction, $amount)
     {

@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Oauth
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 
@@ -46,10 +46,10 @@ class Mage_Oauth_Block_Customer_Token_List extends Mage_Customer_Block_Account_D
      */
     protected function _construct()
     {
-        /** @var $session Mage_Customer_Model_Session */
+        /** @var Mage_Customer_Model_Session $session */
         $session = Mage::getSingleton('customer/session');
 
-        /** @var $collection Mage_Oauth_Model_Resource_Token_Collection */
+        /** @var Mage_Oauth_Model_Resource_Token_Collection $collection */
         $collection = Mage::getModel('oauth/token')->getCollection();
         $collection->joinConsumerAsApplication()
                 ->addFilterByType(Mage_Oauth_Model_Token::TYPE_ACCESS)
@@ -80,11 +80,11 @@ class Mage_Oauth_Block_Customer_Token_List extends Mage_Customer_Block_Account_D
     /**
      * Prepare layout
      *
-     * @return Mage_Oauth_Block_Customer_Token_List
+     * @return $this
      */
     protected function _prepareLayout()
     {
-        /** @var $toolbar Mage_Page_Block_Html_Pager */
+        /** @var Mage_Page_Block_Html_Pager $toolbar */
         $toolbar = $this->getLayout()->createBlock('page/html_pager', 'customer_token.toolbar');
         $toolbar->setCollection($this->_collection);
         $this->setChild('toolbar', $toolbar);
@@ -110,8 +110,10 @@ class Mage_Oauth_Block_Customer_Token_List extends Mage_Customer_Block_Account_D
      */
     public function getUpdateRevokeLink(Mage_Oauth_Model_Token $model)
     {
-        return Mage::getUrl('oauth/customer_token/revoke/',
-            array('id' => $model->getId(), 'status' => (int) !$model->getRevoked()));
+        return Mage::getUrl(
+            'oauth/customer_token/revoke/',
+            array('id' => $model->getId(), 'status' => (int) !$model->getRevoked())
+        );
     }
 
     /**

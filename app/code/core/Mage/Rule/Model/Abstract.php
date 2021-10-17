@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Rule
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 /**
@@ -30,6 +30,24 @@
  * @category Mage
  * @package Mage_Rule
  * @author Magento Core Team <core@magentocommerce.com>
+ *
+ * @method $this unsActions()
+ * @method bool hasActionsSerialized()
+ * @method $this unsActionsSerialized()
+ * @method string getActionsSerialized()
+ * @method $this setActionsSerialized(string $value)
+ * @method $this unsConditions()
+ * @method bool hasConditionsSerialized()
+ * @method $this unsConditionsSerialized()
+ * @method string getConditionsSerialized()
+ * @method $this setConditionsSerialized(string $value)
+ * @method bool hasCustomerGroupIds()
+ * @method array getCustomerGroupIds()
+ * @method $this setCustomerGroupIds(array $value)
+ * @method bool hasDiscountAmount()
+ * @method float getDiscountAmount()
+ * @method bool hasWebsiteIds()
+ * @method $this setWebsiteIds(array $value)
  */
 abstract class Mage_Rule_Model_Abstract extends Mage_Core_Model_Abstract
 {
@@ -90,7 +108,7 @@ abstract class Mage_Rule_Model_Abstract extends Mage_Core_Model_Abstract
      */
     public function getProductFlatSelect($storeId)
     {
-        /** @var $resource Mage_Rule_Model_Resource_Abstract */
+        /** @var Mage_Rule_Model_Resource_Abstract $resource */
         $resource = $this->getResource();
 
         return $resource->getProductFlatSelect($storeId, $this->getConditions());
@@ -176,7 +194,7 @@ abstract class Mage_Rule_Model_Abstract extends Mage_Core_Model_Abstract
         if ($this->hasConditionsSerialized()) {
             $conditions = $this->getConditionsSerialized();
             if (!empty($conditions)) {
-                $conditions = unserialize($conditions);
+                $conditions = Mage::helper('core/unserializeArray')->unserialize($conditions);
                 if (is_array($conditions) && !empty($conditions)) {
                     $this->_conditions->loadArray($conditions);
                 }
@@ -215,7 +233,7 @@ abstract class Mage_Rule_Model_Abstract extends Mage_Core_Model_Abstract
         if ($this->hasActionsSerialized()) {
             $actions = $this->getActionsSerialized();
             if (!empty($actions)) {
-                $actions = unserialize($actions);
+                $actions = Mage::helper('core/unserializeArray')->unserialize($actions);
                 if (is_array($actions) && !empty($actions)) {
                     $this->_actions->loadArray($actions);
                 }
@@ -309,10 +327,10 @@ abstract class Mage_Rule_Model_Abstract extends Mage_Core_Model_Abstract
         $arr = array();
         foreach ($data as $key => $value) {
             if (($key === 'conditions' || $key === 'actions') && is_array($value)) {
-                foreach ($value as $id=>$data) {
+                foreach ($value as $id => $data) {
                     $path = explode('--', $id);
                     $node =& $arr;
-                    for ($i=0, $l=sizeof($path); $i<$l; $i++) {
+                    for ($i=0, $l=count($path); $i<$l; $i++) {
                         if (!isset($node[$key][$path[$i]])) {
                             $node[$key][$path[$i]] = array();
                         }
@@ -465,7 +483,7 @@ abstract class Mage_Rule_Model_Abstract extends Mage_Core_Model_Abstract
      *
      * @return string
      */
-    public function asString($format='')
+    public function asString($format = '')
     {
         return '';
     }

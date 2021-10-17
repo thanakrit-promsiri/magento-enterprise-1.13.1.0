@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Persistent
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 
@@ -31,6 +31,15 @@
  * @category   Mage
  * @package    Mage_Persistent
  * @author     Magento Core Team <core@magentocommerce.com>
+ *
+ * @method Mage_Persistent_Model_Resource_Session getResource()
+ * @method int getCustomerId()
+ * @method $this setCustomerId(int $value)
+ * @method string getInfo()
+ * @method $this setInfo(string $value)
+ * @method string getKey()
+ * @method $this setKey(string $value)
+ * @method $this setWebsiteId(int|string|null $value)
  */
 class Mage_Persistent_Model_Session extends Mage_Core_Model_Abstract
 {
@@ -63,7 +72,7 @@ class Mage_Persistent_Model_Session extends Mage_Core_Model_Abstract
      * Set if load expired persistent session
      *
      * @param bool $loadExpired
-     * @return Mage_Persistent_Model_Session
+     * @return $this
      */
     public function setLoadExpired($loadExpired = true)
     {
@@ -96,7 +105,7 @@ class Mage_Persistent_Model_Session extends Mage_Core_Model_Abstract
      * Serialize info for Resource Model to save
      * For new model check and set available cookie key
      *
-     * @return Mage_Persistent_Model_Session
+     * @return $this
      */
     protected function _beforeSave()
     {
@@ -125,7 +134,7 @@ class Mage_Persistent_Model_Session extends Mage_Core_Model_Abstract
     /**
      * Set model data from info field
      *
-     * @return Mage_Persistent_Model_Session
+     * @return $this
      */
     protected function _afterLoad()
     {
@@ -143,7 +152,7 @@ class Mage_Persistent_Model_Session extends Mage_Core_Model_Abstract
      * Get persistent session by cookie key
      *
      * @param string $key
-     * @return Mage_Persistent_Model_Session
+     * @return $this
      */
     public function loadByCookieKey($key = null)
     {
@@ -173,7 +182,7 @@ class Mage_Persistent_Model_Session extends Mage_Core_Model_Abstract
      *
      * @param int $customerId
      * @param bool $clearCookie
-     * @return Mage_Persistent_Model_Session
+     * @return $this
      */
     public function deleteByCustomerId($customerId, $clearCookie = true)
     {
@@ -187,7 +196,7 @@ class Mage_Persistent_Model_Session extends Mage_Core_Model_Abstract
     /**
      * Remove persistent cookie
      *
-     * @return Mage_Persistent_Model_Session
+     * @return $this
      */
     public function removePersistentCookie()
     {
@@ -198,8 +207,8 @@ class Mage_Persistent_Model_Session extends Mage_Core_Model_Abstract
     /**
      * Delete expired persistent sessions for the website
      *
-     * @param null|int $websiteId
-     * @return Mage_Persistent_Model_Session
+     * @param int|null $websiteId
+     * @return $this
      */
     public function deleteExpired($websiteId = null)
     {
@@ -226,9 +235,10 @@ class Mage_Persistent_Model_Session extends Mage_Core_Model_Abstract
     /**
      * Delete 'persistent' cookie
      *
-     * @return Mage_Core_Model_Abstract
+     * @inheritDoc
      */
-    protected function _afterDeleteCommit() {
+    protected function _afterDeleteCommit()
+    {
         Mage::getSingleton('core/cookie')->delete(Mage_Persistent_Model_Session::COOKIE_NAME);
         return parent::_afterDeleteCommit();
     }
@@ -236,7 +246,7 @@ class Mage_Persistent_Model_Session extends Mage_Core_Model_Abstract
     /**
      * Set `updated_at` to be always changed
      *
-     * @return Mage_Persistent_Model_Session
+     * @inheritDoc
      */
     public function save()
     {

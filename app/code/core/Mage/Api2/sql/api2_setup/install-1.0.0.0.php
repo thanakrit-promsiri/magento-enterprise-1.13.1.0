@@ -1,37 +1,37 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Api2
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 /**
  * Installation of Api2 module tables
  */
-/** @var $installer Mage_Api2_Model_Resource_Setup */
+/** @var Mage_Api2_Model_Resource_Setup $installer */
 $installer = $this;
 
 $installer->startSetup();
 
-/** @var $adapter Varien_Db_Adapter_Pdo_Mysql */
+/** @var Varien_Db_Adapter_Pdo_Mysql $adapter */
 $adapter = $installer->getConnection();
 
 /**
@@ -44,17 +44,32 @@ $table = $adapter->newTable($installer->getTable('api2/acl_role'))
             'nullable' => false,
             'primary'  => true,
         ), 'Entity ID')
-    ->addColumn('created_at', Varien_Db_Ddl_Table::TYPE_TIMESTAMP, null,
+    ->addColumn(
+        'created_at',
+        Varien_Db_Ddl_Table::TYPE_TIMESTAMP,
+        null,
         array(
             'nullable' => false,
             'default'  => Varien_Db_Ddl_Table::TIMESTAMP_INIT
-        ), 'Created At')
-    ->addColumn('updated_at', Varien_Db_Ddl_Table::TYPE_TIMESTAMP, null,
+        ),
+        'Created At'
+    )
+    ->addColumn(
+        'updated_at',
+        Varien_Db_Ddl_Table::TYPE_TIMESTAMP,
+        null,
         array(
             'nullable'  => true
-        ), 'Updated At')
-    ->addColumn('role_name', Varien_Db_Ddl_Table::TYPE_VARCHAR,
-        255, array('nullable'  => false), 'Name of role')
+        ),
+        'Updated At'
+    )
+    ->addColumn(
+        'role_name',
+        Varien_Db_Ddl_Table::TYPE_VARCHAR,
+        255,
+        array('nullable'  => false),
+        'Name of role'
+    )
     ->addIndex($installer->getIdxName('api2/acl_role', array('created_at')), array('created_at'))
     ->addIndex($installer->getIdxName('api2/acl_role', array('updated_at')), array('updated_at'))
     ->setComment('Api2 Global ACL Roles');
@@ -88,21 +103,24 @@ $table = $adapter->newTable($installer->getTable('api2/acl_user'))
             Varien_Db_Adapter_Interface::INDEX_TYPE_UNIQUE
         ),
         array('admin_id'),
-        array('type' => Varien_Db_Adapter_Interface::INDEX_TYPE_UNIQUE))
+        array('type' => Varien_Db_Adapter_Interface::INDEX_TYPE_UNIQUE)
+    )
     ->addForeignKey(
         $installer->getFkName('api2/acl_user', 'admin_id', 'admin/user', 'user_id'),
         'admin_id',
         $installer->getTable('admin/user'),
         'user_id',
         Varien_Db_Ddl_Table::ACTION_CASCADE,
-        Varien_Db_Ddl_Table::ACTION_CASCADE)
+        Varien_Db_Ddl_Table::ACTION_CASCADE
+    )
     ->addForeignKey(
         $installer->getFkName('api2/acl_user', 'role_id', 'api2/acl_role', 'entity_id'),
         'role_id',
         $installer->getTable('api2/acl_role'),
         'entity_id',
         Varien_Db_Ddl_Table::ACTION_CASCADE,
-        Varien_Db_Ddl_Table::ACTION_CASCADE)
+        Varien_Db_Ddl_Table::ACTION_CASCADE
+    )
     ->setComment('Api2 Global ACL Users');
 $adapter->createTable($table);
 
@@ -133,14 +151,16 @@ $table = $adapter->newTable($installer->getTable('api2/acl_rule'))
             Varien_Db_Adapter_Interface::INDEX_TYPE_UNIQUE
         ),
         array('role_id', 'resource_id', 'privilege'),
-        array('type' => Varien_Db_Adapter_Interface::INDEX_TYPE_UNIQUE))
+        array('type' => Varien_Db_Adapter_Interface::INDEX_TYPE_UNIQUE)
+    )
     ->addForeignKey(
         $installer->getFkName('api2/acl_rule', 'role_id', 'api2/acl_role', 'entity_id'),
         'role_id',
         $installer->getTable('api2/acl_role'),
         'entity_id',
         Varien_Db_Ddl_Table::ACTION_CASCADE,
-        Varien_Db_Ddl_Table::ACTION_CASCADE)
+        Varien_Db_Ddl_Table::ACTION_CASCADE
+    )
     ->setComment('Api2 Global ACL Rules');
 $adapter->createTable($table);
 
@@ -168,7 +188,8 @@ $table = $adapter->newTable($installer->getTable('api2/acl_attribute'))
         ), 'Allowed attributes')
     ->addIndex(
         $installer->getIdxName('api2/acl_attribute', array('user_type')),
-        array('user_type'))
+        array('user_type')
+    )
     ->addIndex(
         $installer->getIdxName(
             $installer->getTable('api2/acl_attribute'),
@@ -176,7 +197,8 @@ $table = $adapter->newTable($installer->getTable('api2/acl_attribute'))
             Varien_Db_Adapter_Interface::INDEX_TYPE_UNIQUE
         ),
         array('user_type', 'resource_id', 'operation'),
-        array('type' => Varien_Db_Adapter_Interface::INDEX_TYPE_UNIQUE))
+        array('type' => Varien_Db_Adapter_Interface::INDEX_TYPE_UNIQUE)
+    )
     ->setComment('Api2 Filter ACL Attributes');
 $adapter->createTable($table);
 

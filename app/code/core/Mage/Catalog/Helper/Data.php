@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Catalog
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 
@@ -78,7 +78,7 @@ class Mage_Catalog_Helper_Data extends Mage_Core_Helper_Abstract
      * Set a specified store ID value
      *
      * @param int $store
-     * @return Mage_Catalog_Helper_Data
+     * @return $this
      */
     public function setStoreId($store)
     {
@@ -95,7 +95,6 @@ class Mage_Catalog_Helper_Data extends Mage_Core_Helper_Abstract
     public function getBreadcrumbPath()
     {
         if (!$this->_categoryPath) {
-
             $path = array();
             if ($category = $this->getCategory()) {
                 $pathInStore = $category->getPathInStore();
@@ -169,14 +168,14 @@ class Mage_Catalog_Helper_Data extends Mage_Core_Helper_Abstract
     {
         if ($productId = Mage::getSingleton('catalog/session')->getLastViewedProductId()) {
             $product = Mage::getModel('catalog/product')->load($productId);
-            /* @var $product Mage_Catalog_Model_Product */
+            /* @var Mage_Catalog_Model_Product $product */
             if (Mage::helper('catalog/product')->canShow($product, 'catalog')) {
                 return $product->getProductUrl();
             }
         }
         if ($categoryId = Mage::getSingleton('catalog/session')->getLastViewedCategoryId()) {
             $category = Mage::getModel('catalog/category')->load($categoryId);
-            /* @var $category Mage_Catalog_Model_Category */
+            /* @var Mage_Catalog_Model_Category $category */
             if (!Mage::helper('catalog/category')->canShow($category)) {
                 return '';
             }
@@ -280,7 +279,7 @@ class Mage_Catalog_Helper_Data extends Mage_Core_Helper_Abstract
     /**
      * Retrieve template processor for catalog content
      *
-     * @return Varien_Filter_Template
+     * @return false|Mage_Core_Model_Abstract
      */
     public function getPageTemplateProcessor()
     {
@@ -420,8 +419,8 @@ class Mage_Catalog_Helper_Data extends Mage_Core_Helper_Abstract
      */
     public function canApplyMsrpToProductType($product)
     {
-        if($this->_mapApplyToProductType === null) {
-            /** @var $attribute Mage_Catalog_Model_Resource_Eav_Attribute */
+        if ($this->_mapApplyToProductType === null) {
+            /** @var Mage_Catalog_Model_Resource_Eav_Attribute $attribute */
             $attribute = Mage::getModel('catalog/resource_eav_attribute')
                 ->loadByCode(Mage_Catalog_Model_Product::ENTITY, 'msrp_enabled');
             $this->_mapApplyToProductType = $attribute->getApplyTo();

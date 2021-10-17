@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Eav
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 
@@ -32,8 +32,7 @@
  * @package     Mage_Eav
  * @author      Magento Core Team <core@magentocommerce.com>
  */
-abstract class Mage_Eav_Model_Resource_Attribute_Collection
-    extends Mage_Eav_Model_Resource_Entity_Attribute_Collection
+abstract class Mage_Eav_Model_Resource_Attribute_Collection extends Mage_Eav_Model_Resource_Entity_Attribute_Collection
 {
     /**
      * code of password hash in customer's EAV tables
@@ -88,7 +87,7 @@ abstract class Mage_Eav_Model_Resource_Attribute_Collection
      * Set Website scope
      *
      * @param Mage_Core_Model_Website|int $website
-     * @return Mage_Eav_Model_Resource_Attribute_Collection
+     * @return $this
      */
     public function setWebsite($website)
     {
@@ -113,7 +112,7 @@ abstract class Mage_Eav_Model_Resource_Attribute_Collection
     /**
      * Initialize collection select
      *
-     * @return Mage_Eav_Model_Resource_Attribute_Collection
+     * @return $this
      */
     protected function _initSelect()
     {
@@ -145,7 +144,8 @@ abstract class Mage_Eav_Model_Resource_Attribute_Collection
             ->join(
                 array('additional_table' => $this->getTable($extraTable)),
                 'additional_table.attribute_id = main_table.attribute_id',
-                $extraColumns)
+                $extraColumns
+            )
             ->where('main_table.entity_type_id = :mt_entity_type_id');
 
         // scope values
@@ -159,15 +159,21 @@ abstract class Mage_Eav_Model_Resource_Attribute_Collection
             } else {
                 if (isset($mainColumns[$columnName])) {
                     $alias = sprintf('scope_%s', $columnName);
-                    $expression = $connection->getCheckSql('main_table.%s IS NULL',
-                        'scope_table.%s', 'main_table.%s');
+                    $expression = $connection->getCheckSql(
+                        'main_table.%s IS NULL',
+                        'scope_table.%s',
+                        'main_table.%s'
+                    );
                     $expression = sprintf($expression, $columnName, $columnName, $columnName);
                     $this->addFilterToMap($columnName, $expression);
                     $scopeColumns[$alias] = $columnName;
                 } elseif (isset($extraColumns[$columnName])) {
                     $alias = sprintf('scope_%s', $columnName);
-                    $expression = $connection->getCheckSql('additional_table.%s IS NULL',
-                        'scope_table.%s', 'additional_table.%s');
+                    $expression = $connection->getCheckSql(
+                        'additional_table.%s IS NULL',
+                        'scope_table.%s',
+                        'additional_table.%s'
+                    );
                     $expression = sprintf($expression, $columnName, $columnName, $columnName);
                     $this->addFilterToMap($columnName, $expression);
                     $scopeColumns[$alias] = $columnName;
@@ -191,7 +197,7 @@ abstract class Mage_Eav_Model_Resource_Attribute_Collection
      * Entity type is defined.
      *
      * @param  int $type
-     * @return Mage_Eav_Model_Resource_Attribute_Collection
+     * @return $this
      */
     public function setEntityTypeFilter($type)
     {
@@ -201,7 +207,7 @@ abstract class Mage_Eav_Model_Resource_Attribute_Collection
     /**
      * Specify filter by "is_visible" field
      *
-     * @return Mage_Eav_Model_Resource_Attribute_Collection
+     * @return $this
      */
     public function addVisibleFilter()
     {
@@ -211,31 +217,34 @@ abstract class Mage_Eav_Model_Resource_Attribute_Collection
     /**
      * Exclude system hidden attributes
      *
-     * @return Mage_Eav_Model_Resource_Attribute_Collection
+     * @return $this
      */
     public function addSystemHiddenFilter()
     {
         $field = '(CASE WHEN additional_table.is_system = 1 AND additional_table.is_visible = 0 THEN 1 ELSE 0 END)';
-        return $this->addFieldToFilter($field, 0);
+        $resultCondition = $this->_getConditionSql($field, 0);
+        $this->_select->where($resultCondition);
+        return $this;
     }
 
     /**
      * Exclude system hidden attributes but include password hash
      *
-     * @return Mage_Customer_Model_Entity_Attribute_Collection
+     * @return $this
      */
     public function addSystemHiddenFilterWithPasswordHash()
     {
         $field = '(CASE WHEN additional_table.is_system = 1 AND additional_table.is_visible = 0
             AND main_table.attribute_code != "' . self::EAV_CODE_PASSWORD_HASH . '" THEN 1 ELSE 0 END)';
-        $this->addFieldToFilter($field, 0);
+        $resultCondition = $this->_getConditionSql($field, 0);
+        $this->_select->where($resultCondition);
         return $this;
     }
 
     /**
      * Add exclude hidden frontend input attribute filter to collection
      *
-     * @return Mage_Eav_Model_Resource_Attribute_Collection
+     * @return $this
      */
     public function addExcludeHiddenFrontendFilter()
     {

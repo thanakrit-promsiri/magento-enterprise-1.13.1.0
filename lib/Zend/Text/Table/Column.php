@@ -14,9 +14,9 @@
  *
  * @category  Zend
  * @package   Zend_Text_Table
- * @copyright  Copyright (c) 2005-2010 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd     New BSD License
- * @version   $Id: Column.php 20096 2010-01-06 02:05:09Z bkarwin $
+ * @version   $Id$
  */
 
 /**
@@ -34,7 +34,7 @@
  *
  * @category  Zend
  * @package   Zend_Text_Table
- * @copyright  Copyright (c) 2005-2010 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd     New BSD License
  */
 class Zend_Text_Table_Column
@@ -165,7 +165,7 @@ class Zend_Text_Table_Column
      */
     public function setColSpan($colSpan)
     {
-        if (is_int($colSpan) === false or $colSpan < 1) {
+        if (is_int($colSpan) === false || $colSpan < 1) {
             #require_once 'Zend/Text/Table/Exception.php';
             throw new Zend_Text_Table_Exception('$colSpan must be an integer and greater than 0');
         }
@@ -196,7 +196,7 @@ class Zend_Text_Table_Column
      */
     public function render($columnWidth, $padding = 0)
     {
-        if (is_int($columnWidth) === false or $columnWidth < 1) {
+        if (is_int($columnWidth) === false || $columnWidth < 1) {
             #require_once 'Zend/Text/Table/Exception.php';
             throw new Zend_Text_Table_Exception('$columnWidth must be an integer and greater than 0');
         }

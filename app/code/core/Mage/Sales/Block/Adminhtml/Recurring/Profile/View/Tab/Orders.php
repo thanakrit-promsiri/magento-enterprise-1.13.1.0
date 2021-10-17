@@ -1,35 +1,33 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Sales
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 /**
  * Recurring profile orders grid
  */
-class Mage_Sales_Block_Adminhtml_Recurring_Profile_View_Tab_Orders
-    extends Mage_Adminhtml_Block_Widget_Grid
-    implements Mage_Adminhtml_Block_Widget_Tab_Interface
+class Mage_Sales_Block_Adminhtml_Recurring_Profile_View_Tab_Orders extends Mage_Adminhtml_Block_Widget_Grid implements Mage_Adminhtml_Block_Widget_Tab_Interface
 {
     /**
      * Initialize basic parameters
@@ -46,7 +44,7 @@ class Mage_Sales_Block_Adminhtml_Recurring_Profile_View_Tab_Orders
     /**
      * Prepare grid collection object
      *
-     * @return Mage_Sales_Block_Adminhtml_Recurring_Profile_View_Tab_Orders
+     * @inheritDoc
      */
     protected function _prepareCollection()
     {
@@ -62,7 +60,7 @@ class Mage_Sales_Block_Adminhtml_Recurring_Profile_View_Tab_Orders
      *
      * TODO: fix up this mess
      *
-     * @return Mage_Sales_Block_Adminhtml_Recurring_Profile_View_Tab_Orders
+     * @inheritDoc
      */
     protected function _prepareColumns()
     {
@@ -123,7 +121,8 @@ class Mage_Sales_Block_Adminhtml_Recurring_Profile_View_Tab_Orders
         ));
 
         if (Mage::getSingleton('admin/session')->isAllowed('sales/order/actions/view')) {
-            $this->addColumn('action',
+            $this->addColumn(
+                'action',
                 array(
                     'header'    => Mage::helper('sales')->__('Action'),
                     'width'     => '50px',
@@ -140,7 +139,9 @@ class Mage_Sales_Block_Adminhtml_Recurring_Profile_View_Tab_Orders
                     'sortable'  => false,
                     'index'     => 'stores',
                     'is_system' => true,
-            ));
+                    'data-column' => 'action',
+                )
+            );
         }
 
         return parent::_prepareColumns();
@@ -149,7 +150,7 @@ class Mage_Sales_Block_Adminhtml_Recurring_Profile_View_Tab_Orders
     /**
      * Return row url for js event handlers
      *
-     * @param Varien_Object
+     * @param Varien_Object $row
      * @return string
      */
     public function getRowUrl($row)

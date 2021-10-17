@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_ImportExport
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 /**
@@ -30,6 +30,10 @@
  * @category    Mage
  * @package     Mage_ImportExport
  * @author      Magento Core Team <core@magentocommerce.com>
+ *
+ * @property resource $_fileHandler
+ * @property string $_delimiter
+ * @property string $_enclosure
  */
 abstract class Mage_ImportExport_Model_Export_Adapter_Abstract
 {
@@ -48,6 +52,13 @@ abstract class Mage_ImportExport_Model_Export_Adapter_Abstract
     protected $_headerCols = null;
 
     /**
+     * Count of rows
+     *
+     * @var int
+     */
+    protected $_rowsCount = 0;
+
+    /**
      * Adapter object constructor.
      *
      * @param string $destination OPTIONAL Destination file path.
@@ -56,6 +67,8 @@ abstract class Mage_ImportExport_Model_Export_Adapter_Abstract
      */
     final public function __construct($destination = null)
     {
+        register_shutdown_function(array($this, 'destruct'));
+
         if (!$destination) {
             $destination = tempnam(sys_get_temp_dir(), 'importexport_');
         }
@@ -73,6 +86,13 @@ abstract class Mage_ImportExport_Model_Export_Adapter_Abstract
         $this->_destination = $destination;
 
         $this->_init();
+    }
+
+    /**
+     * Destruct method on shutdown
+     */
+    public function destruct()
+    {
     }
 
     /**
@@ -116,6 +136,16 @@ abstract class Mage_ImportExport_Model_Export_Adapter_Abstract
     }
 
     /**
+     * Get count of wrote lines
+     *
+     * @return int
+     */
+    public function getRowsCount()
+    {
+        return $this->_rowsCount;
+    }
+
+    /**
      * Set column names.
      *
      * @param array $headerCols
@@ -134,6 +164,15 @@ abstract class Mage_ImportExport_Model_Export_Adapter_Abstract
             fputcsv($this->_fileHandler, array_keys($this->_headerCols), $this->_delimiter, $this->_enclosure);
         }
         return $this;
+    }
+
+    /**
+     * Returns destination path
+     * @return string
+     */
+    public function getDestination()
+    {
+        return $this->_destination;
     }
 
     /**

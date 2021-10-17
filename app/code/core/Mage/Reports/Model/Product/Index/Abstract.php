@@ -1,29 +1,28 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Reports
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
-
 
 /**
  * Reports Product Index Abstract Model
@@ -31,6 +30,16 @@
  * @category   Mage
  * @package    Mage_Reports
  * @author     Magento Core Team <core@magentocommerce.com>
+ *
+ * @method Mage_Reports_Model_Resource_Product_Index_Collection_Abstract getCollection()
+ * @method bool hasAddedAt()
+ * @method $this setAddedAt(string $value)
+ * @method bool hasCustomerId()
+ * @method $this setCustomerId(int $value)
+ * @method bool hasStoreId()
+ * @method $this setStoreId(int $value)
+ * @method bool hasVisitorId()
+ * @method $this setVisitorId(int $value)
  */
 abstract class Mage_Reports_Model_Product_Index_Abstract extends Mage_Core_Model_Abstract
 {
@@ -42,14 +51,13 @@ abstract class Mage_Reports_Model_Product_Index_Abstract extends Mage_Core_Model
     protected $_countCacheKey;
 
     /**
-     * Prepare customer/visitor, store data before save
+     * Save object data
      *
+     * @see Mage_Core_Model_Abstract::save()
      * @return Mage_Reports_Model_Product_Index_Abstract
      */
-    protected function _beforeSave()
+    public function save()
     {
-        parent::_beforeSave();
-
         if (!$this->hasVisitorId()) {
             $this->setVisitorId($this->getVisitorId());
         }
@@ -61,6 +69,21 @@ abstract class Mage_Reports_Model_Product_Index_Abstract extends Mage_Core_Model
         }
         if (!$this->hasAddedAt()) {
             $this->setAddedAt(now());
+        }
+
+        // Thanks to new performance tweaks it is possible to switch off visitor logging
+        // This check is needed to make sure report record has either visitor id or customer id
+        if ($this->hasVisitorId() || $this->hasCustomerId()) {
+            try {
+                parent::save();
+            } catch (Exception $exception) {
+                if ($this->hasCustomerId()) {
+                    $this->updateCustomerFromVisitor();
+                    parent::save();
+                } else {
+                    Mage::logException($exception);
+                }
+            }
         }
 
         return $this;
@@ -114,7 +137,8 @@ abstract class Mage_Reports_Model_Product_Index_Abstract extends Mage_Core_Model
     /**
      * Retrieve resource instance wrapper
      *
-     * @return Mage_Reports_Model_Mysql4_Product_Index_Abstract
+     * @inheritDoc
+     * @return Mage_Core_Model_Resource_Db_Abstract|Mage_Reports_Model_Product_Index_Abstract
      */
     protected function _getResource()
     {
@@ -218,7 +242,16 @@ abstract class Mage_Reports_Model_Product_Index_Abstract extends Mage_Core_Model
      */
     public function registerIds($productIds)
     {
-        $this->_getResource()->registerIds($this, $productIds);
+        try {
+            $this->_getResource()->registerIds($this, $productIds);
+        } catch (Exception $exception) {
+            if ($this->hasCustomerId()) {
+                $this->updateCustomerFromVisitor();
+                $this->_getResource()->registerIds($this, $productIds);
+            } else {
+                Mage::logException($exception);
+            }
+        }
         $this->_getSession()->unsData($this->_countCacheKey);
         return $this;
     }

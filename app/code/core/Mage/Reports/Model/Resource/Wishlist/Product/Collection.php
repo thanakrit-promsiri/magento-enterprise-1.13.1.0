@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Reports
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 
@@ -46,7 +46,7 @@ class Mage_Reports_Model_Resource_Wishlist_Product_Collection extends Mage_Wishl
     /**
      * Add wishlist count
      *
-     * @return Mage_Reports_Model_Resource_Wishlist_Product_Collection
+     * @return $this
      */
     public function addWishlistCount()
     {
@@ -55,7 +55,8 @@ class Mage_Reports_Model_Resource_Wishlist_Product_Collection extends Mage_Wishl
             ->join(
                 array('wi' => $wishlistItemTable),
                 'wi.product_id = e.entity_id',
-                array('wishlists' => new Zend_Db_Expr('COUNT(wi.wishlist_item_id)')))
+                array('wishlists' => new Zend_Db_Expr('COUNT(wi.wishlist_item_id)'))
+            )
             ->where('wi.product_id = e.entity_id')
             ->group('wi.product_id');
         /*
@@ -70,7 +71,7 @@ class Mage_Reports_Model_Resource_Wishlist_Product_Collection extends Mage_Wishl
     /**
      * add customer count to result
      *
-     * @return Mage_Reports_Model_Resource_Wishlist_Product_Collection
+     * @return $this
      */
     public function getCustomerCount()
     {
@@ -82,7 +83,8 @@ class Mage_Reports_Model_Resource_Wishlist_Product_Collection extends Mage_Wishl
                 array(
                     'wishlist_cnt' => new Zend_Db_Expr('COUNT(wishlist.wishlist_id)'),
                     'wishlist.customer_id'
-                ))
+                )
+            )
             ->group('wishlist.customer_id');
         return $this;
     }
@@ -110,7 +112,7 @@ class Mage_Reports_Model_Resource_Wishlist_Product_Collection extends Mage_Wishl
      *
      * @param string $attribute
      * @param string $dir
-     * @return Mage_Reports_Model_Resource_Wishlist_Product_Collection
+     * @return $this
      */
     public function setOrder($attribute, $dir = self::SORT_ORDER_DESC)
     {
@@ -123,4 +125,3 @@ class Mage_Reports_Model_Resource_Wishlist_Product_Collection extends Mage_Wishl
         return $this;
     }
 }
-

@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Sales
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 
@@ -42,6 +42,7 @@ class Mage_Sales_Model_Resource_Billing_Agreement_Collection extends Mage_Core_M
     protected $_map = array('fields' => array(
         'customer_email'       => 'ce.email',
         'customer_firstname'   => 'firstname.value',
+        'customer_middlename'  => 'middlename.value',
         'customer_lastname'    => 'lastname.value',
         'agreement_created_at' => 'main_table.created_at',
         'agreement_updated_at' => 'main_table.updated_at',
@@ -59,7 +60,7 @@ class Mage_Sales_Model_Resource_Billing_Agreement_Collection extends Mage_Core_M
     /**
      * Add cutomer details(email, firstname, lastname) to select
      *
-     * @return Mage_Sales_Model_Resource_Billing_Agreement_Collection
+     * @return $this
      */
     public function addCustomerDetails()
     {
@@ -80,6 +81,17 @@ class Mage_Sales_Model_Resource_Billing_Agreement_Collection extends Mage_Core_M
             array('firstname' => $attr->getBackend()->getTable()),
             $joinExpr,
             array('customer_firstname' => 'value')
+        );
+
+        $attr     = $customer->getAttribute('middlename');
+        $joinExpr = 'middlename.entity_id = main_table.customer_id AND '
+            . $adapter->quoteInto('middlename.entity_type_id = ?', $customer->getTypeId()) . ' AND '
+            . $adapter->quoteInto('middlename.attribute_id = ?', $attr->getAttributeId());
+
+        $select->joinLeft(
+            array('middlename' => $attr->getBackend()->getTable()),
+            $joinExpr,
+            array('customer_middlename' => 'value')
         );
 
         $attr = $customer->getAttribute('lastname');

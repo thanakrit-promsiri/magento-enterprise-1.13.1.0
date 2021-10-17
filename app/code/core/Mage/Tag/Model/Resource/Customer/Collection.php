@@ -1,29 +1,28 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Tag
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
-
 
 /**
  * Tags customer collection
@@ -58,7 +57,7 @@ class Mage_Tag_Model_Resource_Customer_Collection extends Mage_Customer_Model_Re
     /**
      * Prepare select
      *
-     * @return Mage_Tag_Model_Resource_Customer_Collection
+     * @return $this
      */
     public function _initSelect()
     {
@@ -75,7 +74,7 @@ class Mage_Tag_Model_Resource_Customer_Collection extends Mage_Customer_Model_Re
      * @deprecated after 1.3.2.3
      *
      * @param string $table
-     * @return Mage_Tag_Model_Resource_Customer_Collection
+     * @return $this
      */
     public function setJoinFlag($table)
     {
@@ -104,7 +103,7 @@ class Mage_Tag_Model_Resource_Customer_Collection extends Mage_Customer_Model_Re
      * @deprecated after 1.3.2.3
      *
      * @param string $table
-     * @return Mage_Tag_Model_Resource_Customer_Collection
+     * @return $this
      */
     public function unsetJoinFlag($table = null)
     {
@@ -116,7 +115,7 @@ class Mage_Tag_Model_Resource_Customer_Collection extends Mage_Customer_Model_Re
      * Adds filter by tag is
      *
      * @param int $tagId
-     * @return Mage_Tag_Model_Resource_Customer_Collection
+     * @return $this
      */
     public function addTagFilter($tagId)
     {
@@ -129,7 +128,7 @@ class Mage_Tag_Model_Resource_Customer_Collection extends Mage_Customer_Model_Re
      * adds filter by product id
      *
      * @param int $productId
-     * @return Mage_Tag_Model_Resource_Customer_Collection
+     * @return $this
      */
     public function addProductFilter($productId)
     {
@@ -142,7 +141,7 @@ class Mage_Tag_Model_Resource_Customer_Collection extends Mage_Customer_Model_Re
      * Apply filter by store id(s).
      *
      * @param int|array $storeId
-     * @return Mage_Tag_Model_Resource_Customer_Collection
+     * @return $this
      */
     public function addStoreFilter($storeId)
     {
@@ -154,7 +153,7 @@ class Mage_Tag_Model_Resource_Customer_Collection extends Mage_Customer_Model_Re
      * Adds filter by status
      *
      * @param int $status
-     * @return Mage_Tag_Model_Resource_Customer_Collection
+     * @return $this
      */
     public function addStatusFilter($status)
     {
@@ -166,7 +165,7 @@ class Mage_Tag_Model_Resource_Customer_Collection extends Mage_Customer_Model_Re
     /**
      * Adds desc order by tag relation id
      *
-     * @return Mage_Tag_Model_Resource_Customer_Collection
+     * @return $this
      */
     public function addDescOrder()
     {
@@ -178,7 +177,7 @@ class Mage_Tag_Model_Resource_Customer_Collection extends Mage_Customer_Model_Re
     /**
      * Adds grouping by tag id
      *
-     * @return Mage_Tag_Model_Resource_Customer_Collection
+     * @return $this
      */
     public function addGroupByTag()
     {
@@ -197,7 +196,7 @@ class Mage_Tag_Model_Resource_Customer_Collection extends Mage_Customer_Model_Re
     /**
      * Adds grouping by customer id
      *
-     * @return Mage_Tag_Model_Resource_Customer_Collection
+     * @return $this
      */
     public function addGroupByCustomer()
     {
@@ -211,7 +210,7 @@ class Mage_Tag_Model_Resource_Customer_Collection extends Mage_Customer_Model_Re
     /**
      * Disables grouping
      *
-     * @return Mage_Tag_Model_Resource_Customer_Collection
+     * @return $this
      */
     public function addGroupByCustomerProduct()
     {
@@ -224,7 +223,7 @@ class Mage_Tag_Model_Resource_Customer_Collection extends Mage_Customer_Model_Re
      * Adds filter by customer id
      *
      * @param int $customerId
-     * @return Mage_Tag_Model_Resource_Customer_Collection
+     * @return $this
      */
     public function addCustomerFilter($customerId)
     {
@@ -243,6 +242,7 @@ class Mage_Tag_Model_Resource_Customer_Collection extends Mage_Customer_Model_Re
 
         //TODO: add full name logic
         $this->addAttributeToSelect('firstname')
+            ->addAttributeToSelect('middlename')
             ->addAttributeToSelect('lastname')
             ->addAttributeToSelect('email');
 
@@ -275,7 +275,7 @@ class Mage_Tag_Model_Resource_Customer_Collection extends Mage_Customer_Model_Re
     /**
      * Adds Product names to item
      *
-     * @return Mage_Tag_Model_Resource_Customer_Collection
+     * @return $this
      */
     public function addProductName()
     {
@@ -289,8 +289,8 @@ class Mage_Tag_Model_Resource_Customer_Collection extends Mage_Customer_Model_Re
         $productsId = array_unique($productsId);
 
         /* small fix */
-        if ( sizeof($productsId) == 0 ) {
-            return;
+        if (!count($productsId)) {
+            return $this;
         }
 
         $collection = Mage::getModel('catalog/product')->getCollection()
@@ -315,7 +315,7 @@ class Mage_Tag_Model_Resource_Customer_Collection extends Mage_Customer_Model_Re
     /**
      * Adds Product names to select
      *
-     * @return Mage_Tag_Model_Resource_Customer_Collection
+     * @return $this
      */
     public function addProductToSelect()
     {
@@ -345,7 +345,7 @@ class Mage_Tag_Model_Resource_Customer_Collection extends Mage_Customer_Model_Re
      * Sets attribute for count
      *
      * @param string $value
-     * @return Mage_Tag_Model_Resource_Customer_Collection
+     * @return $this
      */
     public function setCountAttribute($value)
     {
@@ -366,9 +366,7 @@ class Mage_Tag_Model_Resource_Customer_Collection extends Mage_Customer_Model_Re
     /**
      * Adds field to filter
      *
-     * @param string $attribute
-     * @param array $condition
-     * @return Mage_Tag_Model_Resource_Customer_Collection
+     * @inheritDoc
      */
     public function addFieldToFilter($attribute, $condition = null)
     {
@@ -384,7 +382,7 @@ class Mage_Tag_Model_Resource_Customer_Collection extends Mage_Customer_Model_Re
     /**
      * Treat "order by" items as attributes to sort
      *
-     * @return Mage_Tag_Model_Resource_Customer_Collection
+     * @return $this
      */
     protected function _renderOrders()
     {

@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Checkout
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 /**
@@ -31,8 +31,11 @@
  * @package     Mage_Checkout
  * @author      Magento Core Team <core@magentocommerce.com>
  *
- * @method Mage_Checkout_Block_Cart_Item_Renderer setProductName(string)
- * @method Mage_Checkout_Block_Cart_Item_Renderer setDeleteUrl(string)
+ * @method bool hasProductName()
+ * @method $this setProductName(string)
+ * @method bool hasDeleteUrl()
+ * @method $this setDeleteUrl(string)
+ * @method string getIdSuffix()
  */
 class Mage_Checkout_Block_Cart_Item_Renderer extends Mage_Core_Block_Template
 {
@@ -59,8 +62,8 @@ class Mage_Checkout_Block_Cart_Item_Renderer extends Mage_Core_Block_Template
     /**
      * Set item for render
      *
-     * @param   Mage_Sales_Model_Quote_Item $item
-     * @return  Mage_Checkout_Block_Cart_Item_Renderer
+     * @param Mage_Sales_Model_Quote_Item_Abstract $item
+     * @return  $this
      */
     public function setItem(Mage_Sales_Model_Quote_Item_Abstract $item)
     {
@@ -88,6 +91,10 @@ class Mage_Checkout_Block_Cart_Item_Renderer extends Mage_Core_Block_Template
         return $this->getItem()->getProduct();
     }
 
+    /**
+     * @param Mage_Catalog_Helper_Image $productThumbnail
+     * @return $this
+     */
     public function overrideProductThumbnail($productThumbnail)
     {
         $this->_productThumbnail = $productThumbnail;
@@ -97,7 +104,7 @@ class Mage_Checkout_Block_Cart_Item_Renderer extends Mage_Core_Block_Template
     /**
      * Get product thumbnail image
      *
-     * @return Mage_Catalog_Model_Product_Image
+     * @return Mage_Catalog_Helper_Image
      */
     public function getProductThumbnail()
     {
@@ -107,6 +114,10 @@ class Mage_Checkout_Block_Cart_Item_Renderer extends Mage_Core_Block_Template
         return $this->helper('catalog/image')->init($this->getProduct(), 'thumbnail');
     }
 
+    /**
+     * @param string $productUrl
+     * @return $this
+     */
     public function overrideProductUrl($productUrl)
     {
         $this->_productUrl = $productUrl;
@@ -181,7 +192,7 @@ class Mage_Checkout_Block_Cart_Item_Renderer extends Mage_Core_Block_Template
      */
     public function getProductOptions()
     {
-        /* @var $helper Mage_Catalog_Helper_Product_Configuration */
+        /* @var Mage_Catalog_Helper_Product_Configuration $helper */
         $helper = Mage::helper('catalog/product_configuration');
         return $helper->getCustomOptions($this->getItem());
     }
@@ -216,19 +227,65 @@ class Mage_Checkout_Block_Cart_Item_Renderer extends Mage_Core_Block_Template
      */
     public function getDeleteUrl()
     {
+        return $this->getDeleteUrlCustom();
+    }
+
+    /**
+     * Get item delete url with or without Form Key
+     *
+     * @param bool $addFormKey
+     * @return string
+     */
+    public function getDeleteUrlCustom($addFormKey = true)
+    {
         if ($this->hasDeleteUrl()) {
             return $this->getData('delete_url');
         }
 
+        $params = array(
+            'id' => $this->getItem()->getId(),
+            Mage_Core_Controller_Front_Action::PARAM_NAME_URL_ENCODED => $this->helper('core/url')->getEncodedUrl(),
+        );
+        if ($addFormKey) {
+            $params[Mage_Core_Model_Url::FORM_KEY] = Mage::getSingleton('core/session')->getFormKey();
+        }
+
+        return $this->getUrl('checkout/cart/delete', $params);
+    }
+
+    /**
+     * Get item ajax delete url
+     *
+     * @return string
+     */
+    public function getAjaxDeleteUrl()
+    {
         return $this->getUrl(
-            'checkout/cart/delete',
+            'checkout/cart/ajaxDelete',
             array(
                 'id'=>$this->getItem()->getId(),
-                Mage_Core_Controller_Front_Action::PARAM_NAME_URL_ENCODED => $this->helper('core/url')->getEncodedUrl()
+                Mage_Core_Controller_Front_Action::PARAM_NAME_URL_ENCODED => $this->helper('core/url')->getEncodedUrl(),
+                '_secure' => $this->_getApp()->getStore()->isCurrentlySecure(),
             )
         );
     }
 
+    /**
+     * Get item ajax update url
+     *
+     * @return string
+     */
+    public function getAjaxUpdateUrl()
+    {
+        return $this->getUrl(
+            'checkout/cart/ajaxUpdate',
+            array(
+                'id'=>$this->getItem()->getId(),
+                Mage_Core_Controller_Front_Action::PARAM_NAME_URL_ENCODED => $this->helper('core/url')->getEncodedUrl(),
+                '_secure' => $this->_getApp()->getStore()->isCurrentlySecure(),
+            )
+        );
+    }
     /**
      * Get quote item qty
      *
@@ -299,12 +356,12 @@ class Mage_Checkout_Block_Cart_Item_Renderer extends Mage_Core_Block_Template
         // Add messages saved previously in checkout session
         $checkoutSession = $this->getCheckoutSession();
         if ($checkoutSession) {
-            /* @var $collection Mage_Core_Model_Message_Collection */
+            /* @var Mage_Core_Model_Message_Collection $collection */
             $collection = $checkoutSession->getQuoteItemMessages($quoteItem->getId(), true);
             if ($collection) {
                 $additionalMessages = $collection->getItems();
                 foreach ($additionalMessages as $message) {
-                    /* @var $message Mage_Core_Model_Message_Abstract */
+                    /* @var Mage_Core_Model_Message_Abstract $message */
                     $messages[] = array(
                         'text' => $message->getCode(),
                         'type' => ($message->getType() == Mage_Core_Model_Message::ERROR) ? 'error' : 'notice'
@@ -338,7 +395,7 @@ class Mage_Checkout_Block_Cart_Item_Renderer extends Mage_Core_Block_Template
      */
     public function getFormatedOptionValue($optionValue)
     {
-        /* @var $helper Mage_Catalog_Helper_Product_Configuration */
+        /* @var Mage_Catalog_Helper_Product_Configuration $helper */
         $helper = Mage::helper('catalog/product_configuration');
         $params = array(
             'max_length' => 55,
@@ -385,7 +442,7 @@ class Mage_Checkout_Block_Cart_Item_Renderer extends Mage_Core_Block_Template
      * Set qty mode to be strict or not
      *
      * @param bool $strict
-     * @return Mage_Checkout_Block_Cart_Item_Renderer
+     * @return $this
      */
     public function setQtyMode($strict)
     {
@@ -397,7 +454,7 @@ class Mage_Checkout_Block_Cart_Item_Renderer extends Mage_Core_Block_Template
      * Set ignore product URL rendering
      *
      * @param bool $ignore
-     * @return Mage_Checkout_Block_Cart_Item_Renderer
+     * @return $this
      */
     public function setIgnoreProductUrl($ignore = true)
     {
@@ -446,5 +503,17 @@ class Mage_Checkout_Block_Cart_Item_Renderer extends Mage_Core_Block_Template
         $tags = is_array($tags) ? $tags : array();
 
         return array_merge(parent::getCacheTags(), $tags);
+    }
+
+    /**
+     * Returns true if user is going through checkout process now.
+     *
+     * @return bool
+     */
+    public function isOnCheckoutPage()
+    {
+        $module = $this->getRequest()->getModuleName();
+        $controller = $this->getRequest()->getControllerName();
+        return $module == 'checkout' && ($controller == 'onepage' || $controller == 'multishipping');
     }
 }

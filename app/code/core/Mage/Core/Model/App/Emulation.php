@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Core
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 /**
@@ -71,9 +71,11 @@ class Mage_Core_Model_App_Emulation extends Varien_Object
      *
      * @return Varien_Object information about environment of the initial store
      */
-    public function startEnvironmentEmulation($storeId, $area = Mage_Core_Model_App_Area::AREA_FRONTEND,
-                                              $emulateStoreInlineTranslation = false)
-    {
+    public function startEnvironmentEmulation(
+        $storeId,
+        $area = Mage_Core_Model_App_Area::AREA_FRONTEND,
+        $emulateStoreInlineTranslation = false
+    ) {
         if (is_null($area)) {
             $area = Mage_Core_Model_App_Area::AREA_FRONTEND;
         }
@@ -92,6 +94,8 @@ class Mage_Core_Model_App_Emulation extends Varien_Object
             ->setInitialDesign($initialDesign)
             ->setInitialLocaleCode($initialLocaleCode);
 
+        Mage::app()->getTranslator()->init($area, true);
+
         return $initialEnvironmentInfo;
     }
 
@@ -102,7 +106,7 @@ class Mage_Core_Model_App_Emulation extends Varien_Object
      *
      * @param Varien_Object $initialEnvironmentInfo information about environment of the initial store
      *
-     * @return Mage_Core_Model_App_Emulation
+     * @return $this
      */
     public function stopEnvironmentEmulation(Varien_Object $initialEnvironmentInfo)
     {
@@ -198,7 +202,7 @@ class Mage_Core_Model_App_Emulation extends Varien_Object
      *
      * @param boolean $initialTranslateInline
      *
-     * @return Mage_Core_Model_App_Emulation
+     * @return $this
      */
     protected function _restoreInitialInlineTranslation($initialTranslateInline)
     {
@@ -212,7 +216,7 @@ class Mage_Core_Model_App_Emulation extends Varien_Object
      *
      * @param array $initialDesign
      *
-     * @return Mage_Core_Model_App_Emulation
+     * @return $this
      */
     protected function _restoreInitialDesign(array $initialDesign)
     {
@@ -228,11 +232,12 @@ class Mage_Core_Model_App_Emulation extends Varien_Object
      * @param string $initialLocaleCode
      * @param string $initialArea
      *
-     * @return Mage_Core_Model_App_Emulation
+     * @return $this
      */
-    protected function _restoreInitialLocale($initialLocaleCode,
-                                             $initialArea = Mage_Core_Model_App_Area::AREA_ADMINHTML)
-    {
+    protected function _restoreInitialLocale(
+        $initialLocaleCode,
+        $initialArea = Mage_Core_Model_App_Area::AREA_ADMINHTML
+    ) {
         $currentLocaleCode = $this->_app->getLocale()->getLocaleCode();
         if ($currentLocaleCode != $initialLocaleCode) {
             $this->_app->getLocale()->setLocaleCode($initialLocaleCode);

@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Api
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 /**
@@ -31,22 +31,20 @@
  * @package    Mage_Api
  * @author     Magento Core Team <core@magentocommerce.com>
  */
-class Mage_Api_Model_Server_Adapter_Xmlrpc
-    extends Varien_Object
-    implements Mage_Api_Model_Server_Adapter_Interface
+class Mage_Api_Model_Server_Adapter_Xmlrpc extends Varien_Object implements Mage_Api_Model_Server_Adapter_Interface
 {
      /**
       * XmlRpc Server
       *
       * @var Zend_XmlRpc_Server
       */
-     protected $_xmlRpc = null;
+    protected $_xmlRpc = null;
 
      /**
      * Set handler class name for webservice
      *
      * @param string $handler
-     * @return Mage_Api_Model_Server_Adapter_Xmlrpc
+     * @return $this
      */
     public function setHandler($handler)
     {
@@ -68,7 +66,7 @@ class Mage_Api_Model_Server_Adapter_Xmlrpc
      * Set webservice api controller
      *
      * @param Mage_Api_Controller_Action $controller
-     * @return Mage_Api_Model_Server_Adapter_Xmlrpc
+     * @return $this
      */
     public function setController(Mage_Api_Controller_Action $controller)
     {
@@ -98,7 +96,7 @@ class Mage_Api_Model_Server_Adapter_Xmlrpc
     /**
      * Run webservice
      *
-     * @return Mage_Api_Model_Server_Adapter_Xmlrpc
+     * @return $this
      */
     public function run()
     {
@@ -109,7 +107,7 @@ class Mage_Api_Model_Server_Adapter_Xmlrpc
             ->setClass($this->getHandler());
         $this->getController()->getResponse()
             ->clearHeaders()
-            ->setHeader('Content-Type','text/xml; charset='.$apiConfigCharset)
+            ->setHeader('Content-Type', 'text/xml; charset='.$apiConfigCharset)
             ->setBody($this->_xmlRpc->handle());
         return $this;
     }

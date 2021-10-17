@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Shipping
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 /**
@@ -180,9 +180,9 @@ class Mage_Shipping_Model_Resource_Carrier_Tablerate extends Mage_Core_Model_Res
     /**
      * Upload table rate file and import data from it
      *
-     * @param Varien_Object $object
+     * @param Varien_Object|Mage_Adminhtml_Block_System_Config_Form $object
      * @throws Mage_Core_Exception
-     * @return Mage_Shipping_Model_Resource_Carrier_Tablerate
+     * @return $this
      */
     public function uploadAndImport(Varien_Object $object)
     {
@@ -253,18 +253,17 @@ class Mage_Shipping_Model_Resource_Carrier_Tablerate extends Mage_Core_Model_Res
             }
             $this->_saveImportData($importData);
             $io->streamClose();
+            $adapter->commit();
         } catch (Mage_Core_Exception $e) {
-            $adapter->rollback();
+            $adapter->rollBack();
             $io->streamClose();
             Mage::throwException($e->getMessage());
         } catch (Exception $e) {
-            $adapter->rollback();
+            $adapter->rollBack();
             $io->streamClose();
             Mage::logException($e);
             Mage::throwException(Mage::helper('shipping')->__('An error occurred while import table rates.'));
         }
-
-        $adapter->commit();
 
         if ($this->_importErrors) {
             $error = Mage::helper('shipping')->__('File has not been imported. See the following list of errors: %s', implode(" \n", $this->_importErrors));
@@ -277,7 +276,7 @@ class Mage_Shipping_Model_Resource_Carrier_Tablerate extends Mage_Core_Model_Res
     /**
      * Load directory countries
      *
-     * @return Mage_Shipping_Model_Resource_Carrier_Tablerate
+     * @return $this
      */
     protected function _loadDirectoryCountries()
     {
@@ -288,7 +287,7 @@ class Mage_Shipping_Model_Resource_Carrier_Tablerate extends Mage_Core_Model_Res
         $this->_importIso2Countries = array();
         $this->_importIso3Countries = array();
 
-        /** @var $collection Mage_Directory_Model_Resource_Country_Collection */
+        /** @var Mage_Directory_Model_Resource_Country_Collection $collection */
         $collection = Mage::getResourceModel('directory/country_collection');
         foreach ($collection->getData() as $row) {
             $this->_importIso2Countries[$row['iso2_code']] = $row['country_id'];
@@ -301,7 +300,7 @@ class Mage_Shipping_Model_Resource_Carrier_Tablerate extends Mage_Core_Model_Res
     /**
      * Load directory regions
      *
-     * @return Mage_Shipping_Model_Resource_Carrier_Tablerate
+     * @return $this
      */
     protected function _loadDirectoryRegions()
     {
@@ -311,7 +310,7 @@ class Mage_Shipping_Model_Resource_Carrier_Tablerate extends Mage_Core_Model_Res
 
         $this->_importRegions = array();
 
-        /** @var $collection Mage_Directory_Model_Resource_Region_Collection */
+        /** @var Mage_Directory_Model_Resource_Region_Collection $collection */
         $collection = Mage::getResourceModel('directory/region_collection');
         foreach ($collection->getData() as $row) {
             $this->_importRegions[$row['country_id']][$row['code']] = (int)$row['region_id'];
@@ -423,7 +422,7 @@ class Mage_Shipping_Model_Resource_Carrier_Tablerate extends Mage_Core_Model_Res
      * Save import data batch
      *
      * @param array $data
-     * @return Mage_Shipping_Model_Resource_Carrier_Tablerate
+     * @return $this
      */
     protected function _saveImportData(array $data)
     {

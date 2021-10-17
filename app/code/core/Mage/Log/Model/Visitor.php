@@ -1,43 +1,67 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Log
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
-
 
 /**
  * Enter description here ...
  *
- * @method Mage_Log_Model_Resource_Visitor _getResource()
  * @method Mage_Log_Model_Resource_Visitor getResource()
- * @method string getSessionId()
- * @method Mage_Log_Model_Visitor setSessionId(string $value)
- * @method Mage_Log_Model_Visitor setFirstVisitAt(string $value)
- * @method Mage_Log_Model_Visitor setLastVisitAt(string $value)
+ * @method int getCustomerId()
+ * @method $this setCustomerId(int $value)
+ * @method int getCustomerLogId()
+ * @method $this setCustomerLogId(int $value)
+ * @method bool getDoCustomerLogin()
+ * @method $this setDoCustomerLogin(bool $value)
+ * @method bool getDoCustomerLogout()
+ * @method $this setDoCustomerLogout(bool $value)
+ * @method bool getDoQuoteCreate()
+ * @method $this setDoQuoteCreate(bool $value)
+ * @method bool getDoQuoteDestroy()
+ * @method $this setDoQuoteDestroy(bool $value)
+ * @method $this setFirstVisitAt(string $value)
+ * @method string getHttpAcceptCharset()
+ * @method string getHttpAcceptLanguage()
+ * @method string getHttpHost()
+ * @method string getHttpReferer()
+ * @method string getHttpSecure()
+ * @method string getHttpUserAgent()
+ * @method bool getIsNewVisitor()
+ * @method $this setIsNewVisitor(bool $value)
+ * @method $this setLastVisitAt(string $value)
  * @method int getLastUrlId()
- * @method Mage_Log_Model_Visitor setLastUrlId(int $value)
+ * @method $this setLastUrlId(int $value)
+ * @method int getQuoteId()
+ * @method $this setQuoteId(int $value)
+ * @method string getRemoteAddr()
+ * @method string getRequestUri()
+ * @method string getServerAddr()
+ * @method string getSessionId()
+ * @method $this setSessionId(string $value)
  * @method int getStoreId()
- * @method Mage_Log_Model_Visitor setStoreId(int $value)
+ * @method $this setStoreId(int $value)
+ * @method int getVisitorId()
  *
  * @category    Mage
  * @package     Mage_Log
@@ -52,18 +76,56 @@ class Mage_Log_Model_Visitor extends Mage_Core_Model_Abstract
     protected $_skipRequestLogging = false;
 
     /**
-     * Onject initialization
+     * @var Mage_Log_Helper_Data
+     */
+    protected $_logCondition;
+
+    /**
+     * @var Mage_Core_Helper_Http
+     */
+    protected $_httpHelper;
+
+    /**
+     * @var Mage_Core_Model_Config
+     */
+    protected $_config;
+
+    /**
+     * @var Mage_Core_Model_Session
+     */
+    protected $_session;
+
+    /**
+     * Mage_Log_Model_Visitor constructor.
+     * @param array $data
+     */
+    public function __construct(array $data = array())
+    {
+        $this->_httpHelper = !empty($data['http_helper']) ? $data['http_helper'] : Mage::helper('core/http');
+        $this->_config = !empty($data['config']) ? $data['config'] : Mage::getConfig();
+        $this->_logCondition = !empty($data['log_condition']) ?
+            $data['log_condition'] : Mage::helper('log');
+        $this->_session = !empty($data['session']) ? $data['session'] : Mage::getSingleton('core/session');
+        parent::__construct($data);
+    }
+
+
+    /**
+     * Object initialization
      */
     protected function _construct()
     {
         $this->_init('log/visitor');
-        $userAgent = Mage::helper('core/http')->getHttpUserAgent();
-        $ignoreAgents = Mage::getConfig()->getNode('global/ignore_user_agents');
+        $userAgent = $this->_httpHelper->getHttpUserAgent();
+        $ignoreAgents = $this->_config->getNode('global/ignore_user_agents');
         if ($ignoreAgents) {
             $ignoreAgents = $ignoreAgents->asArray();
             if (in_array($userAgent, $ignoreAgents)) {
                 $this->_skipRequestLogging = true;
             }
+        }
+        if ($this->_logCondition->isLogDisabled()) {
+            $this->_skipRequestLogging = true;
         }
     }
 
@@ -74,30 +136,27 @@ class Mage_Log_Model_Visitor extends Mage_Core_Model_Abstract
      */
     protected function _getSession()
     {
-        return Mage::getSingleton('core/session');
+        return $this->_session;
     }
 
     /**
      * Initialize visitor information from server data
      *
-     * @return Mage_Log_Model_Visitor
+     * @return $this
      */
     public function initServerData()
     {
-        /* @var $helper Mage_Core_Helper_Http */
-        $helper = Mage::helper('core/http');
-
         $this->addData(array(
-            'server_addr'           => $helper->getServerAddr(true),
-            'remote_addr'           => $helper->getRemoteAddr(true),
+            'server_addr'           => $this->_httpHelper->getServerAddr(true),
+            'remote_addr'           => $this->_httpHelper->getRemoteAddr(true),
             'http_secure'           => Mage::app()->getStore()->isCurrentlySecure(),
-            'http_host'             => $helper->getHttpHost(true),
-            'http_user_agent'       => $helper->getHttpUserAgent(true),
-            'http_accept_language'  => $helper->getHttpAcceptLanguage(true),
-            'http_accept_charset'   => $helper->getHttpAcceptCharset(true),
-            'request_uri'           => $helper->getRequestUri(true),
-            'session_id'            => $this->_getSession()->getSessionId(),
-            'http_referer'          => $helper->getHttpReferer(true),
+            'http_host'             => $this->_httpHelper->getHttpHost(true),
+            'http_user_agent'       => $this->_httpHelper->getHttpUserAgent(true),
+            'http_accept_language'  => $this->_httpHelper->getHttpAcceptLanguage(true),
+            'http_accept_charset'   => $this->_httpHelper->getHttpAcceptCharset(true),
+            'request_uri'           => $this->_httpHelper->getRequestUri(true),
+            'session_id'            => $this->_session->getSessionId(),
+            'http_referer'          => $this->_httpHelper->getHttpReferer(true),
         ));
 
         return $this;
@@ -128,6 +187,9 @@ class Mage_Log_Model_Visitor extends Mage_Core_Model_Abstract
         return $url;
     }
 
+    /**
+     * @return mixed
+     */
     public function getFirstVisitAt()
     {
         if (!$this->hasData('first_visit_at')) {
@@ -136,6 +198,9 @@ class Mage_Log_Model_Visitor extends Mage_Core_Model_Abstract
         return $this->getData('first_visit_at');
     }
 
+    /**
+     * @return mixed
+     */
     public function getLastVisitAt()
     {
         if (!$this->hasData('last_visit_at')) {
@@ -150,7 +215,7 @@ class Mage_Log_Model_Visitor extends Mage_Core_Model_Abstract
      * Used in event "controller_action_predispatch"
      *
      * @param   Varien_Event_Observer $observer
-     * @return  Mage_Log_Model_Visitor
+     * @return  $this
      */
     public function initByRequest($observer)
     {
@@ -158,16 +223,34 @@ class Mage_Log_Model_Visitor extends Mage_Core_Model_Abstract
             return $this;
         }
 
-        $this->setData($this->_getSession()->getVisitorData());
-        $this->initServerData();
+        $this->setData($this->_session->getVisitorData());
 
-        if (!$this->getId()) {
+        $visitorId = $this->getId();
+        if (!$visitorId) {
+            $this->initServerData();
             $this->setFirstVisitAt(now());
             $this->setIsNewVisitor(true);
             $this->save();
+        }
+        if (!$visitorId || $this->_isVisitorSessionNew()) {
             Mage::dispatchEvent('visitor_init', array('visitor' => $this));
         }
         return $this;
+    }
+
+    /**
+     * Check is session new
+     *
+     * @return bool
+     */
+    protected function _isVisitorSessionNew()
+    {
+        $visitorData = $this->_session->getVisitorData();
+        $visitorSessionId = null;
+        if (is_array($visitorData) && isset($visitorData['session_id'])) {
+            $visitorSessionId = $visitorData['session_id'];
+        }
+        return $this->_session->getSessionId() != $visitorSessionId;
     }
 
     /**
@@ -176,7 +259,7 @@ class Mage_Log_Model_Visitor extends Mage_Core_Model_Abstract
      * Used in event "controller_action_postdispatch"
      *
      * @param   Varien_Event_Observer $observer
-     * @return  Mage_Log_Model_Visitor
+     * @return  $this
      */
     public function saveByRequest($observer)
     {
@@ -187,7 +270,7 @@ class Mage_Log_Model_Visitor extends Mage_Core_Model_Abstract
         try {
             $this->setLastVisitAt(now());
             $this->save();
-            $this->_getSession()->setVisitorData($this->getData());
+            $this->_session->setVisitorData($this->getData());
         } catch (Exception $e) {
             Mage::logException($e);
         }
@@ -200,11 +283,12 @@ class Mage_Log_Model_Visitor extends Mage_Core_Model_Abstract
      * Used in event "customer_login"
      *
      * @param   Varien_Event_Observer $observer
-     * @return  Mage_Log_Model_Visitor
+     * @return  $this
      */
     public function bindCustomerLogin($observer)
     {
-        if (!$this->getCustomerId() && $customer = $observer->getEvent()->getCustomer()) {
+        /** @var Mage_Customer_Model_Customer $customer */
+        if ($customer = $observer->getEvent()->getCustomer()) {
             $this->setDoCustomerLogin(true);
             $this->setCustomerId($customer->getId());
         }
@@ -217,7 +301,7 @@ class Mage_Log_Model_Visitor extends Mage_Core_Model_Abstract
      * Used in event "customer_logout"
      *
      * @param   Varien_Event_Observer $observer
-     * @return  Mage_Log_Model_Visitor
+     * @return  $this
      */
     public function bindCustomerLogout($observer)
     {
@@ -227,8 +311,13 @@ class Mage_Log_Model_Visitor extends Mage_Core_Model_Abstract
         return $this;
     }
 
+    /**
+     * @param Varien_Event_Observer $observer
+     * @return $this
+     */
     public function bindQuoteCreate($observer)
     {
+        /** @var Mage_Sales_Model_Quote $quote */
         if ($quote = $observer->getEvent()->getQuote()) {
             if ($quote->getIsCheckoutCart()) {
                 $this->setQuoteId($quote->getId());
@@ -238,8 +327,13 @@ class Mage_Log_Model_Visitor extends Mage_Core_Model_Abstract
         return $this;
     }
 
+    /**
+     * @param Varien_Event_Observer $observer
+     * @return $this
+     */
     public function bindQuoteDestroy($observer)
     {
+        /** @var Mage_Sales_Model_Quote $quote */
         if ($quote = $observer->getEvent()->getQuote()) {
             $this->setDoQuoteDestroy(true);
         }
@@ -248,6 +342,8 @@ class Mage_Log_Model_Visitor extends Mage_Core_Model_Abstract
 
     /**
      * Methods for research (depends from customer online admin section)
+     * @param Varien_Object $data
+     * @return $this
      */
     public function addIpData($data)
     {
@@ -256,15 +352,19 @@ class Mage_Log_Model_Visitor extends Mage_Core_Model_Abstract
         return $this;
     }
 
+    /**
+     * @param Varien_Object $data
+     * @return $this
+     */
     public function addCustomerData($data)
     {
         $customerId = $data->getCustomerId();
-        if( intval($customerId) <= 0 ) {
+        if (intval($customerId) <= 0) {
             return $this;
         }
         $customerData = Mage::getModel('customer/customer')->load($customerId);
         $newCustomerData = array();
-        foreach( $customerData->getData() as $propName => $propValue ) {
+        foreach ($customerData->getData() as $propName => $propValue) {
             $newCustomerData['customer_' . $propName] = $propValue;
         }
 
@@ -272,21 +372,29 @@ class Mage_Log_Model_Visitor extends Mage_Core_Model_Abstract
         return $this;
     }
 
+    /**
+     * @param Varien_Object $data
+     * @return $this
+     */
     public function addQuoteData($data)
     {
         $quoteId = $data->getQuoteId();
-        if( intval($quoteId) <= 0 ) {
+        if (intval($quoteId) <= 0) {
             return $this;
         }
         $data->setQuoteData(Mage::getModel('sales/quote')->load($quoteId));
         return $this;
     }
 
+    /**
+     * @param Varien_Event_Observer $observer
+     * @return bool
+     */
     public function isModuleIgnored($observer)
     {
-        $ignores = Mage::getConfig()->getNode('global/ignoredModules/entities')->asArray();
+        $ignores = $this->_config->getNode('global/ignoredModules/entities')->asArray();
 
-        if( is_array($ignores) && $observer) {
+        if (is_array($ignores) && $observer) {
             $curModule = $observer->getEvent()->getControllerAction()->getRequest()->getRouteName();
             if (isset($ignores[$curModule])) {
                 return true;

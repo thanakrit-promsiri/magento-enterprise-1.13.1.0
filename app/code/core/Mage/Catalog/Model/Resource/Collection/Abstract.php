@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Catalog
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 
@@ -46,7 +46,7 @@ class Mage_Catalog_Model_Resource_Collection_Abstract extends Mage_Eav_Model_Ent
      * Set store scope
      *
      * @param int|string|Mage_Core_Model_Store $store
-     * @return Mage_Catalog_Model_Resource_Collection_Abstract
+     * @return $this
      */
     public function setStore($store)
     {
@@ -58,7 +58,7 @@ class Mage_Catalog_Model_Resource_Collection_Abstract extends Mage_Eav_Model_Ent
      * Set store scope
      *
      * @param int|string|Mage_Core_Model_Store $storeId
-     * @return Mage_Catalog_Model_Resource_Collection_Abstract
+     * @return $this
      */
     public function setStoreId($storeId)
     {
@@ -97,7 +97,8 @@ class Mage_Catalog_Model_Resource_Collection_Abstract extends Mage_Eav_Model_Ent
      *
      * @param string $table
      * @param array|int $attributeIds
-     * @return Mage_Eav_Model_Entity_Collection_Abstract
+     * @return Varien_Db_Select|Zend_Db_Select
+     * @throws Mage_Core_Exception
      */
     protected function _getLoadAttributesSelect($table, $attributeIds = array())
     {
@@ -107,7 +108,6 @@ class Mage_Catalog_Model_Resource_Collection_Abstract extends Mage_Eav_Model_Ent
         $storeId = $this->getStoreId();
 
         if ($storeId) {
-
             $adapter        = $this->getConnection();
             $entityIdField  = $this->getEntity()->getEntityIdField();
             $joinCondition  = array(
@@ -120,7 +120,8 @@ class Mage_Catalog_Model_Resource_Collection_Abstract extends Mage_Eav_Model_Ent
                 ->joinLeft(
                     array('t_s' => $table),
                     implode(' AND ', $joinCondition),
-                    array())
+                    array()
+                )
                 ->where('t_d.entity_type_id = ?', $this->getEntity()->getTypeId())
                 ->where("t_d.{$entityIdField} IN (?)", array_keys($this->_itemsById))
                 ->where('t_d.attribute_id IN (?)', $attributeIds)
@@ -197,7 +198,8 @@ class Mage_Catalog_Model_Resource_Collection_Abstract extends Mage_Eav_Model_Ent
             $defCondition = str_replace($tableAlias, $defAlias, $defCondition);
             $defCondition.= $adapter->quoteInto(
                 " AND " . $adapter->quoteColumnAs("$defAlias.store_id", null) . " = ?",
-                $this->getDefaultStoreId());
+                $this->getDefaultStoreId()
+            );
 
             $this->getSelect()->$method(
                 array($defAlias => $attribute->getBackend()->getTable()),
@@ -206,15 +208,20 @@ class Mage_Catalog_Model_Resource_Collection_Abstract extends Mage_Eav_Model_Ent
             );
 
             $method = 'joinLeft';
-            $fieldAlias = $this->getConnection()->getCheckSql("{$tableAlias}.value_id > 0",
-                $fieldAlias, $defFieldAlias);
+            $fieldAlias = $this->getConnection()->getCheckSql(
+                "{$tableAlias}.value_id > 0",
+                $fieldAlias,
+                $defFieldAlias
+            );
             $this->_joinAttributes[$fieldCode]['condition_alias'] = $fieldAlias;
             $this->_joinAttributes[$fieldCode]['attribute']       = $attribute;
         } else {
             $store_id = $this->getDefaultStoreId();
         }
         $condition[] = $adapter->quoteInto(
-            $adapter->quoteColumnAs("$tableAlias.store_id", null) . ' = ?', $store_id);
+            $adapter->quoteColumnAs("$tableAlias.store_id", null) . ' = ?',
+            $store_id
+        );
         return parent::_joinAttributeToSelect($method, $attribute, $tableAlias, $condition, $fieldCode, $fieldAlias);
     }
 }

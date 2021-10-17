@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Magento
  *
@@ -11,24 +10,25 @@
  * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
- * @category   Mage
- * @package    Mage
- * @copyright  Copyright (c) 2008 Irubin Consulting Inc. DBA Varien (http://www.varien.com)
+ * @category    Mage
+ * @package     Mage
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
-if (version_compare(phpversion(), '5.2.0', '<')===true) {
+if (version_compare(phpversion(), '7.0.0', '<')===true) {
     echo  '<div style="font:12px/1.35em arial, helvetica, sans-serif;"><div style="margin:0 0 25px 0; '
         . 'border-bottom:1px solid #ccc;"><h3 style="margin:0; font-size:1.7em; font-weight:normal; '
         . 'text-transform:none; text-align:left; color:#2f2f2f;">Whoops, it looks like you have an invalid PHP version.'
-        . '</h3></div><p>Magento supports PHP 5.2.0 or newer. <a href="http://www.magentocommerce.com/install" '
+
+        . '</h3></div><p>Magento supports PHP 7.0.0 or newer. <a href="https://www.openmage.org/magento-lts/install.html" '
         . 'target="">Find out</a> how to install</a> Magento using PHP-CGI as a work-around.</p></div>';
     exit;
 }
@@ -36,12 +36,13 @@ $start = microtime(true);
 /**
  * Error reporting
  */
-error_reporting(E_ALL | E_STRICT);
-ini_set('display_errors', 1);
+ini_set('display_errors', 0);
 
 $ds = DIRECTORY_SEPARATOR;
 $ps = PATH_SEPARATOR;
 $bp = dirname(__FILE__);
+
+require $bp . '/app/bootstrap.php';
 
 /**
  * Set include path
@@ -116,7 +117,7 @@ if (empty($mediaDirectory)) {
         $mageRunCode,
         $mageRunType,
         array('cache' => array('disallow_save' => true)),
-        array('Mage_Core')
+        isset($config['loaded_modules']) ? $config['loaded_modules'] : ['Mage_Core']
     );
 }
 
@@ -142,27 +143,26 @@ if (0 !== stripos($pathInfo, $mediaDirectory . '/')) {
     sendNotFoundPage();
 }
 
+$localStorage = Mage::getModel('core/file_storage_file');
+$remoteStorage = Mage::getModel('core/file_storage_database');
 try {
-    $databaseFileSotrage = Mage::getModel('core/file_storage_database');
-    $databaseFileSotrage->loadByFilename($relativeFilename);
+    if ($localStorage->lockCreateFile($relativeFilename)) {
+        try {
+            $remoteStorage->loadByFilename($relativeFilename);
+        } catch (Exception $e) {
+            // Ignore errors
+        }
+        if ($remoteStorage->getId()) {
+            $localStorage->saveFile($remoteStorage, false);
+        } else {
+            $localStorage->removeLockedFile($relativeFilename);
+        }
+    }
+    sendFile($filePath);
 } catch (Exception $e) {
-}
-if ($databaseFileSotrage->getId()) {
-    $directory = dirname($filePath);
-    if (!is_dir($directory)) {
-        mkdir($directory, 0777, true);
-    }
-
-    $fp = fopen($filePath, 'w');
-    if (flock($fp, LOCK_EX | LOCK_NB)) {
-        ftruncate($fp, 0);
-        fwrite($fp, $databaseFileSotrage->getContent());
-    }
-    flock($fp, LOCK_UN);
-    fclose($fp);
+    Mage::logException($e);
 }
 
-sendFile($filePath);
 sendNotFoundPage();
 
 /**
@@ -193,6 +193,7 @@ function checkResource($resource, array $allowedResources)
         sendNotFoundPage();
     }
 }
+
 /**
  * Send file to browser
  *
@@ -200,7 +201,7 @@ function checkResource($resource, array $allowedResources)
  */
 function sendFile($file)
 {
-    if (file_exists($file) || is_readable($file)) {
+    if (is_readable($file) && filesize($file) > 0) {
         $transfer = new Varien_File_Transfer_Adapter_Http();
         $transfer->send($file);
         exit;

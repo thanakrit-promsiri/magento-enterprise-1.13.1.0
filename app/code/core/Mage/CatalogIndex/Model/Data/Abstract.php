@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_CatalogIndex
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 
@@ -31,6 +31,11 @@
  * @category   Mage
  * @package    Mage_CatalogIndex
  * @author     Magento Core Team <core@magentocommerce.com>
+ *
+ * @method Mage_CatalogIndex_Model_Resource_Data_Abstract getResource()
+ *
+ * @method array getMinimalPriceData()
+ * @method $this setMinimalPriceData(array $data)
  */
 class Mage_CatalogIndex_Model_Data_Abstract extends Mage_Core_Model_Abstract
 {
@@ -44,13 +49,13 @@ class Mage_CatalogIndex_Model_Data_Abstract extends Mage_Core_Model_Abstract
     /**
      * Defines when product type has children
      *
-     * @var boolean
+     * @var int[]|bool[]
      */
     protected $_haveChildren = array(
-                        Mage_CatalogIndex_Model_Retreiver::CHILDREN_FOR_TIERS=>true,
-                        Mage_CatalogIndex_Model_Retreiver::CHILDREN_FOR_PRICES=>true,
-                        Mage_CatalogIndex_Model_Retreiver::CHILDREN_FOR_ATTRIBUTES=>true,
-                        );
+        Mage_CatalogIndex_Model_Retreiver::CHILDREN_FOR_TIERS => true,
+        Mage_CatalogIndex_Model_Retreiver::CHILDREN_FOR_PRICES => true,
+        Mage_CatalogIndex_Model_Retreiver::CHILDREN_FOR_ATTRIBUTES => true,
+    );
 
     /**
      * Defines when product type has parents
@@ -75,8 +80,8 @@ class Mage_CatalogIndex_Model_Data_Abstract extends Mage_Core_Model_Abstract
      * Return all children ids
      *
      * @param Mage_Core_Model_Store $store
-     * @param int $parentId
-     * @return mixed
+     * @param int|array $parentIds
+     * @return array|false
      */
     public function getChildProductIds($store, $parentIds)
     {
@@ -95,8 +100,8 @@ class Mage_CatalogIndex_Model_Data_Abstract extends Mage_Core_Model_Abstract
      * Return all parent ids
      *
      * @param Mage_Core_Model_Store $store
-     * @param int $childId
-     * @return mixed
+     * @param int|array $childIds
+     * @return array|false
      */
     public function getParentProductIds($store, $childIds)
     {
@@ -117,7 +122,8 @@ class Mage_CatalogIndex_Model_Data_Abstract extends Mage_Core_Model_Abstract
      * @param Mage_Core_Model_Store $store
      * @param array $settings
      * @param int $type
-     * @param int $suppliedId
+     * @param int|array $suppliedId
+     * @return array
      */
     protected function fetchLinkInformation($store, $settings, $type, $suppliedId)
     {
@@ -164,16 +170,16 @@ class Mage_CatalogIndex_Model_Data_Abstract extends Mage_Core_Model_Abstract
             switch ($row['attribute_id']) {
                 case $priceId:
                     $basePrice = $row['value'];
-                break;
+                    break;
                 case $specialPriceId:
                     $specialPrice = $row['value'];
-                break;
+                    break;
                 case $specialPriceFromId:
                     $specialPriceFrom = $row['value'];
-                break;
+                    break;
                 case $specialPriceToId:
                     $specialPriceTo = $row['value'];
-                break;
+                    break;
             }
         }
 
@@ -220,8 +226,7 @@ class Mage_CatalogIndex_Model_Data_Abstract extends Mage_Core_Model_Abstract
         $taxClassId  = $this->getResource()->getAttributeData(array($productId), array($attributeId), $store->getId());
         if (is_array($taxClassId) && isset($taxClassId[0]['value'])) {
             $taxClassId = $taxClassId[0]['value'];
-        }
-        else {
+        } else {
             $taxClassId = 0;
         }
         return $taxClassId;
@@ -245,6 +250,7 @@ class Mage_CatalogIndex_Model_Data_Abstract extends Mage_Core_Model_Abstract
      * @param array $products
      * @param array $attributes
      * @param Mage_Core_Model_Store $store
+     * @return array
      */
     public function getAttributeData($products, $attributes, $store)
     {

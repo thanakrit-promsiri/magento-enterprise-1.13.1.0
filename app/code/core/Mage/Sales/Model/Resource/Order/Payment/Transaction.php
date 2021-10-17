@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Sales
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 
@@ -50,6 +50,30 @@ class Mage_Sales_Model_Resource_Order_Payment_Transaction extends Mage_Sales_Mod
     protected function _construct()
     {
         $this->_init('sales/payment_transaction', 'transaction_id');
+    }
+
+    /**
+     * Unserialize Varien_Object field in an object
+     *
+     * @param Varien_Object $object
+     * @param string $field
+     * @param mixed $defaultValue
+     */
+    protected function _unserializeField(Varien_Object $object, $field, $defaultValue = null)
+    {
+        $value = $object->getData($field);
+        if (empty($value)) {
+            $object->setData($field, $defaultValue);
+        } elseif (!is_array($value) && !is_object($value)) {
+            $unserializedValue = false;
+            try {
+                $unserializedValue = Mage::helper('core/unserializeArray')
+                ->unserialize($value);
+            } catch (Exception $e) {
+                Mage::logException($e);
+            }
+            $object->setData($field, $unserializedValue);
+        }
     }
 
     /**
@@ -84,7 +108,8 @@ class Mage_Sales_Model_Resource_Order_Payment_Transaction extends Mage_Sales_Mod
                 'order_id = ?'      => (int)$orderId,
                 'parent_txn_id = ?' => $txnId
             );
-            $adapter->update($this->getMainTable(), 
+            $adapter->update(
+                $this->getMainTable(),
                 array('parent_id' => $id),
                 $where
             );
@@ -99,9 +124,12 @@ class Mage_Sales_Model_Resource_Order_Payment_Transaction extends Mage_Sales_Mod
      * @param int $paymentId
      * @param string $txnId
      */
-    public function loadObjectByTxnId(Mage_Sales_Model_Order_Payment_Transaction $transaction, $orderId, $paymentId, 
-        $txnId)
-    {
+    public function loadObjectByTxnId(
+        Mage_Sales_Model_Order_Payment_Transaction $transaction,
+        $orderId,
+        $paymentId,
+        $txnId
+    ) {
         $select = $this->_getLoadByUniqueKeySelect($orderId, $paymentId, $txnId);
         $data   = $this->_getWriteAdapter()->fetchRow($select);
         $transaction->setData($data);
@@ -130,10 +158,8 @@ class Mage_Sales_Model_Resource_Order_Payment_Transaction extends Mage_Sales_Mod
      * Lookup for parent_id in already saved transactions of this payment by the order_id
      * Also serialize additional information, if any
      *
+     * @inheritDoc
      * @throws Mage_Core_Exception
-     *
-     * @param Mage_Sales_Model_Order_Payment_Transaction $transaction
-     * @return Mage_Sales_Model_Resource_Order_Payment_Transaction
      */
     protected function _beforeSave(Mage_Core_Model_Abstract $transaction)
     {
@@ -146,7 +172,8 @@ class Mage_Sales_Model_Resource_Order_Payment_Transaction extends Mage_Sales_Mod
         if ($parentTxnId) {
             if (!$txnId || !$orderId || !$paymentId) {
                 Mage::throwException(
-                    Mage::helper('sales')->__('Not enough valid data to save the parent transaction ID.'));
+                    Mage::helper('sales')->__('Not enough valid data to save the parent transaction ID.')
+                );
             }
             $parentId = (int)$this->_lookupByTxnId($orderId, $paymentId, $parentTxnId, $idFieldName);
             if ($parentId) {
@@ -174,7 +201,7 @@ class Mage_Sales_Model_Resource_Order_Payment_Transaction extends Mage_Sales_Mod
      * @param mixed (array|string|object) $columns
      * @param bool $isRow
      * @param string $txnType
-     * @return mixed (array|string)
+     * @return array|string
      */
     private function _lookupByTxnId($orderId, $paymentId, $txnId, $columns, $isRow = false, $txnType = null)
     {

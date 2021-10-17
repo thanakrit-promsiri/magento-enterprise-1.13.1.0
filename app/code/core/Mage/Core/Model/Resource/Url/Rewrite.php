@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Core
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 
@@ -54,7 +54,7 @@ class Mage_Core_Model_Resource_Url_Rewrite extends Mage_Core_Model_Resource_Db_A
     /**
      * Initialize array fields
      *
-     * @return Mage_Core_Model_Resource_Url_Rewrite
+     * @return $this
      */
     protected function _initUniqueFields()
     {
@@ -81,12 +81,12 @@ class Mage_Core_Model_Resource_Url_Rewrite extends Mage_Core_Model_Resource_Db_A
      */
     protected function _getLoadSelect($field, $value, $object)
     {
-        /** @var $select Varien_Db_Select */
+        /** @var Varien_Db_Select $select */
         $select = parent::_getLoadSelect($field, $value, $object);
 
         if (!is_null($object->getStoreId())) {
-            $select->where('store_id IN(?)', array(Mage_Core_Model_App::ADMIN_STORE_ID, $object->getStoreId()));
-            $select->order('store_id ' . Varien_Db_Select::SQL_DESC);
+            $select->where('store_id = ?', $object->getStoreId());
+            $select->order('is_system ' . Varien_Db_Select::SQL_DESC);
             $select->limit(1);
         }
 
@@ -109,7 +109,7 @@ class Mage_Core_Model_Resource_Url_Rewrite extends Mage_Core_Model_Resource_Db_A
         }
 
         $select = $this->_getReadAdapter()->select();
-        /** @var $select Varien_Db_Select */
+        /** @var Varien_Db_Select $select */
         $select->from(array('main_table' => $this->getMainTable()), 'request_path')
             ->where('main_table.store_id = :store_id')
             ->where('main_table.id_path = :id_path')
@@ -134,12 +134,12 @@ class Mage_Core_Model_Resource_Url_Rewrite extends Mage_Core_Model_Resource_Db_A
     public function loadByRequestPath(Mage_Core_Model_Url_Rewrite $object, $path)
     {
         if (!is_array($path)) {
-            $path = array($path);
+            $path = array(strtolower($path));
         }
 
         $pathBind = array();
         foreach ($path as $key => $url) {
-            $pathBind['path' . $key] = $url;
+            $pathBind['path' . $key] = strtolower($url);
         }
         // Form select
         $adapter = $this->_getReadAdapter();
@@ -151,7 +151,7 @@ class Mage_Core_Model_Resource_Url_Rewrite extends Mage_Core_Model_Resource_Db_A
         $items = $adapter->fetchAll($select, $pathBind);
 
         // Go through all found records and choose one with lowest penalty - earlier path in array, concrete store
-        $mapPenalty = array_flip(array_values($path)); // we got mapping array(path => index), lower index - better
+        $mapPenalty = array_change_key_case(array_flip(array_values($path))); // we got mapping array(path => index), lower index - better
         $currentPenalty = null;
         $foundItem = null;
         foreach ($items as $item) {

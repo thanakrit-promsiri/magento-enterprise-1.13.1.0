@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_CatalogRule
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 
@@ -104,7 +104,7 @@ class Mage_CatalogRule_Model_Resource_Rule extends Mage_Rule_Model_Resource_Abst
      *
      * @param Mage_Core_Model_Abstract $object
      *
-     * @return Mage_CatalogRule_Model_Resource_Rule
+     * @inheritDoc
      */
     protected function _afterLoad(Mage_Core_Model_Abstract $object)
     {
@@ -120,7 +120,7 @@ class Mage_CatalogRule_Model_Resource_Rule extends Mage_Rule_Model_Resource_Abst
      *
      * @param Mage_Core_Model_Abstract $object
      *
-     * @return Mage_CatalogRule_Model_Resource_Rule
+     * @return $this
      */
     protected function _afterSave(Mage_Core_Model_Abstract $object)
     {
@@ -152,7 +152,7 @@ class Mage_CatalogRule_Model_Resource_Rule extends Mage_Rule_Model_Resource_Abst
      */
     public function cleanProductData($ruleId, array $productIds = array())
     {
-        /** @var $write Varien_Db_Adapter_Interface */
+        /** @var Varien_Db_Adapter_Interface $write */
         $write = $this->_getWriteAdapter();
 
         $conditions = array('rule_id = ?' => $ruleId);
@@ -174,13 +174,13 @@ class Mage_CatalogRule_Model_Resource_Rule extends Mage_Rule_Model_Resource_Abst
      */
     public function validateProduct(Mage_CatalogRule_Model_Rule $rule, Varien_Object $product, $websiteIds = array())
     {
-        /** @var $helper Mage_Catalog_Helper_Product_Flat */
+        /** @var Mage_Catalog_Helper_Product_Flat $helper */
         $helper = $this->_factory->getHelper('catalog/product_flat');
         if ($helper->isEnabled() && $helper->isBuiltAllStores()) {
-            /** @var $store Mage_Core_Model_Store */
+            /** @var Mage_Core_Model_Store $store */
             foreach ($this->_app->getStores(false) as $store) {
                 if (count($websiteIds) == 0 || in_array($store->getWebsiteId(), $websiteIds)) {
-                    /** @var $selectByStore Varien_Db_Select */
+                    /** @var Varien_Db_Select $selectByStore */
                     $selectByStore = $rule->getProductFlatSelect($store->getId());
                     $selectByStore->where('p.entity_id = ?', $product->getId());
                     $selectByStore->limit(1);
@@ -204,31 +204,41 @@ class Mage_CatalogRule_Model_Resource_Rule extends Mage_Rule_Model_Resource_Abst
      */
     public function insertRuleData(Mage_CatalogRule_Model_Rule $rule, array $websiteIds, array $productIds = array())
     {
-        /** @var $write Varien_Db_Adapter_Interface */
+        /** @var Varien_Db_Adapter_Interface $write */
         $write = $this->_getWriteAdapter();
 
         $customerGroupIds = $rule->getCustomerGroupIds();
-        $fromTime = (int) strtotime($rule->getFromDate());
-        $toTime = (int) strtotime($rule->getToDate());
+
+        $fromTime = (int) Mage::getModel('core/date')->gmtTimestamp(strtotime($rule->getFromDate()));
+        $toTime = (int) Mage::getModel('core/date')->gmtTimestamp(strtotime($rule->getToDate()));
         $toTime = $toTime ? ($toTime + self::SECONDS_IN_DAY - 1) : 0;
+
+        $timestamp = time();
+        if ($fromTime > $timestamp
+            || ($toTime && $toTime < $timestamp)
+        ) {
+            return;
+        }
         $sortOrder = (int) $rule->getSortOrder();
         $actionOperator = $rule->getSimpleAction();
         $actionAmount = (float) $rule->getDiscountAmount();
         $subActionOperator = $rule->getSubIsEnable() ? $rule->getSubSimpleAction() : '';
         $subActionAmount = (float) $rule->getSubDiscountAmount();
         $actionStop = (int) $rule->getStopRulesProcessing();
-        /** @var $helper Mage_Catalog_Helper_Product_Flat */
+        /** @var Mage_Catalog_Helper_Product_Flat $helper */
         $helper = $this->_factory->getHelper('catalog/product_flat');
 
         if ($helper->isEnabled() && $helper->isBuiltAllStores()) {
-            /** @var $store Mage_Core_Model_Store */
+            /** @var Mage_Core_Model_Store $store */
             foreach ($this->_app->getStores(false) as $store) {
                 if (in_array($store->getWebsiteId(), $websiteIds)) {
-                    /** @var $selectByStore Varien_Db_Select */
+                    /** @var Varien_Db_Select $selectByStore */
                     $selectByStore = $rule->getProductFlatSelect($store->getId())
-                        ->joinLeft(array('cg' => $this->getTable('customer/customer_group')),
+                        ->joinLeft(
+                            array('cg' => $this->getTable('customer/customer_group')),
                             $write->quoteInto('cg.customer_group_id IN (?)', $customerGroupIds),
-                            array('cg.customer_group_id'))
+                            array('cg.customer_group_id')
+                        )
                         ->reset(Varien_Db_Select::COLUMNS)
                         ->columns(array(
                             new Zend_Db_Expr($store->getWebsiteId()),
@@ -253,7 +263,9 @@ class Mage_CatalogRule_Model_Resource_Rule extends Mage_Rule_Model_Resource_Abst
                     foreach ($selects as $select) {
                         $write->query(
                             $write->insertFromSelect(
-                                $select, $this->getTable('catalogrule/rule_product'), array(
+                                $select,
+                                $this->getTable('catalogrule/rule_product'),
+                                array(
                                     'website_id',
                                     'customer_group_id',
                                     'product_id',
@@ -266,7 +278,8 @@ class Mage_CatalogRule_Model_Resource_Rule extends Mage_Rule_Model_Resource_Abst
                                     'sort_order',
                                     'sub_simple_action',
                                     'sub_discount_amount',
-                                ), Varien_Db_Adapter_Interface::INSERT_IGNORE
+                                ),
+                                Varien_Db_Adapter_Interface::INSERT_IGNORE
                             )
                         );
                     }
@@ -321,37 +334,38 @@ class Mage_CatalogRule_Model_Resource_Rule extends Mage_Rule_Model_Resource_Abst
      * @param Mage_CatalogRule_Model_Rule $rule
      *
      * @throws Exception
-     * @return Mage_CatalogRule_Model_Resource_Rule
+     * @return $this
      */
     public function updateRuleProductData(Mage_CatalogRule_Model_Rule $rule)
     {
         $ruleId = $rule->getId();
         $write  = $this->_getWriteAdapter();
         $write->beginTransaction();
-        if ($rule->getProductsFilter()) {
-            $this->cleanProductData($ruleId, $rule->getProductsFilter());
-        } else {
-            $this->cleanProductData($ruleId);
-        }
-
-        if (!$rule->getIsActive()) {
-            $write->commit();
-            return $this;
-        }
-
-        $websiteIds = $rule->getWebsiteIds();
-        if (!is_array($websiteIds)) {
-            $websiteIds = explode(',', $websiteIds);
-        }
-        if (empty($websiteIds)) {
-            return $this;
-        }
-
         try {
+            if ($rule->getProductsFilter()) {
+                $this->cleanProductData($ruleId, $rule->getProductsFilter());
+            } else {
+                $this->cleanProductData($ruleId);
+            }
+
+            if (!$rule->getIsActive()) {
+                $write->commit();
+                return $this;
+            }
+
+            $websiteIds = $rule->getWebsiteIds();
+            if (!is_array($websiteIds)) {
+                $websiteIds = explode(',', $websiteIds);
+            }
+            if (empty($websiteIds)) {
+                $write->commit();
+                return $this;
+            }
+
             $this->insertRuleData($rule, $websiteIds);
             $write->commit();
         } catch (Exception $e) {
-            $write->rollback();
+            $write->rollBack();
             throw $e;
         }
 
@@ -381,7 +395,7 @@ class Mage_CatalogRule_Model_Resource_Rule extends Mage_Rule_Model_Resource_Abst
      * @param int|string $toDate
      * @param int|null $productId
      *
-     * @return Mage_CatalogRule_Model_Resource_Rule
+     * @return $this
      */
     public function removeCatalogPricesForDateRange($fromDate, $toDate, $productId = null)
     {
@@ -420,7 +434,7 @@ class Mage_CatalogRule_Model_Resource_Rule extends Mage_Rule_Model_Resource_Abst
      * @param string $date
      * @param int|null $productId
      *
-     * @return Mage_CatalogRule_Model_Resource_Rule
+     * @return $this
      */
     public function deleteOldData($date, $productId = null)
     {
@@ -538,7 +552,7 @@ class Mage_CatalogRule_Model_Resource_Rule extends Mage_Rule_Model_Resource_Abst
      * @param int|Mage_Catalog_Model_Product $product
      *
      * @throws Exception
-     * @return Mage_CatalogRule_Model_Resource_Rule
+     * @return $this
      */
     public function applyAllRules($product = null)
     {
@@ -557,7 +571,7 @@ class Mage_CatalogRule_Model_Resource_Rule extends Mage_Rule_Model_Resource_Abst
      *
      * @deprecated after 1.7.0.2 use method applyAllRules
      *
-     * @return Mage_CatalogRule_Model_Resource_Rule
+     * @return $this
      */
     public function applyAllRulesForDateRange($fromDate = null, $toDate = null, $productId = null)
     {
@@ -578,7 +592,7 @@ class Mage_CatalogRule_Model_Resource_Rule extends Mage_Rule_Model_Resource_Abst
             $indexerCode = 'catalogrule/action_index_refresh_row';
         }
 
-        /** @var $indexer Mage_CatalogRule_Model_Action_Index_Refresh */
+        /** @var Mage_CatalogRule_Model_Action_Index_Refresh $indexer */
         $indexer = Mage::getModel(
             $indexerCode,
             array(
@@ -616,7 +630,8 @@ class Mage_CatalogRule_Model_Resource_Rule extends Mage_Rule_Model_Resource_Abst
         $productPrice = Mage::helper('catalogrule')->calcPriceRule(
             $ruleData['action_operator'],
             $ruleData['action_amount'],
-            $productPrice);
+            $productPrice
+        );
 
         return Mage::app()->getStore()->roundPrice($productPrice);
     }
@@ -626,7 +641,7 @@ class Mage_CatalogRule_Model_Resource_Rule extends Mage_Rule_Model_Resource_Abst
      *
      * @param array $arrData
      *
-     * @return Mage_CatalogRule_Model_Resource_Rule
+     * @return $this
      */
     protected function _saveRuleProductPrices($arrData)
     {
@@ -647,13 +662,11 @@ class Mage_CatalogRule_Model_Resource_Rule extends Mage_Rule_Model_Resource_Abst
             }
             $adapter->insertOnDuplicate($this->getTable('catalogrule/affected_product'), array_unique($productIds));
             $adapter->insertOnDuplicate($this->getTable('catalogrule/rule_product_price'), $arrData);
-
+            $adapter->commit();
         } catch (Exception $e) {
-            $adapter->rollback();
+            $adapter->rollBack();
             throw $e;
-
         }
-        $adapter->commit();
 
         return $this;
     }
@@ -723,7 +736,8 @@ class Mage_CatalogRule_Model_Resource_Rule extends Mage_Rule_Model_Resource_Abst
             ->where('customer_group_id = ?', $customerGroupId)
             ->where('product_id = ?', $productId)
             ->where('from_time = 0 or from_time < ?', $date)
-            ->where('to_time = 0 or to_time > ?', $date);
+            ->where('to_time = 0 or to_time > ?', $date)
+            ->order('sort_order');
 
         return $adapter->fetchAll($select);
     }
@@ -757,7 +771,7 @@ class Mage_CatalogRule_Model_Resource_Rule extends Mage_Rule_Model_Resource_Abst
      * @param array $websiteIds
      *
      * @throws Exception
-     * @return Mage_CatalogRule_Model_Resource_Rule
+     * @return $this
      */
     public function applyToProduct($rule, $product, $websiteIds)
     {
@@ -770,27 +784,51 @@ class Mage_CatalogRule_Model_Resource_Rule extends Mage_Rule_Model_Resource_Abst
 
         $write = $this->_getWriteAdapter();
         $write->beginTransaction();
-
-        $this->cleanProductData($ruleId, array($productId));
-
-        if (!$this->validateProduct($rule, $product, $websiteIds)) {
-            $write->delete($this->getTable('catalogrule/rule_product_price'), array(
-                $write->quoteInto('product_id = ?', $productId),
-            ));
-            $write->commit();
-            return $this;
-        }
-
         try {
-            $this->insertRuleData($rule, $websiteIds, array(
-                $productId => array_combine(array_values($websiteIds), array_values($websiteIds))));
+            if ($this->_isProductMatchedRule($ruleId, $product)) {
+                $this->cleanProductData($ruleId, array($productId));
+            }
+            if ($this->validateProduct($rule, $product, $websiteIds)) {
+                $this->insertRuleData($rule, $websiteIds, array(
+                    $productId => array_combine(array_values($websiteIds), array_values($websiteIds))));
+            } else {
+                $write->delete($this->getTable('catalogrule/rule_product_price'), array(
+                    $write->quoteInto('product_id = ?', $productId),
+                ));
+            }
+
+            $write->commit();
         } catch (Exception $e) {
-            $write->rollback();
+            $write->rollBack();
             throw $e;
         }
-
-        $write->commit();
-
         return $this;
+    }
+
+    /**
+     * Get ids of matched rules for specific product
+     *
+     * @param int $productId
+     * @return array
+     */
+    public function getProductRuleIds($productId)
+    {
+        $read = $this->_getReadAdapter();
+        $select = $read->select()->from($this->getTable('catalogrule/rule_product'), 'rule_id');
+        $select->where('product_id = ?', $productId);
+        return array_flip($read->fetchCol($select));
+    }
+
+    /**
+     * Is product has been matched the rule
+     *
+     * @param int $ruleId
+     * @param Mage_Catalog_Model_Product $product
+     * @return bool
+     */
+    protected function _isProductMatchedRule($ruleId, $product)
+    {
+        $rules = $product->getMatchedRules();
+        return isset($rules[$ruleId]);
     }
 }

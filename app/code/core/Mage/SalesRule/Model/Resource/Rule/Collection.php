@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_SalesRule
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 
@@ -72,12 +72,11 @@ class Mage_SalesRule_Model_Resource_Rule_Collection extends Mage_Rule_Model_Reso
      * @param string|null $now
      * @use $this->addWebsiteGroupDateFilter()
      *
-     * @return Mage_SalesRule_Model_Resource_Rule_Collection
+     * @return $this
      */
     public function setValidationFilter($websiteId, $customerGroupId, $couponCode = '', $now = null)
     {
         if (!$this->getFlag('validation_filter')) {
-
             /* We need to overwrite joinLeft if coupon is applied */
             $this->getSelect()->reset();
             parent::_initSelect();
@@ -85,20 +84,41 @@ class Mage_SalesRule_Model_Resource_Rule_Collection extends Mage_Rule_Model_Reso
             $this->addWebsiteGroupDateFilter($websiteId, $customerGroupId, $now);
             $select = $this->getSelect();
 
+            $connection = $this->getConnection();
             if (strlen($couponCode)) {
                 $select->joinLeft(
                     array('rule_coupons' => $this->getTable('salesrule/coupon')),
-                    'main_table.rule_id = rule_coupons.rule_id ',
+                    $connection->quoteInto(
+                        'main_table.rule_id = rule_coupons.rule_id AND main_table.coupon_type != ?',
+                        Mage_SalesRule_Model_Rule::COUPON_TYPE_NO_COUPON
+                    ),
                     array('code')
                 );
-            $select->where('(main_table.coupon_type = ? ', Mage_SalesRule_Model_Rule::COUPON_TYPE_NO_COUPON)
-                ->orWhere('(main_table.coupon_type = ? AND rule_coupons.type = 0',
-                    Mage_SalesRule_Model_Rule::COUPON_TYPE_AUTO)
-                ->orWhere('main_table.coupon_type = ? AND main_table.use_auto_generation = 1 ' .
-                    'AND rule_coupons.type = 1', Mage_SalesRule_Model_Rule::COUPON_TYPE_SPECIFIC)
-                ->orWhere('main_table.coupon_type = ? AND main_table.use_auto_generation = 0 ' .
-                    'AND rule_coupons.type = 0)', Mage_SalesRule_Model_Rule::COUPON_TYPE_SPECIFIC)
-                ->where('rule_coupons.code = ?)', $couponCode);
+
+                $noCouponCondition = $connection->quoteInto(
+                    'main_table.coupon_type = ? ',
+                    Mage_SalesRule_Model_Rule::COUPON_TYPE_NO_COUPON
+                );
+
+                $orWhereConditions = array(
+                    $connection->quoteInto(
+                        '(main_table.coupon_type = ? AND rule_coupons.type = 0)',
+                        Mage_SalesRule_Model_Rule::COUPON_TYPE_AUTO
+                    ),
+                    $connection->quoteInto(
+                        '(main_table.coupon_type = ? AND main_table.use_auto_generation = 1 AND rule_coupons.type = 1)',
+                        Mage_SalesRule_Model_Rule::COUPON_TYPE_SPECIFIC
+                    ),
+                    $connection->quoteInto(
+                        '(main_table.coupon_type = ? AND main_table.use_auto_generation = 0 AND rule_coupons.type = 0)',
+                        Mage_SalesRule_Model_Rule::COUPON_TYPE_SPECIFIC
+                    ),
+                );
+                $orWhereCondition = implode(' OR ', $orWhereConditions);
+                $select->where(
+                    $noCouponCondition . ' OR ((' . $orWhereCondition . ') AND rule_coupons.code = ?)',
+                    $couponCode
+                );
             } else {
                 $this->addFieldToFilter('main_table.coupon_type', Mage_SalesRule_Model_Rule::COUPON_TYPE_NO_COUPON);
             }
@@ -119,7 +139,7 @@ class Mage_SalesRule_Model_Resource_Rule_Collection extends Mage_Rule_Model_Reso
      * @param string|null $now
      * @use $this->addWebsiteFilter()
      *
-     * @return Mage_SalesRule_Model_Mysql4_Rule_Collection
+     * @return $this
      */
     public function addWebsiteGroupDateFilter($websiteId, $customerGroupId, $now = null)
     {
@@ -157,7 +177,7 @@ class Mage_SalesRule_Model_Resource_Rule_Collection extends Mage_Rule_Model_Reso
     /**
      * Add primary coupon to collection
      *
-     * @return Mage_SalesRule_Model_Resource_Rule_Collection
+     * @return $this
      */
     public function _initSelect()
     {
@@ -176,7 +196,7 @@ class Mage_SalesRule_Model_Resource_Rule_Collection extends Mage_Rule_Model_Reso
      *
      * @param string $attributeCode
      *
-     * @return Mage_SalesRule_Model_Resource_Rule_Collection
+     * @return $this
      */
     public function addAttributeInConditionFilter($attributeCode)
     {
@@ -194,7 +214,7 @@ class Mage_SalesRule_Model_Resource_Rule_Collection extends Mage_Rule_Model_Reso
     /**
      * Excludes price rules with generated specific coupon codes from collection
      *
-     * @return Mage_SalesRule_Model_Resource_Rule_Collection
+     * @return $this
      */
     public function addAllowedSalesRulesFilter()
     {

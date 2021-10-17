@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Catalog
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 
@@ -32,8 +32,7 @@
  * @package     Mage_Catalog
  * @author      Magento Core Team <core@magentocommerce.com>
  */
-class Mage_Catalog_Model_Resource_Product_Attribute_Collection
-    extends Mage_Eav_Model_Resource_Entity_Attribute_Collection
+class Mage_Catalog_Model_Resource_Product_Attribute_Collection extends Mage_Eav_Model_Resource_Entity_Attribute_Collection
 {
     /**
      * Resource model initialization
@@ -47,7 +46,7 @@ class Mage_Catalog_Model_Resource_Product_Attribute_Collection
     /**
      * initialize select object
      *
-     * @return Mage_Catalog_Model_Resource_Product_Attribute_Collection
+     * @return $this
      */
     protected function _initSelect()
     {
@@ -66,7 +65,7 @@ class Mage_Catalog_Model_Resource_Product_Attribute_Collection
             ->join(
                 array('additional_table' => $this->getTable('catalog/eav_attribute')),
                 'additional_table.attribute_id = main_table.attribute_id'
-                )
+            )
             ->where('main_table.entity_type_id = ?', $entityTypeId);
         return $this;
     }
@@ -76,7 +75,7 @@ class Mage_Catalog_Model_Resource_Product_Attribute_Collection
      * Entity type is defined.
      *
      * @param  int $typeId
-     * @return Mage_Catalog_Model_Resource_Product_Attribute_Collection
+     * @return $this
      */
     public function setEntityTypeFilter($typeId)
     {
@@ -105,7 +104,7 @@ class Mage_Catalog_Model_Resource_Product_Attribute_Collection
     /**
      * Remove price from attribute list
      *
-     * @return Mage_Catalog_Model_Resource_Product_Attribute_Collection
+     * @return $this
      */
     public function removePriceFilter()
     {
@@ -115,7 +114,7 @@ class Mage_Catalog_Model_Resource_Product_Attribute_Collection
     /**
      * Specify "is_visible_in_advanced_search" filter
      *
-     * @return Mage_Catalog_Model_Resource_Product_Attribute_Collection
+     * @return $this
      */
     public function addDisplayInAdvancedSearchFilter()
     {
@@ -125,7 +124,7 @@ class Mage_Catalog_Model_Resource_Product_Attribute_Collection
     /**
      * Specify "is_filterable" filter
      *
-     * @return Mage_Catalog_Model_Resource_Product_Attribute_Collection
+     * @return $this
      */
     public function addIsFilterableFilter()
     {
@@ -135,7 +134,7 @@ class Mage_Catalog_Model_Resource_Product_Attribute_Collection
     /**
      * Add filterable in search filter
      *
-     * @return Mage_Catalog_Model_Resource_Product_Attribute_Collection
+     * @return $this
      */
     public function addIsFilterableInSearchFilter()
     {
@@ -145,7 +144,7 @@ class Mage_Catalog_Model_Resource_Product_Attribute_Collection
     /**
      * Specify filter by "is_visible" field
      *
-     * @return Mage_Catalog_Model_Resource_Product_Attribute_Collection
+     * @return $this
      */
     public function addVisibleFilter()
     {
@@ -155,7 +154,7 @@ class Mage_Catalog_Model_Resource_Product_Attribute_Collection
     /**
      * Specify "is_searchable" filter
      *
-     * @return Mage_Catalog_Model_Resource_Product_Attribute_Collection
+     * @return $this
      */
     public function addIsSearchableFilter()
     {
@@ -166,7 +165,7 @@ class Mage_Catalog_Model_Resource_Product_Attribute_Collection
      * Specify filter for attributes that have to be indexed
      *
      * @param bool $addRequiredCodes
-     * @return Mage_Catalog_Model_Resource_Product_Attribute_Collection
+     * @return $this
      */
     public function addToIndexFilter($addRequiredCodes = false)
     {
@@ -179,8 +178,10 @@ class Mage_Catalog_Model_Resource_Product_Attribute_Collection
         );
 
         if ($addRequiredCodes) {
-            $conditions[] = $this->getConnection()->quoteInto('main_table.attribute_code IN (?)',
-                array('status', 'visibility'));
+            $conditions[] = $this->getConnection()->quoteInto(
+                'main_table.attribute_code IN (?)',
+                array('status', 'visibility')
+            );
         }
 
         $this->getSelect()->where(sprintf('(%s)', implode(' OR ', $conditions)));
@@ -191,7 +192,7 @@ class Mage_Catalog_Model_Resource_Product_Attribute_Collection
     /**
      * Specify filter for attributes used in quick search
      *
-     * @return Mage_Catalog_Model_Resource_Eav_Mysql4_Product_Attribute_Collection
+     * @return $this
      */
     public function addSearchableAttributeFilter()
     {

@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Cron
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 /**
@@ -60,7 +60,7 @@ class Mage_Cron_Model_Observer
         $jobsRoot = Mage::getConfig()->getNode('crontab/jobs');
         $defaultJobsRoot = Mage::getConfig()->getNode('default/crontab/jobs');
 
-        /** @var $schedule Mage_Cron_Model_Schedule */
+        /** @var Mage_Cron_Model_Schedule $schedule */
         foreach ($schedules->getIterator() as $schedule) {
             $jobConfig = $jobsRoot->{$schedule->getJobCode()};
             if (!$jobConfig || !$jobConfig->run) {
@@ -98,11 +98,15 @@ class Mage_Cron_Model_Observer
         }
     }
 
+    /**
+     * @return Mage_Cron_Model_Resource_Schedule_Collection
+     */
     public function getPendingSchedules()
     {
         if (!$this->_pendingSchedules) {
             $this->_pendingSchedules = Mage::getModel('cron/schedule')->getCollection()
                 ->addFieldToFilter('status', Mage_Cron_Model_Schedule::STATUS_PENDING)
+                ->orderByScheduledAt()
                 ->load();
         }
         return $this->_pendingSchedules;
@@ -111,7 +115,7 @@ class Mage_Cron_Model_Observer
     /**
      * Generate cron schedule
      *
-     * @return Mage_Cron_Model_Observer
+     * @return $this
      */
     public function generate()
     {
@@ -156,9 +160,9 @@ class Mage_Cron_Model_Observer
     /**
      * Generate jobs for config information
      *
-     * @param   $jobs
+     * @param   SimpleXMLElement $jobs
      * @param   array $exists
-     * @return  Mage_Cron_Model_Observer
+     * @return  $this
      */
     protected function _generateJobs($jobs, $exists)
     {
@@ -202,7 +206,7 @@ class Mage_Cron_Model_Observer
     /**
      * Clean up the history of tasks
      *
-     * @return Mage_Cron_Model_Observer
+     * @return $this
      */
     public function cleanup()
     {
@@ -242,9 +246,9 @@ class Mage_Cron_Model_Observer
     /**
      * Processing cron task which is marked as always
      *
-     * @param $jobCode
-     * @param $jobConfig
-     * @return Mage_Cron_Model_Observer
+     * @param string $jobCode
+     * @param SimpleXMLElement $jobConfig
+     * @return $this|void
      */
     protected function _processAlwaysTask($jobCode, $jobConfig)
     {
@@ -269,9 +273,9 @@ class Mage_Cron_Model_Observer
      * Process cron task
      *
      * @param Mage_Cron_Model_Schedule $schedule
-     * @param $jobConfig
+     * @param SimpleXMLElement $jobConfig
      * @param bool $isAlways
-     * @return Mage_Cron_Model_Observer
+     * @return $this|void
      */
     protected function _processJob($schedule, $jobConfig, $isAlways = false)
     {
@@ -316,6 +320,7 @@ class Mage_Cron_Model_Observer
                 though running status is set in tryLockJob we must set it here because the object
                 was loaded with a pending status and will set it back to pending if we don't set it here
                  */
+                 $schedule->setStatus(Mage_Cron_Model_Schedule::STATUS_RUNNING);
             }
 
             $schedule
@@ -327,7 +332,6 @@ class Mage_Cron_Model_Observer
             $schedule
                 ->setStatus(Mage_Cron_Model_Schedule::STATUS_SUCCESS)
                 ->setFinishedAt(strftime('%Y-%m-%d %H:%M:%S', time()));
-
         } catch (Exception $e) {
             $schedule->setStatus($errorStatus)
                 ->setMessages($e->__toString());
@@ -340,26 +344,20 @@ class Mage_Cron_Model_Observer
     /**
      * Get job for task marked as always
      *
-     * @param $jobCode
-     * @return bool|Mage_Cron_Model_Schedule
+     * @param string $jobCode
+     * @return Mage_Cron_Model_Schedule
      */
     protected function _getAlwaysJobSchedule($jobCode)
     {
-        /** @var $schedule Mage_Cron_Model_Schedule */
+        /** @var Mage_Cron_Model_Schedule $schedule */
         $schedule = Mage::getModel('cron/schedule')->load($jobCode, 'job_code');
         if ($schedule->getId() === null) {
             $ts = strftime('%Y-%m-%d %H:%M:00', time());
             $schedule->setJobCode($jobCode)
-                ->setStatus(Mage_Cron_Model_Schedule::STATUS_RUNNING)
                 ->setCreatedAt($ts)
-                ->setScheduledAt($ts)
-                ->save();
-            return $schedule;
-        } else if ($schedule->getStatus() != Mage_Cron_Model_Schedule::STATUS_RUNNING) {
-            $schedule->tryLockJob($schedule->getStatus());
-            return $schedule;
+                ->setScheduledAt($ts);
         }
-
-        return false;
+        $schedule->setStatus(Mage_Cron_Model_Schedule::STATUS_RUNNING)->save();
+        return $schedule;
     }
 }

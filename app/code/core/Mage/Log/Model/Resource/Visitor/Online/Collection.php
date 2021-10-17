@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Log
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 
@@ -53,21 +53,22 @@ class Mage_Log_Model_Resource_Visitor_Online_Collection extends Mage_Core_Model_
     /**
      * Add Customer data to collection
      *
-     * @return Mage_Log_Model_Resource_Visitor_Online_Collection
+     * @return $this
      */
     public function addCustomerData()
     {
         $customer   = Mage::getModel('customer/customer');
         // alias => attribute_code
         $attributes = array(
-            'customer_lastname'     => 'lastname',
-            'customer_firstname'    => 'firstname',
-            'customer_email'        => 'email'
+            'customer_lastname'   => 'lastname',
+            'customer_middlename' => 'middlename',
+            'customer_firstname'  => 'firstname',
+            'customer_email'      => 'email'
         );
 
         foreach ($attributes as $alias => $attributeCode) {
             $attribute = $customer->getAttribute($attributeCode);
-            /* @var $attribute Mage_Eav_Model_Entity_Attribute_Abstract */
+            /* @var Mage_Eav_Model_Entity_Attribute_Abstract $attribute */
 
             if ($attribute->getBackendType() == 'static') {
                 $tableAlias = 'customer_' . $attribute->getAttributeCode();
@@ -79,8 +80,7 @@ class Mage_Log_Model_Resource_Visitor_Online_Collection extends Mage_Core_Model_
                 );
 
                 $this->_fields[$alias] = sprintf('%s.%s', $tableAlias, $attribute->getAttributeCode());
-            }
-            else {
+            } else {
                 $tableAlias = 'customer_' . $attribute->getAttributeCode();
 
                 $joinConds  = array(
@@ -90,7 +90,7 @@ class Mage_Log_Model_Resource_Visitor_Online_Collection extends Mage_Core_Model_
 
                 $this->getSelect()->joinLeft(
                     array($tableAlias => $attribute->getBackend()->getTable()),
-                    join(' AND ', $joinConds),
+                    implode(' AND ', $joinConds),
                     array($alias => 'value')
                 );
 
@@ -106,7 +106,7 @@ class Mage_Log_Model_Resource_Visitor_Online_Collection extends Mage_Core_Model_
      * Filter collection by specified website(s)
      *
      * @param int|array $websiteIds
-     * @return Mage_Log_Model_Resource_Visitor_Online_Collection
+     * @return $this
      */
     public function addWebsiteFilter($websiteIds)
     {
@@ -125,11 +125,11 @@ class Mage_Log_Model_Resource_Visitor_Online_Collection extends Mage_Core_Model_
      *     array('attribute'=>'lastname', 'like'=>'test%'),
      * )
      *
-     * @see self::_getConditionSql for $condition
-     *
      * @param string $field
      * @param null|string|array $condition
-     * @return Mage_Eav_Model_Entity_Collection_Abstract
+     * @return Mage_Core_Model_Resource_Db_Collection_Abstract
+     * @see self::_getConditionSql for $condition
+     *
      */
     public function addFieldToFilter($field, $condition = null)
     {

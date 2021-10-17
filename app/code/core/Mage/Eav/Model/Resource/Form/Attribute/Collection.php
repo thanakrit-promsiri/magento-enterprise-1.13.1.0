@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Eav
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 
@@ -94,7 +94,7 @@ class Mage_Eav_Model_Resource_Form_Attribute_Collection extends Mage_Core_Model_
      * Set current store to collection
      *
      * @param Mage_Core_Model_Store|string|int $store
-     * @return Mage_Eav_Model_Resource_Form_Attribute_Collection
+     * @return $this
      */
     public function setStore($store)
     {
@@ -119,7 +119,7 @@ class Mage_Eav_Model_Resource_Form_Attribute_Collection extends Mage_Core_Model_
      * Set entity type instance to collection
      *
      * @param Mage_Eav_Model_Entity_Type|string|int $entityType
-     * @return Mage_Eav_Model_Resource_Form_Attribute_Collection
+     * @return $this
      */
     public function setEntityType($entityType)
     {
@@ -144,7 +144,7 @@ class Mage_Eav_Model_Resource_Form_Attribute_Collection extends Mage_Core_Model_
      * Add Form Code filter to collection
      *
      * @param string $code
-     * @return Mage_Eav_Model_Resource_Form_Attribute_Collection
+     * @return $this
      */
     public function addFormCodeFilter($code)
     {
@@ -155,7 +155,7 @@ class Mage_Eav_Model_Resource_Form_Attribute_Collection extends Mage_Core_Model_
      * Set order by attribute sort order
      *
      * @param string $direction
-     * @return Mage_Eav_Model_Resource_Form_Attribute_Collection
+     * @return $this
      */
     public function setSortOrder($direction = self::SORT_ORDER_ASC)
     {
@@ -166,7 +166,7 @@ class Mage_Eav_Model_Resource_Form_Attribute_Collection extends Mage_Core_Model_
     /**
      * Add joins to select
      *
-     * @return Mage_Eav_Model_Resource_Form_Attribute_Collection
+     * @inheritDoc
      */
     protected function _beforeLoad()
     {
@@ -218,13 +218,21 @@ class Mage_Eav_Model_Resource_Form_Attribute_Collection extends Mage_Core_Model_
                     if (isset($eaColumns[$columnName])) {
                         $code = sprintf('scope_%s', $columnName);
                         $expression = $connection->getCheckSql('sa.%s IS NULL', 'ea.%s', 'sa.%s');
-                        $saColumns[$code] = new Zend_Db_Expr(sprintf($expression,
-                            $columnName, $columnName, $columnName));
+                        $saColumns[$code] = new Zend_Db_Expr(sprintf(
+                            $expression,
+                            $columnName,
+                            $columnName,
+                            $columnName
+                        ));
                     } elseif (isset($caColumns[$columnName])) {
                         $code = sprintf('scope_%s', $columnName);
                         $expression = $connection->getCheckSql('sa.%s IS NULL', 'ca.%s', 'sa.%s');
-                        $saColumns[$code] = new Zend_Db_Expr(sprintf($expression,
-                            $columnName, $columnName, $columnName));
+                        $saColumns[$code] = new Zend_Db_Expr(sprintf(
+                            $expression,
+                            $columnName,
+                            $columnName,
+                            $columnName
+                        ));
                     }
                 }
             }
@@ -232,7 +240,8 @@ class Mage_Eav_Model_Resource_Form_Attribute_Collection extends Mage_Core_Model_
             $store = $this->getStore();
             $joinWebsiteExpression = $connection
                 ->quoteInto(
-                    'sa.attribute_id = main_table.attribute_id AND sa.website_id = ?', (int)$store->getWebsiteId()
+                    'sa.attribute_id = main_table.attribute_id AND sa.website_id = ?',
+                    (int)$store->getWebsiteId()
                 );
             $select->joinLeft(
                 array('sa' => $this->_getEavWebsiteTable()),

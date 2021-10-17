@@ -1,29 +1,28 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Core
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
-
 
 /**
  * Abstract Core Resource Collection
@@ -74,7 +73,7 @@ abstract class Mage_Core_Model_Resource_Db_Collection_Abstract extends Varien_Da
     /**
      * Fields to select changed flag
      *
-     * @var booleam
+     * @var boolean
      */
     protected $_fieldsToSelectChanged  = false;
 
@@ -141,7 +140,6 @@ abstract class Mage_Core_Model_Resource_Db_Collection_Abstract extends Varien_Da
      */
     protected function _construct()
     {
-
     }
 
     /**
@@ -162,7 +160,7 @@ abstract class Mage_Core_Model_Resource_Db_Collection_Abstract extends Varien_Da
      * Set main collection table
      *
      * @param string $table
-     * @return Mage_Core_Model_Resource_Db_Collection_Abstract
+     * @return $this
      */
     public function setMainTable($table)
     {
@@ -185,7 +183,7 @@ abstract class Mage_Core_Model_Resource_Db_Collection_Abstract extends Varien_Da
     /**
      * Init collection select
      *
-     * @return Mage_Core_Model_Resource_Db_Collection_Abstract
+     * @return $this
      */
     protected function _initSelect()
     {
@@ -210,7 +208,7 @@ abstract class Mage_Core_Model_Resource_Db_Collection_Abstract extends Varien_Da
     /**
      * Init fields for select
      *
-     * @return Mage_Core_Model_Resource_Db_Collection_Abstract
+     * @return $this
      */
     protected function _initSelectFields()
     {
@@ -253,7 +251,6 @@ abstract class Mage_Core_Model_Resource_Db_Collection_Abstract extends Varien_Da
                 $columnEntry = array('main_table', $field, $alias);
                 array_splice($columns, $insertIndex, 0, array($columnEntry)); // Insert column
                 $insertIndex ++;
-
             }
         } else {
             array_unshift($columns, array('main_table', '*', null));
@@ -282,7 +279,7 @@ abstract class Mage_Core_Model_Resource_Db_Collection_Abstract extends Varien_Da
     /**
      * Initialize initial fields to select like id field
      *
-     * @return Mage_Core_Model_Resource_Db_Collection_Abstract
+     * @return $this
      */
     protected function _initInitialFieldsToSelect()
     {
@@ -298,7 +295,7 @@ abstract class Mage_Core_Model_Resource_Db_Collection_Abstract extends Varien_Da
      *
      * @param string|array $field
      * @param string|null $alias
-     * @return Mage_Core_Model_Resource_Db_Collection_Abstract
+     * @return $this
      */
     public function addFieldToSelect($field, $alias = null)
     {
@@ -316,8 +313,7 @@ abstract class Mage_Core_Model_Resource_Db_Collection_Abstract extends Varien_Da
             foreach ($field as $key => $value) {
                 $this->addFieldToSelect(
                     $value,
-                    (is_string($key) ? $key : null),
-                    false
+                    (is_string($key) ? $key : null)
                 );
             }
 
@@ -337,14 +333,14 @@ abstract class Mage_Core_Model_Resource_Db_Collection_Abstract extends Varien_Da
 
     /**
      * Add attribute expression (SUM, COUNT, etc)
-     * Example: ('sub_total', 'SUM({{attribute}})', 'revenue')
+     * Example: ('sub_total', 'SUM({{attribute}})', array('attribute' => 'revenue'))
      * Example: ('sub_total', 'SUM({{revenue}})', 'revenue')
      * For some functions like SUM use groupByAttribute.
      *
      * @param string $alias
      * @param string $expression
-     * @param array $fields
-     * @return Mage_Core_Model_Resource_Db_Collection_Abstract
+     * @param array|string $fields
+     * @return $this
      */
     public function addExpressionFieldToSelect($alias, $expression, $fields)
     {
@@ -354,11 +350,11 @@ abstract class Mage_Core_Model_Resource_Db_Collection_Abstract extends Varien_Da
         }
 
         $fullExpression = $expression;
-        foreach ($fields as $fieldKey=>$fieldItem) {
+        foreach ($fields as $fieldKey => $fieldItem) {
             $fullExpression = str_replace('{{' . $fieldKey . '}}', $fieldItem, $fullExpression);
         }
 
-        $this->getSelect()->columns(array($alias=>$fullExpression));
+        $this->getSelect()->columns(array($alias=>new Zend_Db_Expr($fullExpression)));
 
         return $this;
     }
@@ -368,7 +364,7 @@ abstract class Mage_Core_Model_Resource_Db_Collection_Abstract extends Varien_Da
      *
      * @param string|null $field
      * @param boolean $isAlias Alias identifier
-     * @return Mage_Core_Model_Resource_Db_Collection_Abstract
+     * @return $this
      */
     public function removeFieldFromSelect($field, $isAlias = false)
     {
@@ -392,7 +388,7 @@ abstract class Mage_Core_Model_Resource_Db_Collection_Abstract extends Varien_Da
     /**
      * Removes all fields from select
      *
-     * @return Mage_Core_Model_Resource_Db_Collection_Abstract
+     * @return $this
      */
     public function removeAllFieldsFromSelect()
     {
@@ -406,7 +402,7 @@ abstract class Mage_Core_Model_Resource_Db_Collection_Abstract extends Varien_Da
      *
      * @param string $model
      * @param Mage_Core_Model_Resource_Db_Abstract $resourceModel
-     * @return Mage_Core_Model_Resource_Db_Collection_Abstract
+     * @return $this
      */
     protected function _init($model, $resourceModel = null)
     {
@@ -422,7 +418,7 @@ abstract class Mage_Core_Model_Resource_Db_Collection_Abstract extends Varien_Da
      * Set model name for collection items
      *
      * @param string $model
-     * @return Mage_Core_Model_Resource_Db_Collection_Abstract
+     * @return $this
      */
     public function setModel($model)
     {
@@ -437,7 +433,7 @@ abstract class Mage_Core_Model_Resource_Db_Collection_Abstract extends Varien_Da
      * Get model instance
      *
      * @param array $args
-     * @return Varien_Object
+     * @return string
      */
     public function getModelName($args = array())
     {
@@ -505,11 +501,12 @@ abstract class Mage_Core_Model_Resource_Db_Collection_Abstract extends Varien_Da
         return $this->getConnection()->fetchCol($idsSelect);
     }
 
+    /**
+     * @return array
+     */
     public function getData()
     {
         if ($this->_data === null) {
-
-
             $this->_renderFilters()
                  ->_renderOrders()
                  ->_renderLimit();
@@ -518,7 +515,7 @@ abstract class Mage_Core_Model_Resource_Db_Collection_Abstract extends Varien_Da
              * @var string $query
              */
             $query       = $this->_prepareSelect($this->getSelect());
-            $this->_data = $this->_fetchAll($query, $this->_bindParams);
+            $this->_data = $this->_fetchAll($query);
             $this->_afterLoadData();
         }
         return $this->_data;
@@ -527,10 +524,13 @@ abstract class Mage_Core_Model_Resource_Db_Collection_Abstract extends Varien_Da
     /**
      * Prepare select for load
      *
+     * @param Varien_Db_Select $select
      * @return string
+     * @throws Zend_Db_Select_Exception
      */
     protected function _prepareSelect(Varien_Db_Select $select)
     {
+        /** @var Mage_Core_Model_Resource_Helper_Mysql4 $helper */
         $helper = Mage::getResourceHelper('core');
 
         $unionParts = $select->getPart(Zend_Db_Select::UNION);
@@ -547,10 +547,10 @@ abstract class Mage_Core_Model_Resource_Db_Collection_Abstract extends Varien_Da
     /**
      * Join table to collection select
      *
-     * @param string $table
-     * @param string $cond
-     * @param string $cols
-     * @return Mage_Core_Model_Resource_Db_Collection_Abstract
+     * @param  array|string|Zend_Db_Expr $table Table name
+     * @param  string $cond Join on this condition
+     * @param  array|string $cols The columns to select from the joined table
+     * @return $this
      */
     public function join($table, $cond, $cols = '*')
     {
@@ -564,7 +564,7 @@ abstract class Mage_Core_Model_Resource_Db_Collection_Abstract extends Varien_Da
             $alias = $table;
         }
 
-        if (!isset($this->_joinedTables[$table])) {
+        if (!isset($this->_joinedTables[$alias])) {
             $this->getSelect()->join(
                 array($alias => $this->getTable($table)),
                 $cond,
@@ -578,7 +578,7 @@ abstract class Mage_Core_Model_Resource_Db_Collection_Abstract extends Varien_Da
     /**
      * Redeclare before load method for adding event
      *
-     * @return Mage_Core_Model_Resource_Db_Collection_Abstract
+     * @return $this
      */
     protected function _beforeLoad()
     {
@@ -596,7 +596,7 @@ abstract class Mage_Core_Model_Resource_Db_Collection_Abstract extends Varien_Da
      * Set reset items data changed flag
      *
      * @param boolean $flag
-     * @return Mage_Core_Model_Resource_Db_Collection_Abstract
+     * @return $this
      */
     public function setResetItemsDataChanged($flag)
     {
@@ -607,10 +607,11 @@ abstract class Mage_Core_Model_Resource_Db_Collection_Abstract extends Varien_Da
     /**
      * Set flag data has changed to all collection items
      *
-     * @return Mage_Core_Model_Mysql4_Collection_Abstract
+     * @return $this
      */
     public function resetItemsDataChanged()
     {
+        /** @var Varien_Object $item */
         foreach ($this->_items as $item) {
             $item->setDataChanges(false);
         }
@@ -621,11 +622,12 @@ abstract class Mage_Core_Model_Resource_Db_Collection_Abstract extends Varien_Da
     /**
      * Redeclare after load method for specifying collection items original data
      *
-     * @return Mage_Core_Model_Resource_Db_Collection_Abstract
+     * @return $this
      */
     protected function _afterLoad()
     {
         parent::_afterLoad();
+        /** @var Varien_Object $item */
         foreach ($this->_items as $item) {
             $item->setOrigData();
             if ($this->_resetItemsDataChanged) {
@@ -644,7 +646,7 @@ abstract class Mage_Core_Model_Resource_Db_Collection_Abstract extends Varien_Da
     /**
      * Save all the entities in the collection
      *
-     * @return Mage_Core_Model_Resource_Db_Collection_Abstract
+     * @return $this
      */
     public function save()
     {
@@ -681,7 +683,7 @@ abstract class Mage_Core_Model_Resource_Db_Collection_Abstract extends Varien_Da
      *
      * @param array $data
      * @param Zend_Db_Select $select
-     * @return Mage_Core_Model_Resource_Db_Collection_Abstract
+     * @return $this
      */
     protected function _saveCache($data, $select)
     {
@@ -713,7 +715,4 @@ abstract class Mage_Core_Model_Resource_Db_Collection_Abstract extends Varien_Da
     {
         return Varien_Date::formatDate($date, $includeTime);
     }
-
-
-
 }

@@ -15,20 +15,10 @@
  * @category   Zend
  * @package    Zend_Service_WindowsAzure
  * @subpackage Diagnostics
- * @copyright  Copyright (c) 2005-2010 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @version    $Id$
  */
-
-/**
- * @see Zend_Service_WindowsAzure_Diagnostics_Exception
- */
-#require_once 'Zend/Service/WindowsAzure/Diagnostics/Exception.php';
-
-/**
- * @see Zend_Service_WindowsAzure_Diagnostics_ConfigurationObjectBaseAbstract
- */
-#require_once 'Zend/Service/WindowsAzure/Diagnostics/ConfigurationObjectBaseAbstract.php';
 
 /**
  * @see Zend_Service_WindowsAzure_Diagnostics_ConfigurationLogs
@@ -59,7 +49,7 @@
  * @category   Zend
  * @package    Zend_Service_WindowsAzure
  * @subpackage Diagnostics
- * @copyright  Copyright (c) 2005-2010 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  *
  * @property	int																				OverallQuotaInMB				Overall quota in MB
@@ -74,11 +64,11 @@ class Zend_Service_WindowsAzure_Diagnostics_ConfigurationDataSources
 {
     /**
      * Constructor
-     * 
+     *
 	 * @param	int	$overallQuotaInMB				Overall quota in MB
 	 */
-    public function __construct($overallQuotaInMB = 0) 
-    {	        
+    public function __construct($overallQuotaInMB = 0)
+    {
         $this->_data = array(
             'overallquotainmb'        		=> $overallQuotaInMB,
             'logs'             				=> new Zend_Service_WindowsAzure_Diagnostics_ConfigurationLogs(),

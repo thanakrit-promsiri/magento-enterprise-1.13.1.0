@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Checkout
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 /**
@@ -102,7 +102,7 @@ class Mage_Checkout_Model_Type_Onepage
      * Declare checkout quote instance
      *
      * @param Mage_Sales_Model_Quote $quote
-     * @return Mage_Checkout_Model_Type_Onepage
+     * @return $this
      */
     public function setQuote(Mage_Sales_Model_Quote $quote)
     {
@@ -123,19 +123,22 @@ class Mage_Checkout_Model_Type_Onepage
     /**
      * Initialize quote state to be valid for one page checkout
      *
-     * @return Mage_Checkout_Model_Type_Onepage
+     * @return $this
      */
     public function initCheckout()
     {
         $checkout = $this->getCheckout();
         $customerSession = $this->getCustomerSession();
         if (is_array($checkout->getStepData())) {
-            foreach ($checkout->getStepData() as $step=>$data) {
+            foreach ($checkout->getStepData() as $step => $data) {
                 if (!($step==='login' || $customerSession->isLoggedIn() && $step==='billing')) {
                     $checkout->setStepData($step, 'allow', false);
                 }
             }
         }
+
+        $quoteSave = false;
+        $collectTotals = false;
 
         /**
          * Reset multishipping flag before any manipulations with quote address
@@ -143,6 +146,31 @@ class Mage_Checkout_Model_Type_Onepage
          */
         if ($this->getQuote()->getIsMultiShipping()) {
             $this->getQuote()->setIsMultiShipping(false);
+            $quoteSave = true;
+        }
+
+        /**
+         *  Reset customer balance
+         */
+        if ($this->getQuote()->getUseCustomerBalance()) {
+            $this->getQuote()->setUseCustomerBalance(false);
+            $quoteSave = true;
+            $collectTotals = true;
+        }
+        /**
+         *  Reset reward points
+         */
+        if ($this->getQuote()->getUseRewardPoints()) {
+            $this->getQuote()->setUseRewardPoints(false);
+            $quoteSave = true;
+            $collectTotals = true;
+        }
+
+        if ($collectTotals) {
+            $this->getQuote()->collectTotals();
+        }
+
+        if ($quoteSave) {
             $this->getQuote()->save();
         }
 
@@ -225,9 +253,10 @@ class Mage_Checkout_Model_Type_Onepage
      * Save billing address information to quote
      * This method is called by One Page Checkout JS (AJAX) while saving the billing information.
      *
-     * @param   array $data
-     * @param   int $customerAddressId
-     * @return  Mage_Checkout_Model_Type_Onepage
+     * @param array $data
+     * @param int $customerAddressId
+     * @return array|true
+     * @throws Mage_Core_Exception
      */
     public function saveBilling($data, $customerAddressId)
     {
@@ -236,7 +265,7 @@ class Mage_Checkout_Model_Type_Onepage
         }
 
         $address = $this->getQuote()->getBillingAddress();
-        /* @var $addressForm Mage_Customer_Model_Form */
+        /* @var Mage_Customer_Model_Form $addressForm */
         $addressForm = Mage::getModel('customer/form');
         $addressForm->setFormCode('customer_address_edit')
             ->setEntityType('customer_address')
@@ -270,7 +299,7 @@ class Mage_Checkout_Model_Type_Onepage
             //unset billing address attributes which were not shown in form
             foreach ($addressForm->getAttributes() as $attribute) {
                 if (!isset($data[$attribute->getAttributeCode()])) {
-                    $address->setData($attribute->getAttributeCode(), NULL);
+                    $address->setData($attribute->getAttributeCode(), null);
                 }
             }
             $address->setCustomerAddressId(null);
@@ -334,6 +363,7 @@ class Mage_Checkout_Model_Type_Onepage
                         ->setShippingMethod($shippingMethod)
                         ->setCollectShippingRates(true);
                     $this->getCheckout()->setStepData('shipping', 'complete', true);
+                    $this->_setCartCouponCode();
                     break;
             }
         }
@@ -363,7 +393,7 @@ class Mage_Checkout_Model_Type_Onepage
      */
     protected function _validateCustomerData(array $data)
     {
-        /** @var $customerForm Mage_Customer_Model_Form */
+        /** @var Mage_Customer_Model_Form $customerForm */
         $customerForm = Mage::getModel('customer/form');
         $customerForm->setFormCode('checkout_register')
             ->setIsAjaxRequest(Mage::app()->getRequest()->isAjax());
@@ -374,7 +404,7 @@ class Mage_Checkout_Model_Type_Onepage
             $customerForm->setEntity($customer);
             $customerData = $quote->getCustomer()->getData();
         } else {
-            /* @var $customer Mage_Customer_Model_Customer */
+            /* @var Mage_Customer_Model_Customer $customer */
             $customer = Mage::getModel('customer/customer');
             $customerForm->setEntity($customer);
             $customerRequest = $customerForm->prepareRequest($data);
@@ -398,12 +428,12 @@ class Mage_Checkout_Model_Type_Onepage
         if ($quote->getCheckoutMethod() == self::METHOD_REGISTER) {
             // set customer password
             $customer->setPassword($customerRequest->getParam('customer_password'));
-            $customer->setConfirmation($customerRequest->getParam('confirm_password'));
+            $customer->setPasswordConfirmation($customerRequest->getParam('confirm_password'));
         } else {
             // spoof customer password for guest
             $password = $customer->generatePassword();
             $customer->setPassword($password);
-            $customer->setConfirmation($password);
+            $customer->setPasswordConfirmation($password);
             // set NOT LOGGED IN group id explicitly,
             // otherwise copyFieldset('customer_account', 'to_quote') will fill it with default group id value
             $customer->setGroupId(Mage_Customer_Model_Group::NOT_LOGGED_IN_ID);
@@ -486,7 +516,7 @@ class Mage_Checkout_Model_Type_Onepage
                     'message' => implode(', ', $validationResult)
                 );
             }
-        } else if (self::METHOD_GUEST == $this->getQuote()->getCheckoutMethod()) {
+        } elseif (self::METHOD_GUEST == $this->getQuote()->getCheckoutMethod()) {
             $email = $address->getData('email');
             if (!Zend_Validate::is($email, 'EmailAddress')) {
                 return array(
@@ -502,9 +532,9 @@ class Mage_Checkout_Model_Type_Onepage
     /**
      * Save checkout shipping address
      *
-     * @param   array $data
-     * @param   int $customerAddressId
-     * @return  Mage_Checkout_Model_Type_Onepage
+     * @param array $data
+     * @param int $customerAddressId
+     * @return array
      */
     public function saveShipping($data, $customerAddressId)
     {
@@ -513,7 +543,7 @@ class Mage_Checkout_Model_Type_Onepage
         }
         $address = $this->getQuote()->getShippingAddress();
 
-        /* @var $addressForm Mage_Customer_Model_Form */
+        /* @var Mage_Customer_Model_Form $addressForm */
         $addressForm    = Mage::getModel('customer/form');
         $addressForm->setFormCode('customer_address_edit')
             ->setEntityType('customer_address')
@@ -547,7 +577,7 @@ class Mage_Checkout_Model_Type_Onepage
             // unset shipping address attributes which were not shown in form
             foreach ($addressForm->getAttributes() as $attribute) {
                 if (!isset($data[$attribute->getAttributeCode()])) {
-                    $address->setData($attribute->getAttributeCode(), NULL);
+                    $address->setData($attribute->getAttributeCode(), null);
                 }
             }
 
@@ -563,6 +593,8 @@ class Mage_Checkout_Model_Type_Onepage
         if (($validateRes = $address->validate())!==true) {
             return array('error' => 1, 'message' => $validateRes);
         }
+
+        $this->_setCartCouponCode();
 
         $this->getQuote()->collectTotals()->save();
 
@@ -657,7 +689,7 @@ class Mage_Checkout_Model_Type_Onepage
     /**
      * Prepare quote for guest checkout order submit
      *
-     * @return Mage_Checkout_Model_Type_Onepage
+     * @return $this
      */
     protected function _prepareGuestQuote()
     {
@@ -672,7 +704,7 @@ class Mage_Checkout_Model_Type_Onepage
     /**
      * Prepare quote for customer registration and customer order submit
      *
-     * @return Mage_Checkout_Model_Type_Onepage
+     * @return void
      */
     protected function _prepareNewCustomerQuote()
     {
@@ -682,7 +714,7 @@ class Mage_Checkout_Model_Type_Onepage
 
         //$customer = Mage::getModel('customer/customer');
         $customer = $quote->getCustomer();
-        /* @var $customer Mage_Customer_Model_Customer */
+        /* @var Mage_Customer_Model_Customer $customer */
         $customerBilling = $billing->exportCustomerAddress();
         $customer->addAddress($customerBilling);
         $billing->setCustomerAddress($customerBilling);
@@ -698,15 +730,18 @@ class Mage_Checkout_Model_Type_Onepage
 
         Mage::helper('core')->copyFieldset('checkout_onepage_quote', 'to_customer', $quote, $customer);
         $customer->setPassword($customer->decryptPassword($quote->getPasswordHash()));
-        $customer->setPasswordHash($customer->hashPassword($customer->getPassword()));
+        $passwordCreatedTime = $this->_checkoutSession->getData('_session_validator_data')['session_expire_timestamp']
+            - Mage::getSingleton('core/cookie')->getLifetime();
+        $customer->setPasswordCreatedAt($passwordCreatedTime);
         $quote->setCustomer($customer)
             ->setCustomerId(true);
+        $quote->setPasswordHash('');
     }
 
     /**
      * Prepare quote for customer order submit
      *
-     * @return Mage_Checkout_Model_Type_Onepage
+     * @return void
      */
     protected function _prepareCustomerQuote()
     {
@@ -732,7 +767,7 @@ class Mage_Checkout_Model_Type_Onepage
         }
         if ($shipping && isset($customerShipping) && !$customer->getDefaultShipping()) {
             $customerShipping->setIsDefaultShipping(true);
-        } else if (isset($customerBilling) && !$customer->getDefaultShipping()) {
+        } elseif (isset($customerBilling) && !$customer->getDefaultShipping()) {
             $customerBilling->setIsDefaultShipping(true);
         }
         $quote->setCustomer($customer);
@@ -741,7 +776,7 @@ class Mage_Checkout_Model_Type_Onepage
     /**
      * Involve new customer to system
      *
-     * @return Mage_Checkout_Model_Type_Onepage
+     * @return $this
      */
     protected function _involveNewCustomer()
     {
@@ -762,7 +797,7 @@ class Mage_Checkout_Model_Type_Onepage
     /**
      * Create order based on checkout type. Create customer if necessary.
      *
-     * @return Mage_Checkout_Model_Type_Onepage
+     * @return $this
      */
     public function saveOrder()
     {
@@ -798,8 +833,10 @@ class Mage_Checkout_Model_Type_Onepage
 
         $order = $service->getOrder();
         if ($order) {
-            Mage::dispatchEvent('checkout_type_onepage_save_order_after',
-                array('order'=>$order, 'quote'=>$this->getQuote()));
+            Mage::dispatchEvent(
+                'checkout_type_onepage_save_order_after',
+                array('order'=>$order, 'quote'=>$this->getQuote())
+            );
 
             /**
              * a flag to set that there will be redirect to third party after confirmation
@@ -811,7 +848,7 @@ class Mage_Checkout_Model_Type_Onepage
              */
             if (!$redirectUrl && $order->getCanSendNewEmailFlag()) {
                 try {
-                    $order->sendNewOrderEmail();
+                    $order->queueNewOrderEmail();
                 } catch (Exception $e) {
                     Mage::logException($e);
                 }
@@ -833,6 +870,7 @@ class Mage_Checkout_Model_Type_Onepage
         $profiles = $service->getRecurringPaymentProfiles();
         if ($profiles) {
             $ids = array();
+            /** @var Mage_Sales_Model_Recurring_Profile $profile */
             foreach ($profiles as $profile) {
                 $ids[] = $profile->getId();
             }
@@ -851,8 +889,9 @@ class Mage_Checkout_Model_Type_Onepage
     /**
      * Validate quote state to be able submitted from one page checkout page
      *
+     * @return void
+     * @throws Mage_Core_Exception
      * @deprecated after 1.4 - service model doing quote validation
-     * @return Mage_Checkout_Model_Type_Onepage
      */
     protected function validateOrder()
     {
@@ -918,5 +957,18 @@ class Mage_Checkout_Model_Type_Onepage
             $orderId = $order->getIncrementId();
         }
         return $orderId;
+    }
+
+    /**
+     * Sets cart coupon code from checkout to quote
+     *
+     * @return $this
+     */
+    protected function _setCartCouponCode()
+    {
+        if ($couponCode = $this->getCheckout()->getCartCouponCode()) {
+            $this->getQuote()->setCouponCode($couponCode);
+        }
+        return $this;
     }
 }

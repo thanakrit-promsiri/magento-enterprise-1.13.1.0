@@ -1,33 +1,41 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Sales
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
-
+/**
+ * Class Mage_Sales_Model_Order_Status
+ * @method Mage_Sales_Model_Resource_Order_Status _getResource()
+ * @method Mage_Sales_Model_Resource_Order_Status getResource()
+ * @method Mage_Sales_Model_Resource_Order_Status_Collection getCollection()
+ *
+ * @method string getStatus()
+ * @method string getLabel()
+ * @method bool hasStoreLabels()
+ */
 class Mage_Sales_Model_Order_Status extends Mage_Core_Model_Abstract
 {
-
     protected function _construct()
     {
         $this->_init('sales/order_status');
@@ -38,9 +46,9 @@ class Mage_Sales_Model_Order_Status extends Mage_Core_Model_Abstract
      *
      * @param string  $state
      * @param boolean $isDefault make the status as default one for state
-     * @return Mage_Sales_Model_Order_Status
+     * @return $this
      */
-    public function assignState($state, $isDefault=false)
+    public function assignState($state, $isDefault = false)
     {
         $this->_getResource()->beginTransaction();
         try {
@@ -57,7 +65,7 @@ class Mage_Sales_Model_Order_Status extends Mage_Core_Model_Abstract
      * Unassigns order status from particular state
      *
      * @param string  $state
-     * @return Mage_Sales_Model_Order_Status
+     * @return $this
      */
     public function unassignState($state)
     {
@@ -93,7 +101,7 @@ class Mage_Sales_Model_Order_Status extends Mage_Core_Model_Abstract
      * @param mixed $store
      * @return string
      */
-    public function getStoreLabel($store=null)
+    public function getStoreLabel($store = null)
     {
         $store = Mage::app()->getStore($store);
         $label = false;
@@ -110,6 +118,7 @@ class Mage_Sales_Model_Order_Status extends Mage_Core_Model_Abstract
      * Load default status per state
      *
      * @param string $state
+     * @return Mage_Sales_Model_Order_Status
      */
     public function loadDefaultByState($state)
     {

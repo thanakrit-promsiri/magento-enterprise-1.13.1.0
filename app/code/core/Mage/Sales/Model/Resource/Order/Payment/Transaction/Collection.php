@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Sales
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 
@@ -32,8 +32,7 @@
  * @package     Mage_Sales
  * @author      Magento Core Team <core@magentocommerce.com>
  */
-class Mage_Sales_Model_Resource_Order_Payment_Transaction_Collection
-    extends Mage_Sales_Model_Resource_Order_Collection_Abstract
+class Mage_Sales_Model_Resource_Order_Payment_Transaction_Collection extends Mage_Sales_Model_Resource_Order_Collection_Abstract
 {
     /**
      * Order ID filter
@@ -104,7 +103,7 @@ class Mage_Sales_Model_Resource_Order_Payment_Transaction_Collection
      * Join order information
      *
      * @param array $keys
-     * @return Mage_Sales_Model_Resource_Order_Payment_Transaction_Collection
+     * @return $this
      */
     public function addOrderInformation(array $keys)
     {
@@ -117,7 +116,7 @@ class Mage_Sales_Model_Resource_Order_Payment_Transaction_Collection
      * Join payment information
      *
      * @param array $keys
-     * @return Mage_Sales_Model_Resource_Order_Payment_Transaction_Collection
+     * @return $this
      */
     public function addPaymentInformation(array $keys)
     {
@@ -129,7 +128,7 @@ class Mage_Sales_Model_Resource_Order_Payment_Transaction_Collection
      * Order ID filter setter
      *
      * @param int $orderId
-     * @return Mage_Sales_Model_Resource_Order_Payment_Transaction_Collection
+     * @return $this
      */
     public function addOrderIdFilter($orderId)
     {
@@ -142,7 +141,7 @@ class Mage_Sales_Model_Resource_Order_Payment_Transaction_Collection
      * Can take either the integer id or the payment instance
      *
      * @param Mage_Sales_Model_Order_Payment|int $payment
-     * @return Mage_Sales_Model_Resource_Order_Payment_Transaction_Collection
+     * @return $this
      */
     public function addPaymentIdFilter($payment)
     {
@@ -158,7 +157,7 @@ class Mage_Sales_Model_Resource_Order_Payment_Transaction_Collection
      * Parent ID filter setter
      *
      * @param int $parentId
-     * @return Mage_Sales_Model_Resource_Order_Payment_Transaction_Collection
+     * @return $this
      */
     public function addParentIdFilter($parentId)
     {
@@ -170,7 +169,7 @@ class Mage_Sales_Model_Resource_Order_Payment_Transaction_Collection
      * Transaction type filter setter
      *
      * @param array|string $txnType
-     * @return Mage_Sales_Model_Resource_Order_Payment_Transaction_Collection
+     * @return $this
      */
     public function addTxnTypeFilter($txnType)
     {
@@ -185,7 +184,7 @@ class Mage_Sales_Model_Resource_Order_Payment_Transaction_Collection
      * Add filter by store ids
      *
      * @param int|array $storeIds
-     * @return Mage_Sales_Model_Resource_Order_Payment_Transaction_Collection
+     * @return $this
      */
     public function addStoreFilter($storeIds)
     {
@@ -197,7 +196,7 @@ class Mage_Sales_Model_Resource_Order_Payment_Transaction_Collection
     /**
      * Prepare filters
      *
-     * @return Mage_Sales_Model_Resource_Order_Payment_Transaction_Collection
+     * @return $this
      */
     protected function _beforeLoad()
     {
@@ -244,7 +243,7 @@ class Mage_Sales_Model_Resource_Order_Payment_Transaction_Collection
     /**
      * Unserialize additional_information in each item
      *
-     * @return Mage_Sales_Model_Resource_Order_Payment_Transaction_Collection
+     * @inheritDoc
      */
     protected function _afterLoad()
     {

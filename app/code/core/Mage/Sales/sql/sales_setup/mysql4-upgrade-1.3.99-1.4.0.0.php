@@ -1,47 +1,61 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Sales
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
-/* @var $installer Mage_Sales_Model_Entity_Setup */
+/* @var Mage_Sales_Model_Entity_Setup $installer */
 $installer = $this;
 $installer->startSetup();
 
 /* Include code from mysql4-upgrade-0.9.38-0.9.39.php */
-$installer->getConnection()->addColumn($installer->getTable('sales_flat_quote_item'),
-    'store_id', 'smallint(5) unsigned default null AFTER `product_id`');
-$installer->getConnection()->addConstraint('FK_SALES_QUOTE_ITEM_STORE',
-    $installer->getTable('sales_flat_quote_item'), 'store_id',
-    $installer->getTable('core/store'), 'store_id',
-    'set null', 'cascade'
+$installer->getConnection()->addColumn(
+    $installer->getTable('sales_flat_quote_item'),
+    'store_id',
+    'smallint(5) unsigned default null AFTER `product_id`'
 );
-$installer->getConnection()->addColumn($installer->getTable('sales_flat_order_item'),
-    'store_id', 'smallint(5) unsigned default null AFTER `quote_item_id`');
-$installer->getConnection()->addConstraint('FK_SALES_ORDER_ITEM_STORE',
-    $installer->getTable('sales_flat_order_item'), 'store_id',
-    $installer->getTable('core/store'), 'store_id',
-    'set null', 'cascade'
+$installer->getConnection()->addConstraint(
+    'FK_SALES_QUOTE_ITEM_STORE',
+    $installer->getTable('sales_flat_quote_item'),
+    'store_id',
+    $installer->getTable('core/store'),
+    'store_id',
+    'set null',
+    'cascade'
+);
+$installer->getConnection()->addColumn(
+    $installer->getTable('sales_flat_order_item'),
+    'store_id',
+    'smallint(5) unsigned default null AFTER `quote_item_id`'
+);
+$installer->getConnection()->addConstraint(
+    'FK_SALES_ORDER_ITEM_STORE',
+    $installer->getTable('sales_flat_order_item'),
+    'store_id',
+    $installer->getTable('core/store'),
+    'store_id',
+    'set null',
+    'cascade'
 );
 $installer->addAttribute('quote_item', 'redirect_url', array(
     'type'  => 'varchar',
@@ -761,7 +775,7 @@ $entityToFlat = array(
     'shipment_track'        => array()
 );
 
-/* @var $select Varien_Db_Select */
+/* @var Varien_Db_Select $select */
 $select = $installer->getConnection()->select();
 
 $select
@@ -776,7 +790,6 @@ $select
     ))
     ->where('entity.entity_type_code IN (?)', array_keys($entityToFlat))
     ->where('attribute.attribute_code NOT IN(?)', $excludeAttributes['all']);
-;
 
 
 $attributes = array();
@@ -828,10 +841,10 @@ foreach ($entityToFlat as $entityCode => $flags) {
             !in_array($code, $excludeAttributes['all']) &&
             (!isset($excludeAttributes[$entityCode]) ||
                 !in_array($code, $excludeAttributes[$entityCode]))) {
-
             $installer->getConnection()->addColumn(
                 $installer->getTable($flatTablePrefix),
-                $code, $definition
+                $code,
+                $definition
             );
 
             if (isset($entityFieldInIndex[$code])) { // Add entity table indexes with custom fields
@@ -866,10 +879,10 @@ foreach ($entityToFlat as $entityCode => $flags) {
                 !in_array($attributeCode, $excludeAttributes['all']) &&
                 (!isset($excludeAttributes[$entityCode]) ||
                 !in_array($attributeCode, $excludeAttributes[$entityCode]))) {
-
                 $installer->getConnection()->addColumn(
                     $installer->getTable($flatTablePrefix),
-                    $attributeCode, $definitions[$attribute['type']]
+                    $attributeCode,
+                    $definitions[$attribute['type']]
                 );
 
 
@@ -923,8 +936,7 @@ foreach ($entityToFlat as $entityCode => $flags) {
                 $sql .= $select->crossUpdateFromSelect(array('e'=>$installer->getTable($flatTablePrefix)))  . "; \n";
             }
         }
-
-    } else  {
+    } else {
         $sql = '';
     }
 
@@ -1116,7 +1128,7 @@ $flag = Mage::getModel('reports/flag')
     ->setReportFlagCode(Mage_Reports_Model_Flag::REPORT_ORDER_FLAG_CODE)
     ->loadSelf();
 
-if($flag->getId()) {
+if ($flag->getId()) {
     $flag->delete();
 }
 
@@ -1170,7 +1182,7 @@ if ($attribute && is_array($attribute) && isset($attribute['backend_type']) && $
         $installer->updateAttribute($orderEntityTypeId, $attribute['attribute_code'], array('backend_type' => 'static'));
         $installer->getConnection()->commit();
     } catch (Exception $e) {
-        $installer->getConnection()->rollback();
+        $installer->getConnection()->rollBack();
         throw $e;
     }
 }
@@ -1255,7 +1267,9 @@ $tableData = array(
 foreach ($tableData as $table => $columns) {
     foreach ($columns as $columnName => $columnType) {
         $installer->getConnection()->addColumn(
-            $installer->getTable($table), $columnName, $definitions[$columnType]
+            $installer->getTable($table),
+            $columnName,
+            $definitions[$columnType]
         );
     }
 }

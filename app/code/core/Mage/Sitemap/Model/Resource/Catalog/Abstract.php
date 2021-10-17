@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Sitemap
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 
@@ -81,7 +81,7 @@ abstract class Mage_Sitemap_Model_Resource_Catalog_Abstract extends Mage_Core_Mo
      * @param string $attributeCode
      * @param mixed $value
      * @param string $type
-     * @return Zend_Db_Select
+     * @return Zend_Db_Select|false
      */
     protected function _addFilter($storeId, $attributeCode, $value, $type = '=')
     {
@@ -120,15 +120,18 @@ abstract class Mage_Sitemap_Model_Resource_Catalog_Abstract extends Mage_Core_Mo
             if ($attribute['is_global']) {
                 $this->_select->where('t1_' . $attributeCode . '.value' . $conditionRule, $value);
             } else {
-                $ifCase = $this->_select->getAdapter()->getCheckSql('t2_' . $attributeCode . '.value_id > 0',
-                    't2_' . $attributeCode . '.value', 't1_' . $attributeCode . '.value'
+                $ifCase = $this->_select->getAdapter()->getCheckSql(
+                    't2_' . $attributeCode . '.value_id > 0',
+                    't2_' . $attributeCode . '.value',
+                    't1_' . $attributeCode . '.value'
                 );
                 $this->_select->joinLeft(
                     array('t2_' . $attributeCode => $attribute['table']),
                     $this->_getWriteAdapter()->quoteInto(
                         't1_' . $attributeCode . '.entity_id = t2_' . $attributeCode . '.entity_id AND t1_'
                             . $attributeCode . '.attribute_id = t2_' . $attributeCode . '.attribute_id AND t2_'
-                            . $attributeCode . '.store_id = ?', $storeId
+                            . $attributeCode . '.store_id = ?',
+                        $storeId
                     ),
                     array()
                 )

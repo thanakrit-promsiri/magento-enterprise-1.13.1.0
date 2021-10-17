@@ -1,30 +1,30 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Catalog
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
-/** @var $installer Mage_Catalog_Model_Resource_Setup */
+/** @var Mage_Catalog_Model_Resource_Setup $installer */
 $installer  = $this;
 $connection = $installer->getConnection();
 
@@ -68,13 +68,20 @@ $table = $installer->getConnection()
             Varien_Db_Adapter_Interface::INDEX_TYPE_UNIQUE
         ),
         array('entity_id', 'all_groups', 'customer_group_id', 'website_id'),
-        array('type' => Varien_Db_Adapter_Interface::INDEX_TYPE_UNIQUE))
-    ->addIndex($installer->getIdxName('catalog/product_attribute_group_price', array('entity_id')),
-        array('entity_id'))
-    ->addIndex($installer->getIdxName('catalog/product_attribute_group_price', array('customer_group_id')),
-        array('customer_group_id'))
-    ->addIndex($installer->getIdxName('catalog/product_attribute_group_price', array('website_id')),
-        array('website_id'))
+        array('type' => Varien_Db_Adapter_Interface::INDEX_TYPE_UNIQUE)
+    )
+    ->addIndex(
+        $installer->getIdxName('catalog/product_attribute_group_price', array('entity_id')),
+        array('entity_id')
+    )
+    ->addIndex(
+        $installer->getIdxName('catalog/product_attribute_group_price', array('customer_group_id')),
+        array('customer_group_id')
+    )
+    ->addIndex(
+        $installer->getIdxName('catalog/product_attribute_group_price', array('website_id')),
+        array('website_id')
+    )
     ->addForeignKey(
         $installer->getFkName(
             'catalog/product_attribute_group_price',
@@ -82,8 +89,12 @@ $table = $installer->getConnection()
             'customer/customer_group',
             'customer_group_id'
         ),
-        'customer_group_id', $installer->getTable('customer/customer_group'), 'customer_group_id',
-         Varien_Db_Ddl_Table::ACTION_CASCADE, Varien_Db_Ddl_Table::ACTION_CASCADE)
+        'customer_group_id',
+        $installer->getTable('customer/customer_group'),
+        'customer_group_id',
+        Varien_Db_Ddl_Table::ACTION_CASCADE,
+        Varien_Db_Ddl_Table::ACTION_CASCADE
+    )
     ->addForeignKey(
         $installer->getFkName(
             'catalog/product_attribute_group_price',
@@ -91,8 +102,12 @@ $table = $installer->getConnection()
             'catalog/product',
             'entity_id'
         ),
-        'entity_id', $installer->getTable('catalog/product'), 'entity_id',
-        Varien_Db_Ddl_Table::ACTION_CASCADE, Varien_Db_Ddl_Table::ACTION_CASCADE)
+        'entity_id',
+        $installer->getTable('catalog/product'),
+        'entity_id',
+        Varien_Db_Ddl_Table::ACTION_CASCADE,
+        Varien_Db_Ddl_Table::ACTION_CASCADE
+    )
     ->addForeignKey(
         $installer->getFkName(
             'catalog/product_attribute_group_price',
@@ -100,8 +115,12 @@ $table = $installer->getConnection()
             'core/website',
             'website_id'
         ),
-        'website_id', $installer->getTable('core/website'), 'website_id',
-        Varien_Db_Ddl_Table::ACTION_CASCADE, Varien_Db_Ddl_Table::ACTION_CASCADE)
+        'website_id',
+        $installer->getTable('core/website'),
+        'website_id',
+        Varien_Db_Ddl_Table::ACTION_CASCADE,
+        Varien_Db_Ddl_Table::ACTION_CASCADE
+    )
     ->setComment('Catalog Product Group Price Attribute Backend Table');
 $installer->getConnection()->createTable($table);
 
@@ -139,10 +158,14 @@ $table = $connection
         ), 'Website ID')
     ->addColumn('price', Varien_Db_Ddl_Table::TYPE_DECIMAL, '12,4', array(
         ), 'Min Price')
-    ->addIndex($installer->getIdxName('catalog/product_index_group_price', array('customer_group_id')),
-        array('customer_group_id'))
-    ->addIndex($installer->getIdxName('catalog/product_index_group_price', array('website_id')),
-        array('website_id'))
+    ->addIndex(
+        $installer->getIdxName('catalog/product_index_group_price', array('customer_group_id')),
+        array('customer_group_id')
+    )
+    ->addIndex(
+        $installer->getIdxName('catalog/product_index_group_price', array('website_id')),
+        array('website_id')
+    )
     ->addForeignKey(
         $installer->getFkName(
             'catalog/product_index_group_price',
@@ -150,8 +173,12 @@ $table = $connection
             'customer/customer_group',
             'customer_group_id'
         ),
-        'customer_group_id', $installer->getTable('customer/customer_group'), 'customer_group_id',
-        Varien_Db_Ddl_Table::ACTION_CASCADE, Varien_Db_Ddl_Table::ACTION_CASCADE)
+        'customer_group_id',
+        $installer->getTable('customer/customer_group'),
+        'customer_group_id',
+        Varien_Db_Ddl_Table::ACTION_CASCADE,
+        Varien_Db_Ddl_Table::ACTION_CASCADE
+    )
     ->addForeignKey(
         $installer->getFkName(
             'catalog/product_index_group_price',
@@ -159,17 +186,25 @@ $table = $connection
             'catalog/product',
             'entity_id'
         ),
-        'entity_id', $installer->getTable('catalog/product'), 'entity_id',
-        Varien_Db_Ddl_Table::ACTION_CASCADE, Varien_Db_Ddl_Table::ACTION_CASCADE)
+        'entity_id',
+        $installer->getTable('catalog/product'),
+        'entity_id',
+        Varien_Db_Ddl_Table::ACTION_CASCADE,
+        Varien_Db_Ddl_Table::ACTION_CASCADE
+    )
     ->addForeignKey(
         $installer->getFkName(
             'catalog/product_index_group_price',
             'website_id',
             'core/website',
             'website_id'
-         ),
-        'website_id', $installer->getTable('core/website'), 'website_id',
-        Varien_Db_Ddl_Table::ACTION_CASCADE, Varien_Db_Ddl_Table::ACTION_CASCADE)
+        ),
+        'website_id',
+        $installer->getTable('core/website'),
+        'website_id',
+        Varien_Db_Ddl_Table::ACTION_CASCADE,
+        Varien_Db_Ddl_Table::ACTION_CASCADE
+    )
     ->setComment('Catalog Product Group Price Index Table');
 $connection->createTable($table);
 

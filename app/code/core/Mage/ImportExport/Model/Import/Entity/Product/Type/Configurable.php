@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_ImportExport
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 /**
@@ -31,8 +31,7 @@
  * @package     Mage_ImportExport
  * @author      Magento Core Team <core@magentocommerce.com>
  */
-class Mage_ImportExport_Model_Import_Entity_Product_Type_Configurable
-    extends Mage_ImportExport_Model_Import_Entity_Product_Type_Abstract
+class Mage_ImportExport_Model_Import_Entity_Product_Type_Configurable extends Mage_ImportExport_Model_Import_Entity_Product_Type_Abstract
 {
     /**
      * Error codes.
@@ -131,7 +130,7 @@ class Mage_ImportExport_Model_Import_Entity_Product_Type_Configurable
     /**
      * Add attribute parameters to appropriate attribute set.
      *
-     * @param string $attrParams Name of attribute set.
+     * @param string $attrSetName
      * @param array $attrParams Refined attribute parameters.
      * @return Mage_ImportExport_Model_Import_Entity_Product_Type_Abstract
      */
@@ -218,7 +217,7 @@ class Mage_ImportExport_Model_Import_Entity_Product_Type_Configurable
     /**
      * Array of SKU to array of super attribute values for all products.
      *
-     * @return Mage_ImportExport_Model_Import_Entity_Product_Type_Configurable
+     * @return $this
      */
     protected function _loadSkuSuperAttributeValues()
     {
@@ -230,18 +229,34 @@ class Mage_ImportExport_Model_Import_Entity_Product_Type_Configurable
                     ->getNode('global/catalog/product/type/configurable/allow_product_types')->children() as $type) {
                 $allowProductTypes[] = $type->getName();
             }
-            foreach (Mage::getResourceModel('catalog/product_collection')
+            /** @var Mage_Catalog_Model_Resource_Product_Collection $collection */
+            $collection = Mage::getResourceModel('catalog/product_collection')
                         ->addFieldToFilter('type_id', $allowProductTypes)
-                        ->addAttributeToSelect(array_keys($this->_superAttributes)) as $product) {
-                $attrSetName = $attrSetIdToName[$product->getAttributeSetId()];
+                        ->addAttributeToSelect(array_keys($this->_superAttributes));
 
-                $data = array_intersect_key(
-                    $product->getData(),
-                    $this->_superAttributes
-                );
-                foreach ($data as $attrCode => $value) {
-                    $attrId = $this->_superAttributes[$attrCode]['id'];
-                    $this->_skuSuperAttributeValues[$attrSetName][$product->getId()][$attrId] = $value;
+            $collectionSize = $collection->getSize();
+            if ($collectionSize) {
+                $configPageSize = Mage::helper('importexport')->getImportConfigurablePageSize();
+                $pageSize = ($configPageSize > 0) ? $configPageSize : $collectionSize;
+                $page = 0;
+                $collection->setPageSize($pageSize);
+                while ($pageSize * $page < $collectionSize) {
+                    $page++;
+                    $collection->setCurPage($page);
+
+                    foreach ($collection as $product) {
+                        $attrSetName = $attrSetIdToName[$product->getAttributeSetId()];
+
+                        $data = array_intersect_key(
+                            $product->getData(),
+                            $this->_superAttributes
+                        );
+                        foreach ($data as $attrCode => $value) {
+                            $attrId = $this->_superAttributes[$attrCode]['id'];
+                            $this->_skuSuperAttributeValues[$attrSetName][$product->getId()][$attrId] = $value;
+                        }
+                    }
+                    $collection->clear();
                 }
             }
         }
@@ -251,7 +266,7 @@ class Mage_ImportExport_Model_Import_Entity_Product_Type_Configurable
     /**
      * Array of SKU to array of super attribute values for all products.
      *
-     * @return Mage_ImportExport_Model_Import_Entity_Product_Type_Configurable
+     * @return $this
      */
     protected function _loadSkuSuperData()
     {
@@ -285,7 +300,7 @@ class Mage_ImportExport_Model_Import_Entity_Product_Type_Configurable
      *
      * @param array $superData
      * @param array $superAttributes
-     * @return Mage_ImportExport_Model_Import_Entity_Product_Type_Configurable
+     * @return $this
      */
     protected function _processSuperData(array $superData, array &$superAttributes)
     {

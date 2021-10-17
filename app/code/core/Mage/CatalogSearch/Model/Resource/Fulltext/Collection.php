@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_CatalogSearch
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 
@@ -34,6 +34,39 @@
  */
 class Mage_CatalogSearch_Model_Resource_Fulltext_Collection extends Mage_Catalog_Model_Resource_Product_Collection
 {
+    /**
+     * Name for relevance order
+     */
+    const RELEVANCE_ORDER_NAME = 'relevance';
+
+    /**
+     * Found data
+     *
+     * @var array
+     */
+    protected $_foundData = null;
+
+    /**
+     * Sort order by relevance
+     *
+     * @var null
+     */
+    protected $_relevanceSortOrder = SORT_DESC;
+
+    /**
+     * Sort by relevance flag
+     *
+     * @var bool
+     */
+    protected $_sortByRelevance = false;
+
+    /**
+     * Is search filter applied flag
+     *
+     * @var bool
+     */
+    protected $_isSearchFiltersApplied = false;
+
     /**
      * Retrieve query model object
      *
@@ -48,21 +81,100 @@ class Mage_CatalogSearch_Model_Resource_Fulltext_Collection extends Mage_Catalog
      * Add search query filter
      *
      * @param string $query
-     * @return Mage_CatalogSearch_Model_Resource_Fulltext_Collection
+     * @return $this
      */
     public function addSearchFilter($query)
     {
-        Mage::getSingleton('catalogsearch/fulltext')->prepareResult();
+        return $this;
+    }
 
-        $this->getSelect()->joinInner(
-            array('search_result' => $this->getTable('catalogsearch/result')),
-            $this->getConnection()->quoteInto(
-                'search_result.product_id=e.entity_id AND search_result.query_id=?',
-                $this->_getQuery()->getId()
-            ),
-            array('relevance' => 'relevance')
-        );
+    /**
+     * Before load handler
+     *
+     * @return Mage_Catalog_Model_Resource_Product_Collection
+     */
+    protected function _beforeLoad()
+    {
+        if (!$this->_isSearchFiltersApplied) {
+            $this->_applySearchFilters();
+        }
 
+        return parent::_beforeLoad();
+    }
+
+    /**
+     * Get collection size
+     *
+     * @return int
+     */
+    public function getSize()
+    {
+        if (!$this->_isSearchFiltersApplied) {
+            $this->_applySearchFilters();
+        }
+
+        return parent::getSize();
+    }
+
+    /**
+     * Apply collection search filter
+     *
+     * @return $this
+     */
+    protected function _applySearchFilters()
+    {
+        $foundIds = $this->getFoundIds();
+        if (!empty($foundIds)) {
+            $this->addIdFilter($foundIds);
+        } else {
+            $this->getSelect()->where('FALSE');
+        }
+        $this->_isSearchFiltersApplied = true;
+
+        return $this;
+    }
+
+    /**
+     * Get found products ids
+     *
+     * @return array
+     */
+    public function getFoundIds()
+    {
+        if (is_null($this->_foundData)) {
+            /** @var Mage_CatalogSearch_Model_Fulltext $preparedResult */
+            $preparedResult = Mage::getSingleton('catalogsearch/fulltext');
+            $preparedResult->prepareResult();
+            $this->_foundData = $preparedResult->getResource()->getFoundData();
+        }
+        if (isset($this->_orders[self::RELEVANCE_ORDER_NAME])) {
+            $this->_resortFoundDataByRelevance();
+        }
+        return array_keys($this->_foundData);
+    }
+
+    /**
+     * Resort found data by relevance
+     *
+     * @return $this
+     */
+    protected function _resortFoundDataByRelevance()
+    {
+        if (is_array($this->_foundData)) {
+            $data = array();
+            foreach ($this->_foundData as $id => $relevance) {
+                $this->_foundData[$id] = $relevance . '_' . $id;
+            }
+            natsort($this->_foundData);
+            if ($this->_relevanceSortOrder == SORT_DESC) {
+                $this->_foundData = array_reverse($this->_foundData);
+            }
+            foreach ($this->_foundData as $dataString) {
+                list ($relevance, $id) = explode('_', $dataString);
+                $data[$id] = $relevance;
+            }
+            $this->_foundData = $data;
+        }
         return $this;
     }
 
@@ -71,12 +183,13 @@ class Mage_CatalogSearch_Model_Resource_Fulltext_Collection extends Mage_Catalog
      *
      * @param string $attribute
      * @param string $dir
-     * @return Mage_CatalogSearch_Model_Resource_Fulltext_Collection
+     * @return $this
      */
     public function setOrder($attribute, $dir = 'desc')
     {
         if ($attribute == 'relevance') {
-            $this->getSelect()->order("relevance {$dir}");
+            $this->_relevanceSortOrder = ($dir == 'asc') ? SORT_ASC : SORT_DESC;
+            $this->addOrder(self::RELEVANCE_ORDER_NAME);
         } else {
             parent::setOrder($attribute, $dir);
         }
@@ -84,12 +197,59 @@ class Mage_CatalogSearch_Model_Resource_Fulltext_Collection extends Mage_Catalog
     }
 
     /**
-     * Stub method for campatibility with other search engines
+     * Add sorting by relevance to select
      *
-     * @return Mage_CatalogSearch_Model_Resource_Fulltext_Collection
+     * @return $this
+     */
+    protected function _addRelevanceSorting()
+    {
+        $foundIds = $this->getFoundIds();
+        if (!$foundIds) {
+            return $this;
+        }
+
+        /** @var Mage_CatalogSearch_Model_Resource_Helper_Mysql4 $resourceHelper */
+        $resourceHelper = Mage::getResourceHelper('catalogsearch');
+        $this->_select->order(
+            new Zend_Db_Expr(
+                $resourceHelper->getFieldOrderExpression(
+                    'e.' . $this->getResource()->getIdFieldName(),
+                    $foundIds
+                )
+                . ' ' . Zend_Db_Select::SQL_ASC
+            )
+        );
+
+        return $this;
+    }
+
+    /**
+     * Stub method for compatibility with other search engines
+     *
+     * @return $this
      */
     public function setGeneralDefaultQuery()
     {
+        return $this;
+    }
+
+    /**
+     * Render sql select orders
+     *
+     * @return  Varien_Data_Collection_Db
+     */
+    protected function _renderOrders()
+    {
+        if (!$this->_isOrdersRendered) {
+            foreach ($this->_orders as $attribute => $direction) {
+                if ($attribute == self::RELEVANCE_ORDER_NAME) {
+                    $this->_addRelevanceSorting();
+                } else {
+                    $this->addAttributeToSort($attribute, $direction);
+                }
+            }
+            $this->_isOrdersRendered = true;
+        }
         return $this;
     }
 }

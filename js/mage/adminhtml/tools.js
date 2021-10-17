@@ -1,29 +1,29 @@
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Academic Free License (AFL 3.0)
+ * that is bundled with this package in the file LICENSE_AFL.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/afl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Adminhtml
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright   Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license     http://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
  */
 function setLocation(url){
-    window.location.href = url;
+    window.location.href = encodeURI(url);
 }
 
 function confirmSetLocation(message, url){
@@ -94,7 +94,7 @@ function imagePreview(element){
         win.document.close();
         Event.observe(win, 'load', function(){
             var img = win.document.getElementById('image_preview');
-            win.resizeTo(img.width+40, img.height+80)
+            win.resizeTo(img.width+40, img.height+80);
         });
     }
 }
@@ -167,7 +167,7 @@ function submitAndReloadArea(area, url) {
             onSuccess: function(transport) {
                 try {
                     if (transport.responseText.isJSON()) {
-                        var response = transport.responseText.evalJSON()
+                        var response = transport.responseText.evalJSON();
                         if (response.error) {
                             alert(response.message);
                         }
@@ -204,7 +204,7 @@ Event.observe(window, 'load', function() {
 });
 */
 function syncOnchangeValue(baseElem, distElem){
-    var compare = {baseElem:baseElem, distElem:distElem}
+    var compare = {baseElem:baseElem, distElem:distElem};
     Event.observe(baseElem, 'change', function(){
         if($(this.baseElem) && $(this.distElem)){
             $(this.distElem).value = $(this.baseElem).value;
@@ -311,7 +311,7 @@ var toolbarToggle = {
         // Create copy of header, that will serve as floating toolbar docked to top of window
         this.headerCopy = $(document.createElement('div'));
         this.headerCopy.appendChild(this.header.cloneNode(true));
-        document.body.insertBefore(this.headerCopy, document.body.lastChild)
+        document.body.insertBefore(this.headerCopy, document.body.lastChild);
         this.headerCopy.addClassName('content-header-floating');
 
         // Remove duplicated buttons and their container
@@ -393,7 +393,7 @@ var toolbarToggle = {
             if (buttons.oldParent == buttons.parentNode) {
                 // Make static dimensions for placeholder, so it's not collapsed when buttons are removed
                 if (buttons.placeholder) {
-                    var dimensions = buttons.placeholder.getDimensions()
+                    var dimensions = buttons.placeholder.getDimensions();
                     buttons.placeholder.style.width = dimensions.width + 'px';
                     buttons.placeholder.style.height = dimensions.height + 'px';
                 }
@@ -476,7 +476,7 @@ var toolbarToggle = {
 
         this.eventsAdded = false;
     }
-}
+};
 
 // Deprecated since 1.4.2.0-beta1 - use toolbarToggle.reset() instead
 function updateTopButtonToolbarToggle()
@@ -525,7 +525,7 @@ var Cookie = {
         if (cookieLifeTime) {
             var date = new Date();
             date.setTime(date.getTime()+(cookieLifeTime*1000));
-            expires = '; expires='+date.toGMTString();
+            expires = '; expires='+date.toUTCString();
         }
         var urlPath = '/' + BASE_URL.split('/').slice(3).join('/'); // Get relative path
         document.cookie = escape(cookieName) + "=" + escape(cookieValue) + expires + "; path=" + urlPath;

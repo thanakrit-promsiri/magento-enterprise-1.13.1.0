@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Tag
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 /**
@@ -40,17 +40,17 @@ class Mage_Tag_IndexController extends Mage_Core_Controller_Front_Action
     public function saveAction()
     {
         $customerSession = Mage::getSingleton('customer/session');
-        if(!$customerSession->authenticate($this)) {
+        if (!$customerSession->authenticate($this)) {
             return;
         }
         $tagName    = (string) $this->getRequest()->getQuery('productTagName');
         $productId  = (int)$this->getRequest()->getParam('product');
 
-        if(strlen($tagName) && $productId) {
+        if (strlen($tagName) && $productId) {
             $session = Mage::getSingleton('catalog/session');
             $product = Mage::getModel('catalog/product')
                 ->load($productId);
-            if(!$product->getId()){
+            if (!$product->getId()) {
                 $session->addError($this->__('Unable to save tag(s).'));
             } else {
                 try {
@@ -112,10 +112,10 @@ class Mage_Tag_IndexController extends Mage_Core_Controller_Front_Action
      */
     protected function _cleanTags(array $tagNamesArr)
     {
-        foreach( $tagNamesArr as $key => $tagName ) {
+        foreach ($tagNamesArr as $key => $tagName) {
             $tagNamesArr[$key] = trim($tagNamesArr[$key], '\'');
             $tagNamesArr[$key] = trim($tagNamesArr[$key]);
-            if( $tagNamesArr[$key] == '' ) {
+            if ($tagNamesArr[$key] == '') {
                 unset($tagNamesArr[$key]);
             }
         }
@@ -142,7 +142,7 @@ class Mage_Tag_IndexController extends Mage_Core_Controller_Front_Action
         if (count($counter[Mage_Tag_Model_Tag::ADD_STATUS_EXIST])) {
             foreach ($counter[Mage_Tag_Model_Tag::ADD_STATUS_EXIST] as $tagName) {
                 $session->addNotice(
-                    $this->__('Tag "%s" has already been added to the product.' , $helper->escapeHtml($tagName))
+                    $this->__('Tag "%s" has already been added to the product.', $helper->escapeHtml($tagName))
                 );
             }
         }
@@ -150,7 +150,7 @@ class Mage_Tag_IndexController extends Mage_Core_Controller_Front_Action
         if (count($counter[Mage_Tag_Model_Tag::ADD_STATUS_SUCCESS])) {
             foreach ($counter[Mage_Tag_Model_Tag::ADD_STATUS_SUCCESS] as $tagName) {
                 $session->addSuccess(
-                    $this->__('Tag "%s" has been added to the product.' ,$helper->escapeHtml($tagName))
+                    $this->__('Tag "%s" has been added to the product.', $helper->escapeHtml($tagName))
                 );
             }
         }
@@ -158,10 +158,9 @@ class Mage_Tag_IndexController extends Mage_Core_Controller_Front_Action
         if (count($counter[Mage_Tag_Model_Tag::ADD_STATUS_REJECTED])) {
             foreach ($counter[Mage_Tag_Model_Tag::ADD_STATUS_REJECTED] as $tagName) {
                 $session->addNotice(
-                    $this->__('Tag "%s" has been rejected by administrator.' ,$helper->escapeHtml($tagName))
+                    $this->__('Tag "%s" has been rejected by administrator.', $helper->escapeHtml($tagName))
                 );
             }
         }
     }
-
 }

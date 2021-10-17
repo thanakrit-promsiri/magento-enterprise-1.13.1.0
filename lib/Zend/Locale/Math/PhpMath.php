@@ -14,9 +14,9 @@
  *
  * @category   Zend
  * @package    Zend_Locale
- * @copyright  Copyright (c) 2005-2010 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
- * @version    $Id: PhpMath.php 20096 2010-01-06 02:05:09Z bkarwin $
+ * @version    $Id$
  */
 
 
@@ -28,7 +28,7 @@
  *
  * @category   Zend
  * @package    Zend_Locale
- * @copyright  Copyright (c) 2005-2010 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
 class Zend_Locale_Math_PhpMath extends Zend_Locale_Math
@@ -69,7 +69,7 @@ class Zend_Locale_Math_PhpMath extends Zend_Locale_Math
         $op1 = self::normalize($op1);
         $op2 = self::normalize($op2);
         $result = $op1 + $op2;
-        if (is_infinite($result)  or  (abs($result - $op2 - $op1) > $precision)) {
+        if (is_infinite($result)  ||  (abs($result - $op2 - $op1) > $precision)) {
             #require_once 'Zend/Locale/Math/Exception.php';
             throw new Zend_Locale_Math_Exception("addition overflow: $op1 + $op2 != $result", $op1, $op2, $result);
         }
@@ -92,7 +92,7 @@ class Zend_Locale_Math_PhpMath extends Zend_Locale_Math
         $op1  = self::normalize($op1);
         $op2  = self::normalize($op2);
         $result = $op1 - $op2;
-        if (is_infinite($result)  or  (abs($result + $op2 - $op1) > $precision)) {
+        if (is_infinite($result)  ||  (abs($result + $op2 - $op1) > $precision)) {
             #require_once 'Zend/Locale/Math/Exception.php';
             throw new Zend_Locale_Math_Exception("subtraction overflow: $op1 - $op2 != $result", $op1, $op2, $result);
         }
@@ -114,7 +114,7 @@ class Zend_Locale_Math_PhpMath extends Zend_Locale_Math
         $op2 = ($op2 > 0) ? floor($op2) : ceil($op2);
 
         $result = pow($op1, $op2);
-        if (is_infinite($result)  or  is_nan($result)) {
+        if (is_infinite($result)  ||  is_nan($result)) {
             #require_once 'Zend/Locale/Math/Exception.php';
             throw new Zend_Locale_Math_Exception("power overflow: $op1 ^ $op2", $op1, $op2, $result);
         }
@@ -134,7 +134,7 @@ class Zend_Locale_Math_PhpMath extends Zend_Locale_Math
         $op1 = self::normalize($op1);
         $op2 = self::normalize($op2);
         $result = $op1 * $op2;
-        if (is_infinite($result)  or  is_nan($result)) {
+        if (is_infinite($result)  ||  is_nan($result)) {
             #require_once 'Zend/Locale/Math/Exception.php';
             throw new Zend_Locale_Math_Exception("multiplication overflow: $op1 * $op2 != $result", $op1, $op2, $result);
         }
@@ -158,7 +158,7 @@ class Zend_Locale_Math_PhpMath extends Zend_Locale_Math
         $op1 = self::normalize($op1);
         $op2 = self::normalize($op2);
         $result = $op1 / $op2;
-        if (is_infinite($result)  or  is_nan($result)) {
+        if (is_infinite($result)  ||  is_nan($result)) {
             #require_once 'Zend/Locale/Math/Exception.php';
             throw new Zend_Locale_Math_Exception("division overflow: $op1 / $op2 != $result", $op1, $op2, $result);
         }
@@ -198,7 +198,7 @@ class Zend_Locale_Math_PhpMath extends Zend_Locale_Math
             return NULL;
         }
         $result = $op1 % $op2;
-        if (is_nan($result)  or  (($op1 - $result) % $op2 != 0)) {
+        if (is_nan($result)  ||  (($op1 - $result) % $op2 != 0)) {
             #require_once 'Zend/Locale/Math/Exception.php';
             throw new Zend_Locale_Math_Exception("modulus calculation error: $op1 % $op2 != $result", $op1, $op2, $result);
         }

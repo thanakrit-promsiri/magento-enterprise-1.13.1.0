@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Varien
  * @package     Varien_Io
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 
@@ -99,10 +99,16 @@ class Varien_Io_File extends Varien_Io_Abstract
      */
     protected $_streamLocked = false;
 
+    public function __construct()
+    {
+        // Initialize shutdown function
+        register_shutdown_function(array($this, 'destruct'));
+    }
+
     /**
-     * Destruct
+     * stream close on shutdown
      */
-    public function __destruct()
+    public function destruct()
     {
         if ($this->_streamHandler) {
             $this->streamClose();
@@ -121,7 +127,7 @@ class Varien_Io_File extends Varien_Io_Abstract
     {
         $writeableMode = preg_match('#^[wax]#i', $mode);
         if ($writeableMode && !is_writeable($this->_cwd)) {
-            throw new Exception('Permission denied for write to ' . $this->_cwd);
+            throw new Exception('Permission denied for write to ' . $this->getFilteredPath($this->_cwd));
         }
 
         if (!ini_get('auto_detect_line_endings')) {
@@ -132,7 +138,7 @@ class Varien_Io_File extends Varien_Io_Abstract
         $this->_streamHandler = @fopen($fileName, $mode);
         @chdir($this->_iwd);
         if ($this->_streamHandler === false) {
-            throw new Exception('Error write to file ' . $fileName);
+            throw new Exception('Error write to file ' . $this->getFilteredPath($fileName));
         }
 
         $this->_streamFileName = $fileName;
@@ -226,6 +232,7 @@ class Varien_Io_File extends Varien_Io_Abstract
         if (!$this->_streamHandler) {
             return false;
         }
+
         return @fputcsv($this->_streamHandler, $row, $delimiter, $enclosure);
     }
 
@@ -402,6 +409,7 @@ class Varien_Io_File extends Varien_Io_Abstract
      *
      * @param string $dir
      * @return boolean
+     * @throws Exception
      */
     public function cd($dir)
     {
@@ -411,7 +419,6 @@ class Varien_Io_File extends Varien_Io_Abstract
             return true;
         } else {
             throw new Exception('Unable to list current working directory.');
-            return false;
         }
     }
 
@@ -479,7 +486,12 @@ class Varien_Io_File extends Varien_Io_Abstract
      */
     protected function _IsValidSource($src)
     {
-        if (is_string($src) || is_resource($src)) {
+        // In case of a string
+        if (is_string($src)) {
+            // If its a file we check for null byte
+            // If it's not a valid path, file_exists() will return a falsey value, and the @ will keep it from complaining about the bad string.
+            return !(@file_exists($src) && strpos($src, chr(0)) !== false);
+        } elseif (is_resource($src)) {
             return true;
         }
 
@@ -498,14 +510,14 @@ class Varien_Io_File extends Varien_Io_Abstract
     {
         $error = false;
         @chdir($this->_cwd);
-         if (file_exists($filename)) {
+        if (file_exists($filename)) {
             if (!is_writeable($filename)) {
-                $error = "File '{$filename}' isn't writeable";
+                $error = "File '{$this->getFilteredPath($filename)}' isn't writeable";
             }
         } else {
             $folder = dirname($filename);
             if (!is_writable($folder)) {
-                $error = "Folder '{$folder}' isn't writeable";
+                $error = "Folder '{$this->getFilteredPath($folder)}' isn't writeable";
             }
         }
         @chdir($this->_iwd);
@@ -525,7 +537,7 @@ class Varien_Io_File extends Varien_Io_Abstract
     protected function _checkSrcIsFile($src)
     {
         $result = false;
-        if (is_string($src) && is_readable($src) && is_file($src)) {
+        if (is_string($src) && @is_readable($src) && is_file($src)) {
             $result = true;
         }
 
@@ -608,7 +620,7 @@ class Varien_Io_File extends Varien_Io_Abstract
             $this->checkAndCreateFolder(dirname($folder), $mode);
         }
         if (!is_dir($folder) && !$this->mkdir($folder, $mode)) {
-            throw new Exception("Unable to create directory '{$folder}'. Access forbidden.");
+            throw new Exception("Unable to create directory '{$this->getFilteredPath($folder)}'. Access forbidden.");
         }
         return true;
     }
@@ -837,5 +849,10 @@ class Varien_Io_File extends Varien_Io_Abstract
     public function dirname($file)
     {
         return $this->getCleanPath(dirname($file));
+    }
+
+    public function getStreamHandler()
+    {
+        return $this->_streamHandler;
     }
 }

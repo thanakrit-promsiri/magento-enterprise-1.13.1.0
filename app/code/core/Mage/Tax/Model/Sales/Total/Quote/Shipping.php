@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Tax
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 /**
@@ -48,6 +48,13 @@ class Mage_Tax_Model_Sales_Total_Quote_Shipping extends Mage_Sales_Model_Quote_A
     protected $_config = null;
 
     /**
+     * Tax helper instance
+     *
+     * @var Mage_Tax_Helper_Data|null
+     */
+    protected $_helper = null;
+
+    /**
      * Flag which is initialized when collect method is started and catalog prices include tax.
      * It is used for checking if store tax and customer tax requests are similar
      *
@@ -69,14 +76,15 @@ class Mage_Tax_Model_Sales_Total_Quote_Shipping extends Mage_Sales_Model_Quote_A
     {
         $this->setCode('shipping');
         $this->_calculator  = Mage::getSingleton('tax/calculation');
+        $this->_helper      = Mage::helper('tax');
         $this->_config      = Mage::getSingleton('tax/config');
     }
 
     /**
      * Collect totals information about shipping
      *
-     * @param   Mage_Sales_Model_Quote_Address $address
-     * @return  Mage_Sales_Model_Quote_Address_Total_Shipping
+     * @param Mage_Sales_Model_Quote_Address $address
+     * @return Mage_Tax_Model_Sales_Total_Quote_Shipping
      */
     public function collect(Mage_Sales_Model_Quote_Address $address)
     {
@@ -97,7 +105,12 @@ class Mage_Tax_Model_Sales_Total_Quote_Shipping extends Mage_Sales_Model_Quote_A
 
         $priceIncludesTax = $this->_config->shippingPriceIncludesTax($store);
         if ($priceIncludesTax) {
-            $this->_areTaxRequestsSimilar = $calc->compareRequests($addressTaxRequest, $storeTaxRequest);
+            if ($this->_helper->isCrossBorderTradeEnabled($store)) {
+                $this->_areTaxRequestsSimilar = true;
+            } else {
+                $this->_areTaxRequestsSimilar =
+                        $this->_calculator->compareRequests($storeTaxRequest, $addressTaxRequest);
+            }
         }
 
         $shipping           = $taxShipping = $address->getShippingAmount();
@@ -107,7 +120,11 @@ class Mage_Tax_Model_Sales_Total_Quote_Shipping extends Mage_Sales_Model_Quote_A
             if ($this->_areTaxRequestsSimilar) {
                 $tax            = $this->_round($calc->calcTaxAmount($shipping, $rate, true, false), $rate, true);
                 $baseTax        = $this->_round(
-                    $calc->calcTaxAmount($baseShipping, $rate, true, false), $rate, true, 'base');
+                    $calc->calcTaxAmount($baseShipping, $rate, true, false),
+                    $rate,
+                    true,
+                    'base'
+                );
                 $taxShipping    = $shipping;
                 $baseTaxShipping = $baseShipping;
                 $shipping       = $shipping - $tax;
@@ -125,7 +142,11 @@ class Mage_Tax_Model_Sales_Total_Quote_Shipping extends Mage_Sales_Model_Quote_A
                 $baseShipping   = $calc->round($baseShipping - $baseStoreTax);
                 $tax            = $this->_round($calc->calcTaxAmount($shipping, $rate, false, false), $rate, true);
                 $baseTax        = $this->_round(
-                    $calc->calcTaxAmount($baseShipping, $rate, false, false), $rate, true, 'base');
+                    $calc->calcTaxAmount($baseShipping, $rate, false, false),
+                    $rate,
+                    true,
+                    'base'
+                );
                 $taxShipping    = $shipping + $tax;
                 $baseTaxShipping = $baseShipping + $baseTax;
                 $taxable        = $taxShipping;
@@ -143,7 +164,11 @@ class Mage_Tax_Model_Sales_Total_Quote_Shipping extends Mage_Sales_Model_Quote_A
                 $taxId = $appliedRate['id'];
                 $taxes[] = $this->_round($calc->calcTaxAmount($shipping, $taxRate, false, false), $taxId, false);
                 $baseTaxes[] = $this->_round(
-                    $calc->calcTaxAmount($baseShipping, $taxRate, false, false), $taxId, false, 'base');
+                    $calc->calcTaxAmount($baseShipping, $taxRate, false, false),
+                    $taxId,
+                    false,
+                    'base'
+                );
             }
             $tax            = array_sum($taxes);
             $baseTax        = array_sum($baseTaxes);
@@ -241,9 +266,9 @@ class Mage_Tax_Model_Sales_Total_Quote_Shipping extends Mage_Sales_Model_Quote_A
     /**
      * Calculate shipping price without store tax
      *
+     * @param Mage_Sales_Model_Quote_Address $address
+     * @return void
      * @deprecated after 1.4.0.0
-     * @param   Mage_Sales_Model_Quote_Address $address
-     * @return  Mage_Tax_Model_Sales_Total_Quote_Subtotal
      */
     protected function _processShippingAmount($address)
     {

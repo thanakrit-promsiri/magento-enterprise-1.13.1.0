@@ -1,30 +1,30 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Downloadable
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
-/** @var $installer Mage_Catalog_Model_Resource_Eav_Mysql4_Setup */
+/** @var Mage_Catalog_Model_Resource_Eav_Mysql4_Setup $installer */
 $installer = $this;
 $adapter = $installer->getConnection();
 
@@ -47,14 +47,18 @@ $adapter->beginTransaction();
 //update downloadable purchased data
 $select = $adapter->select()
     ->from(array('d' => $installer->getTable('downloadable/link_purchased')), array('purchased_id', 'purchased_id'))
-    ->joinLeft(array('o' => $installer->getTable('sales/order')),
-        'd.order_id = o.entity_id', array())
+    ->joinLeft(
+        array('o' => $installer->getTable('sales/order')),
+        'd.order_id = o.entity_id',
+        array()
+    )
     ->where('o.entity_id IS NULL')
     ->where('d.order_id IS NOT NULL')
 ;
 $ids = $adapter->fetchPairs($select);
 if ($ids) {
-    $adapter->update($installer->getTable('downloadable/link_purchased'),
+    $adapter->update(
+        $installer->getTable('downloadable/link_purchased'),
         array('order_id' => new Zend_Db_Expr('(NULL)')),
         $adapter->quoteInto('purchased_id IN (?)', $ids)
     );
@@ -62,14 +66,18 @@ if ($ids) {
 //update downloadable purchased items data
 $select = $adapter->select()
     ->from(array('d' => $installer->getTable('downloadable/link_purchased_item')), array('item_id', 'item_id'))
-    ->joinLeft(array('o' => $installer->getTable('sales/order_item')),
-        'd.order_item_id = o.item_id', array())
+    ->joinLeft(
+        array('o' => $installer->getTable('sales/order_item')),
+        'd.order_item_id = o.item_id',
+        array()
+    )
     ->where('o.item_id IS NULL')
     ->where('d.order_item_id IS NOT NULL')
 ;
 $ids = $adapter->fetchPairs($select);
 if ($ids) {
-    $adapter->update($installer->getTable('downloadable/link_purchased_item'),
+    $adapter->update(
+        $installer->getTable('downloadable/link_purchased_item'),
         array('order_item_id' => new Zend_Db_Expr('(NULL)')),
         $adapter->quoteInto('item_id IN (?)', $ids)
     );

@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Catalog
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 
@@ -63,13 +63,63 @@ class Mage_Catalog_Helper_Product_Compare extends Mage_Core_Helper_Url
     protected $_customerId = null;
 
     /**
+     * @var Mage_Log_Helper_Data
+     */
+    protected $_logCondition;
+
+    /**
+     * @var Mage_Catalog_Model_Session
+     */
+    protected $_catalogSession;
+
+    /**
+     * @var Mage_Customer_Model_Session
+     */
+    protected $_customerSession;
+
+    /**
+     * @var Mage_Core_Model_Session
+     */
+    protected $_coreSession;
+
+    /**
+     * @var Mage_Log_Model_Visitor
+     */
+    protected $_logVisitor;
+
+    /**
+     * @var Mage_Catalog_Model_Product_Visibility
+     */
+    protected $_productVisibility;
+
+    /**
+     * Mage_Catalog_Helper_Product_Compare constructor.
+     * @param array $data
+     */
+    public function __construct(array $data = array())
+    {
+        $this->_logCondition = isset($data['log_condition'])
+            ? $data['log_condition'] : Mage::helper('log');
+        $this->_catalogSession = isset($data['catalog_session'])
+            ? $data['catalog_session'] : Mage::getSingleton('catalog/session');
+        $this->_customerSession = isset($data['customer_session'])
+            ? $data['customer_session'] : Mage::getSingleton('customer/session');
+        $this->_coreSession = isset($data['core_session'])
+            ? $data['core_session'] :  Mage::getSingleton('core/session');
+        $this->_productVisibility = isset($data['product_visibility'])
+            ? $data['product_visibility'] : Mage::getSingleton('catalog/product_visibility');
+        $this->_logVisitor = isset($data['log_visitor'])
+            ? $data['log_visitor'] : Mage::getSingleton('log/visitor');
+    }
+
+    /**
      * Retrieve Catalog Session instance
      *
      * @return Mage_Catalog_Model_Session
      */
     protected function _getSession()
     {
-        return Mage::getSingleton('catalog/session');
+        return $this->_catalogSession;
     }
 
     /**
@@ -100,11 +150,7 @@ class Mage_Catalog_Helper_Product_Compare extends Mage_Core_Helper_Url
      */
     protected function _getUrlParams($product)
     {
-        return array(
-            'product' => $product->getId(),
-            Mage_Core_Controller_Front_Action::PARAM_NAME_URL_ENCODED => $this->getEncodedUrl(),
-            Mage_Core_Model_Url::FORM_KEY => $this->_getSingletonModel('core/session')->getFormKey()
-        );
+        return $this->_getUrlCustomParams($product);
     }
 
     /**
@@ -115,7 +161,7 @@ class Mage_Catalog_Helper_Product_Compare extends Mage_Core_Helper_Url
      */
     public function getAddUrl($product)
     {
-        return $this->_getUrl('catalog/product_compare/add', $this->_getUrlParams($product));
+        return $this->getAddUrlCustom($product);
     }
 
     /**
@@ -126,15 +172,7 @@ class Mage_Catalog_Helper_Product_Compare extends Mage_Core_Helper_Url
      */
     public function getAddToWishlistUrl($product)
     {
-        $beforeCompareUrl = Mage::getSingleton('catalog/session')->getBeforeCompareUrl();
-
-        $params = array(
-            'product' => $product->getId(),
-            Mage_Core_Model_Url::FORM_KEY => $this->_getSingletonModel('core/session')->getFormKey(),
-            Mage_Core_Controller_Front_Action::PARAM_NAME_URL_ENCODED => $this->getEncodedUrl($beforeCompareUrl)
-        );
-
-        return $this->_getUrl('wishlist/index/add', $params);
+        return $this->getAddToWishlistUrlCustom($product);
     }
 
     /**
@@ -145,20 +183,13 @@ class Mage_Catalog_Helper_Product_Compare extends Mage_Core_Helper_Url
      */
     public function getAddToCartUrl($product)
     {
-        $beforeCompareUrl = $this->_getSingletonModel('catalog/session')->getBeforeCompareUrl();
-        $params = array(
-            'product' => $product->getId(),
-            Mage_Core_Controller_Front_Action::PARAM_NAME_URL_ENCODED => $this->getEncodedUrl($beforeCompareUrl),
-            Mage_Core_Model_Url::FORM_KEY => $this->_getSingletonModel('core/session')->getFormKey()
-        );
-
-        return $this->_getUrl('checkout/cart/add', $params);
+        return $this->getAddToCartUrlCustom($product);
     }
 
     /**
      * Retrieve remove item from compare list url
      *
-     * @param   $item
+     * @param   Mage_Catalog_Model_Product $item
      * @return  string
      */
     public function getRemoveUrl($item)
@@ -191,20 +222,20 @@ class Mage_Catalog_Helper_Product_Compare extends Mage_Core_Helper_Url
     public function getItemCollection()
     {
         if (!$this->_itemCollection) {
+            /** @var Mage_Catalog_Model_Resource_Product_Compare_Item_Collection _itemCollection */
             $this->_itemCollection = Mage::getResourceModel('catalog/product_compare_item_collection')
                 ->useProductItem(true)
                 ->setStoreId(Mage::app()->getStore()->getId());
 
-            if (Mage::getSingleton('customer/session')->isLoggedIn()) {
-                $this->_itemCollection->setCustomerId(Mage::getSingleton('customer/session')->getCustomerId());
+            if ($this->_customerSession->isLoggedIn()) {
+                $this->_itemCollection->setCustomerId($this->_customerSession->getCustomerId());
             } elseif ($this->_customerId) {
                 $this->_itemCollection->setCustomerId($this->_customerId);
             } else {
-                $this->_itemCollection->setVisitorId(Mage::getSingleton('log/visitor')->getId());
+                $this->_itemCollection->setVisitorId($this->_logVisitor->getId());
             }
 
-            Mage::getSingleton('catalog/product_visibility')
-                ->addVisibleInSiteFilterToCollection($this->_itemCollection);
+            $this->_productVisibility->addVisibleInSiteFilterToCollection($this->_itemCollection);
 
             /* Price data is added to consider item stock status using price index */
             $this->_itemCollection->addPriceData();
@@ -214,7 +245,7 @@ class Mage_Catalog_Helper_Product_Compare extends Mage_Core_Helper_Url
                 ->load();
 
             /* update compare items count */
-            $this->_getSession()->setCatalogCompareItemsCount(count($this->_itemCollection));
+            $this->_catalogSession->setCatalogCompareItemsCount(count($this->_itemCollection));
         }
 
         return $this->_itemCollection;
@@ -224,35 +255,34 @@ class Mage_Catalog_Helper_Product_Compare extends Mage_Core_Helper_Url
      * Calculate cache product compare collection
      *
      * @param  bool $logout
-     * @return Mage_Catalog_Helper_Product_Compare
+     * @return $this
      */
     public function calculate($logout = false)
     {
         // first visit
-        if (!$this->_getSession()->hasCatalogCompareItemsCount() && !$this->_customerId) {
+        if (!$this->_catalogSession->hasCatalogCompareItemsCount() && !$this->_customerId) {
             $count = 0;
         } else {
-            /** @var $collection Mage_Catalog_Model_Resource_Eav_Mysql4_Product_Compare_Item_Collection */
+            /** @var Mage_Catalog_Model_Resource_Eav_Mysql4_Product_Compare_Item_Collection $collection */
             $collection = Mage::getResourceModel('catalog/product_compare_item_collection')
                 ->useProductItem(true);
-            if (!$logout && Mage::getSingleton('customer/session')->isLoggedIn()) {
-                $collection->setCustomerId(Mage::getSingleton('customer/session')->getCustomerId());
+            if (!$logout && $this->_customerSession->isLoggedIn()) {
+                $collection->setCustomerId($this->_customerSession->getCustomerId());
             } elseif ($this->_customerId) {
                 $collection->setCustomerId($this->_customerId);
             } else {
-                $collection->setVisitorId(Mage::getSingleton('log/visitor')->getId());
+                $collection->setVisitorId($this->_logVisitor->getId());
             }
 
             /* Price data is added to consider item stock status using price index */
             $collection->addPriceData();
 
-            Mage::getSingleton('catalog/product_visibility')
-                ->addVisibleInSiteFilterToCollection($collection);
+            $this->_productVisibility->addVisibleInSiteFilterToCollection($collection);
 
             $count = $collection->getSize();
         }
 
-        $this->_getSession()->setCatalogCompareItemsCount($count);
+        $this->_catalogSession->setCatalogCompareItemsCount($count);
 
         return $this;
     }
@@ -264,11 +294,11 @@ class Mage_Catalog_Helper_Product_Compare extends Mage_Core_Helper_Url
      */
     public function getItemCount()
     {
-        if (!$this->_getSession()->hasCatalogCompareItemsCount()) {
+        if (!$this->_catalogSession->hasCatalogCompareItemsCount()) {
             $this->calculate();
         }
 
-        return $this->_getSession()->getCatalogCompareItemsCount();
+        return $this->_catalogSession->getCatalogCompareItemsCount();
     }
 
     /**
@@ -285,7 +315,7 @@ class Mage_Catalog_Helper_Product_Compare extends Mage_Core_Helper_Url
      * Set is allow used flat (for collection)
      *
      * @param bool $flag
-     * @return Mage_Catalog_Helper_Product_Compare
+     * @return $this
      */
     public function setAllowUsedFlat($flag)
     {
@@ -307,11 +337,81 @@ class Mage_Catalog_Helper_Product_Compare extends Mage_Core_Helper_Url
      * Setter for customer id
      *
      * @param int $id
-     * @return Mage_Catalog_Helper_Product_Compare
+     * @return $this
      */
     public function setCustomerId($id)
     {
         $this->_customerId = $id;
         return $this;
+    }
+
+    /**
+     * Retrieve url for adding product to conpare list with or without Form Key
+     *
+     * @param Mage_Catalog_Model_Product $product
+     * @param bool $addFormKey
+     * @return string
+     */
+    public function getAddUrlCustom($product, $addFormKey = true)
+    {
+        if ($this->_logCondition->isVisitorLogEnabled() || $this->_customerSession->isLoggedIn()) {
+            return $this->_getUrl('catalog/product_compare/add', $this->_getUrlCustomParams($product, $addFormKey));
+        }
+        return '';
+    }
+
+    /**
+     * Retrive add to wishlist url with or without Form Key
+     *
+     * @param Mage_Catalog_Model_Product $product
+     * @param bool $addFormKey
+     * @return string
+     */
+    public function getAddToWishlistUrlCustom($product, $addFormKey = true)
+    {
+        $beforeCompareUrl = $this->_catalogSession->getBeforeCompareUrl();
+        $params = $this->_getUrlCustomParams($product, $addFormKey, $beforeCompareUrl);
+
+        return $this->_getUrl('wishlist/index/add', $params);
+    }
+
+    /**
+     * Retrive add to cart url with or without Form Key
+     *
+     * @param Mage_Catalog_Model_Product $product
+     * @param bool $addFormKey
+     * @return string
+     */
+    public function getAddToCartUrlCustom($product, $addFormKey = true)
+    {
+        $beforeCompareUrl = $this->_catalogSession->getBeforeCompareUrl();
+        $params = array(
+            'product' => $product->getId(),
+            Mage_Core_Controller_Front_Action::PARAM_NAME_URL_ENCODED => $this->getEncodedUrl($beforeCompareUrl),
+        );
+        if ($addFormKey) {
+            $params[Mage_Core_Model_Url::FORM_KEY] = $this->_coreSession->getFormKey();
+        }
+
+        return $this->_getUrl('checkout/cart/add', $params);
+    }
+
+    /**
+     * Get parameters used for build add product to compare list urls with or without Form Key
+     *
+     * @param   Mage_Catalog_Model_Product $product
+     * @param bool $addFormKey
+     * @return  array
+     */
+    protected function _getUrlCustomParams($product, $addFormKey = true, $url = null)
+    {
+        $params = array(
+            'product' => $product->getId(),
+            Mage_Core_Controller_Front_Action::PARAM_NAME_URL_ENCODED => $this->getEncodedUrl($url),
+        );
+        if ($addFormKey) {
+            $params[Mage_Core_Model_Url::FORM_KEY] = $this->_coreSession->getFormKey();
+        }
+        return $params;
     }
 }

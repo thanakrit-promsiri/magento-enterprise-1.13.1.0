@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Sales
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 
@@ -81,26 +81,35 @@ class Mage_Sales_Model_Resource_Order extends Mage_Sales_Model_Resource_Order_Ab
     /**
      * Init virtual grid records for entity
      *
-     * @return Mage_Sales_Model_Resource_Order
+     * @return $this
      */
     protected function _initVirtualGridColumns()
     {
         parent::_initVirtualGridColumns();
         $adapter       = $this->getReadConnection();
         $ifnullFirst   = $adapter->getIfNullSql('{{table}}.firstname', $adapter->quote(''));
+        $ifnullMiddle  = $adapter->getIfNullSql('{{table}}.middlename', $adapter->quote(''));
         $ifnullLast    = $adapter->getIfNullSql('{{table}}.lastname', $adapter->quote(''));
-        $concatAddress = $adapter->getConcatSql(array($ifnullFirst, $adapter->quote(' '), $ifnullLast));
+        $concatAddress = $adapter->getConcatSql(array(
+            $ifnullFirst,
+            $adapter->quote(' '),
+            $ifnullMiddle,
+            $adapter->quote(' '),
+            $ifnullLast
+        ));
+        $concatAddress = new Zend_Db_Expr("TRIM(REPLACE($concatAddress,'  ', ' '))");
+
         $this->addVirtualGridColumn(
-                'billing_name',
-                'sales/order_address',
-                array('billing_address_id' => 'entity_id'),
-                $concatAddress
-            )
+            'billing_name',
+            'sales/order_address',
+            array('billing_address_id' => 'entity_id'),
+            $concatAddress
+        )
             ->addVirtualGridColumn(
                 'shipping_name',
                 'sales/order_address',
-                 array('shipping_address_id' => 'entity_id'),
-                 $concatAddress
+                array('shipping_address_id' => 'entity_id'),
+                $concatAddress
             );
 
         return $this;
@@ -120,18 +129,21 @@ class Mage_Sales_Model_Resource_Order extends Mage_Sales_Model_Resource_Order_Ab
         $select  = $adapter->select()
             ->from(
                 array('o' => $this->getTable('sales/order_item')),
-                array('o.product_type', new Zend_Db_Expr('COUNT(*)')))
+                array('o.product_type', new Zend_Db_Expr('COUNT(*)'))
+            )
             ->joinInner(
                 array('p' => $this->getTable('catalog/product')),
                 'o.product_id=p.entity_id',
-                array())
+                array()
+            )
             ->where('o.order_id=?', $orderId)
             ->group('o.product_type')
         ;
         if ($productTypeIds) {
             $select->where(
                 sprintf('(o.product_type %s (?))', ($isProductTypeIn ? 'IN' : 'NOT IN')),
-                $productTypeIds);
+                $productTypeIds
+            );
         }
         return $adapter->fetchPairs($select);
     }

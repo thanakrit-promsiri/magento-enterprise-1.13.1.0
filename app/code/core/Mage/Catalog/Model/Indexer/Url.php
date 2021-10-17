@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Catalog
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 /**
@@ -115,7 +115,7 @@ class Mage_Catalog_Model_Indexer_Url extends Mage_Index_Model_Indexer_Abstract
             } else {
                 $result = false;
             }
-        } else if ($entity == Mage_Core_Model_Store_Group::ENTITY) {
+        } elseif ($entity == Mage_Core_Model_Store_Group::ENTITY) {
             $storeGroup = $event->getDataObject();
             $hasDataChanges = $storeGroup && ($storeGroup->dataHasChangedFor('root_category_id')
                 || $storeGroup->dataHasChangedFor('website_id'));
@@ -124,7 +124,7 @@ class Mage_Catalog_Model_Indexer_Url extends Mage_Index_Model_Indexer_Abstract
             } else {
                 $result = false;
             }
-        } else if ($entity == Mage_Core_Model_Config_Data::ENTITY) {
+        } elseif ($entity == Mage_Core_Model_Config_Data::ENTITY) {
             $configData = $event->getDataObject();
             if ($configData && in_array($configData->getPath(), $this->_relatedConfigSettings)) {
                 $result = $configData->isValueChanged();
@@ -144,6 +144,7 @@ class Mage_Catalog_Model_Indexer_Url extends Mage_Index_Model_Indexer_Abstract
      * Register data required by process in event object
      *
      * @param Mage_Index_Model_Event $event
+     * @return Mage_Catalog_Model_Indexer_Url
      */
     protected function _registerEvent(Mage_Index_Model_Event $event)
     {
@@ -151,7 +152,7 @@ class Mage_Catalog_Model_Indexer_Url extends Mage_Index_Model_Indexer_Abstract
         $entity = $event->getEntity();
         switch ($entity) {
             case Mage_Catalog_Model_Product::ENTITY:
-               $this->_registerProductEvent($event);
+                $this->_registerProductEvent($event);
                 break;
 
             case Mage_Catalog_Model_Category::ENTITY:
@@ -222,7 +223,7 @@ class Mage_Catalog_Model_Indexer_Url extends Mage_Index_Model_Indexer_Abstract
             $this->reindexAll();
         }
 
-        /* @var $urlModel Mage_Catalog_Model_Url */
+        /* @var Mage_Catalog_Model_Url $urlModel */
         $urlModel = Mage::getSingleton('catalog/url');
 
         // Force rewrites history saving
@@ -231,15 +232,16 @@ class Mage_Catalog_Model_Indexer_Url extends Mage_Index_Model_Indexer_Abstract
             $urlModel->setShouldSaveRewritesHistory($dataObject->getData('save_rewrites_history'));
         }
 
-        if(isset($data['rewrite_product_ids'])) {
+        if (isset($data['rewrite_product_ids'])) {
             $urlModel->clearStoreInvalidRewrites(); // Maybe some products were moved or removed from website
-            foreach ($data['rewrite_product_ids'] as $productId) {
+            foreach (array_unique($data['rewrite_product_ids']) as $productId) {
                  $urlModel->refreshProductRewrite($productId);
             }
         }
+
         if (isset($data['rewrite_category_ids'])) {
             $urlModel->clearStoreInvalidRewrites(); // Maybe some categories were moved
-            foreach ($data['rewrite_category_ids'] as $categoryId) {
+            foreach (array_unique($data['rewrite_category_ids']) as $categoryId) {
                 $urlModel->refreshCategoryRewrite($categoryId);
             }
         }
@@ -250,7 +252,7 @@ class Mage_Catalog_Model_Indexer_Url extends Mage_Index_Model_Indexer_Abstract
      */
     public function reindexAll()
     {
-        /** @var $resourceModel Mage_Catalog_Model_Resource_Url */
+        /** @var Mage_Catalog_Model_Resource_Url $resourceModel */
         $resourceModel = Mage::getResourceSingleton('catalog/url');
         $resourceModel->beginTransaction();
         try {

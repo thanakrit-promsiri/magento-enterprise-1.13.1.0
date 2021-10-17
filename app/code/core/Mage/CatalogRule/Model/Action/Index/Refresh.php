@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_CatalogRule
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 /**
@@ -116,12 +116,12 @@ class Mage_CatalogRule_Model_Action_Index_Refresh
     {
         $this->_app->dispatchEvent('catalogrule_before_apply', array('resource' => $this->_resource));
 
-        /** @var $coreDate Mage_Core_Model_Date */
+        /** @var Mage_Core_Model_Date $coreDate */
         $coreDate  = $this->_factory->getModel('core/date');
         $timestamp = $coreDate->gmtTimestamp('Today');
 
         foreach ($this->_app->getWebsites(false) as $website) {
-            /** @var $website Mage_Core_Model_Website */
+            /** @var Mage_Core_Model_Website $website */
             if ($website->getDefaultStore()) {
                 $this->_reindex($website, $timestamp);
             }
@@ -271,10 +271,10 @@ class Mage_CatalogRule_Model_Action_Index_Refresh
      */
     protected function _prepareTemporarySelect(Mage_Core_Model_Website $website)
     {
-        /** @var $catalogFlatHelper Mage_Catalog_Helper_Product_Flat */
+        /** @var Mage_Catalog_Helper_Product_Flat $catalogFlatHelper */
         $catalogFlatHelper = $this->_factory->getHelper('catalog/product_flat');
 
-        /** @var $eavConfig Mage_Eav_Model_Config */
+        /** @var Mage_Eav_Model_Config $eavConfig */
         $eavConfig = $this->_factory->getSingleton('eav/config');
         $priceAttribute = $eavConfig->getAttribute(Mage_Catalog_Model_Product::ENTITY, 'price');
 
@@ -319,20 +319,28 @@ class Mage_CatalogRule_Model_Action_Index_Refresh
             );
             $priceColumn = $this->_connection->getIfNullSql(
                 $this->_connection->getIfNullSql(
-                    'pg.value',
-                    'pgd.value'
+                    $this->_connection->getCheckSql(
+                        'pg.is_percent = 1',
+                        'p.price * (100 - pg.value)/100',
+                        'pg.value'
+                    ),
+                    $this->_connection->getCheckSql(
+                        'pgd.is_percent = 1',
+                        'p.price * (100 - pgd.value)/100',
+                        'pgd.value'
+                    )
                 ),
                 'p.price'
             );
         } else {
             $select->joinInner(
-                    array(
+                array(
                         'pd' => $this->_resource->getTable(array('catalog/product', $priceAttribute->getBackendType()))
                     ),
-                    'pd.entity_id = rp.product_id AND pd.store_id = 0 AND pd.attribute_id = '
+                'pd.entity_id = rp.product_id AND pd.store_id = 0 AND pd.attribute_id = '
                         . $priceAttribute->getId(),
-                    array()
-                )
+                array()
+            )
                 ->joinLeft(
                     array(
                         'p' => $this->_resource->getTable(array('catalog/product', $priceAttribute->getBackendType()))
@@ -343,8 +351,22 @@ class Mage_CatalogRule_Model_Action_Index_Refresh
                 );
             $priceColumn = $this->_connection->getIfNullSql(
                 $this->_connection->getIfNullSql(
-                    'pg.value',
-                    'pgd.value'
+                    $this->_connection->getCheckSql(
+                        'pg.is_percent = 1',
+                        $this->_connection->getIfNullSql(
+                            'p.value',
+                            'pd.value'
+                        ) . ' * (100 - pg.value)/100',
+                        'pg.value'
+                    ),
+                    $this->_connection->getCheckSql(
+                        'pgd.is_percent = 1',
+                        $this->_connection->getIfNullSql(
+                            'p.value',
+                            'pd.value'
+                        ) . ' * (100 - pgd.value)/100',
+                        'pgd.value'
+                    )
                 ),
                 $this->_connection->getIfNullSql(
                     'p.value',
@@ -394,7 +416,8 @@ class Mage_CatalogRule_Model_Action_Index_Refresh
             '',
             array(
                 $this->_connection->getIfNullSql(
-                    new Zend_Db_Expr('@group_id'), $nA
+                    new Zend_Db_Expr('@group_id'),
+                    $nA
                 ) . ' != cppt.grouped_id' =>
                 '@price := ' . $this->_connection->getCaseSql(
                     $this->_connection->quoteIdentifier('cppt.action_operator'),
@@ -414,7 +437,8 @@ class Mage_CatalogRule_Model_Action_Index_Refresh
                     )
                 ),
                 $this->_connection->getIfNullSql(
-                    new Zend_Db_Expr('@group_id'), $nA
+                    new Zend_Db_Expr('@group_id'),
+                    $nA
                 ) . ' = cppt.grouped_id AND '
                 . $this->_connection->getIfNullSql(
                     new Zend_Db_Expr('@action_stop'),
@@ -437,7 +461,7 @@ class Mage_CatalogRule_Model_Action_Index_Refresh
                     )
                 )
             ),
-            '@price := @price'
+            '@price'
         );
     }
 
@@ -445,13 +469,13 @@ class Mage_CatalogRule_Model_Action_Index_Refresh
      * Prepare index select
      *
      * @param Mage_Core_Model_Website $website
-     * @param $time
+     * @param int|Zend_Db_Expr $time
      * @return Varien_Db_Select
      */
     protected function _prepareIndexSelect(Mage_Core_Model_Website $website, $time)
     {
         $nA = $this->_connection->quote('N/A');
-        $this->_connection->query('SET @price := NULL');
+        $this->_connection->query('SET @price := 0');
         $this->_connection->query('SET @group_id := NULL');
         $this->_connection->query('SET @action_stop := NULL');
 
@@ -592,6 +616,7 @@ class Mage_CatalogRule_Model_Action_Index_Refresh
 
     /**
      * Prepare data for group website relation
+     * @param string $timestamp
      */
     protected function _prepareGroupWebsite($timestamp)
     {
@@ -629,7 +654,7 @@ class Mage_CatalogRule_Model_Action_Index_Refresh
      */
     protected function _prepareAffectedProduct()
     {
-        /** @var $modelCondition Mage_Catalog_Model_Product_Condition */
+        /** @var Mage_Catalog_Model_Product_Condition $modelCondition */
         $modelCondition = $this->_factory->getModel('catalog/product_condition');
 
         $productCondition = $modelCondition->setTable($this->_resource->getTable('catalogrule/affected_product'))

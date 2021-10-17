@@ -14,9 +14,9 @@
  *
  * @category   Zend
  * @package    Zend_Service_WindowsAzure
- * @copyright  Copyright (c) 2005-2010 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
- * @version    $Id: SharedKeyLite.php 22773 2010-08-03 07:18:27Z maartenba $
+ * @version    $Id$
  */
 
 /**
@@ -25,26 +25,11 @@
 #require_once 'Zend/Service/WindowsAzure/Credentials/CredentialsAbstract.php';
 
 /**
- * @see Zend_Service_WindowsAzure_Storage
- */
-#require_once 'Zend/Service/WindowsAzure/Storage.php';
-
-/**
- * @see Zend_Service_WindowsAzure_Credentials_SharedKey
- */
-#require_once 'Zend/Service/WindowsAzure/Credentials/SharedKey.php';
-
-/**
- * @see Zend_Service_WindowsAzure_Credentials_Exception
- */
-#require_once 'Zend/Service/WindowsAzure/Credentials/Exception.php';
-
-/**
  * @category   Zend
  * @package    Zend_Service_WindowsAzure
- * @copyright  Copyright (c) 2005-2010 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
- */ 
+ */
 class Zend_Service_WindowsAzure_Credentials_SharedKeyLite
     extends Zend_Service_WindowsAzure_Credentials_CredentialsAbstract
 {
@@ -63,7 +48,7 @@ class Zend_Service_WindowsAzure_Credentials_SharedKeyLite
 	) {
 	    return $requestUrl;
 	}
-	
+
 	/**
 	 * Sign request headers with credentials
 	 *
@@ -89,9 +74,10 @@ class Zend_Service_WindowsAzure_Credentials_SharedKeyLite
 	) {
 		// Table storage?
 		if (!$forTableStorage) {
+			#require_once 'Zend/Service/WindowsAzure/Credentials/Exception.php';
 			throw new Zend_Service_WindowsAzure_Credentials_Exception('The Windows Azure SDK for PHP does not support SharedKeyLite authentication on blob or queue storage. Use SharedKey authentication instead.');
 		}
-		
+
 		// Determine path
 		if ($this->_usePathStyleUri) {
 			$path = substr($path, strpos($path, '/'));
@@ -118,7 +104,7 @@ class Zend_Service_WindowsAzure_Credentials_SharedKeyLite
 		    $requestDate = gmdate('D, d M Y H:i:s', time()) . ' GMT'; // RFC 1123
 		}
 
-		// Create string to sign   
+		// Create string to sign
 		$stringToSign   = array();
     	$stringToSign[] = $requestDate; // Date
     	$stringToSign[] = $canonicalizedResource;		 			// Canonicalized resource
@@ -128,14 +114,14 @@ class Zend_Service_WindowsAzure_Credentials_SharedKeyLite
     	// Sign request
     	$headers[Zend_Service_WindowsAzure_Credentials_CredentialsAbstract::PREFIX_STORAGE_HEADER . 'date'] = $requestDate;
     	$headers['Authorization'] = 'SharedKeyLite ' . $this->_accountName . ':' . $signString;
-    	
+
     	// Return headers
     	return $headers;
 	}
-	
+
 	/**
 	 * Prepare query string for signing
-	 * 
+	 *
 	 * @param  string $value Original query string
 	 * @return string        Query string for signing
 	 */
@@ -146,11 +132,11 @@ class Zend_Service_WindowsAzure_Credentials_SharedKeyLite
 	        // If not found, no query string needed
 	        return '';
 	    } else {
-	        // If found, make sure it is the only parameter being used      
+	        // If found, make sure it is the only parameter being used
     		if (strlen($value) > 0 && strpos($value, '?') === 0) {
     			$value = substr($value, 1);
     		}
-    		
+
     		// Split parts
     		$queryParts = explode('&', $value);
     		foreach ($queryParts as $queryPart) {

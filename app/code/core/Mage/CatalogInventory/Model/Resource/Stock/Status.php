@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_CatalogInventory
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 
@@ -49,14 +49,20 @@ class Mage_CatalogInventory_Model_Resource_Stock_Status extends Mage_Core_Model_
      * @param Mage_CatalogInventory_Model_Stock_Status $object
      * @param int $productId
      * @param int $status
-     * @param float $qty
+     * @param int|float $qty
      * @param int $stockId
      * @param int|null $websiteId
-     * @return Mage_CatalogInventory_Model_Resource_Stock_Status
+     * @return $this
+     * @throws Zend_Db_Adapter_Exception
      */
-    public function saveProductStatus(Mage_CatalogInventory_Model_Stock_Status $object, $productId, $status, $qty = 0,
-        $stockId = 1, $websiteId = null)
-    {
+    public function saveProductStatus(
+        Mage_CatalogInventory_Model_Stock_Status $object,
+        $productId,
+        $status,
+        $qty = 0,
+        $stockId = 1,
+        $websiteId = null
+    ) {
         $websites = array_keys($object->getWebsites($websiteId));
         $adapter = $this->_getWriteAdapter();
         foreach ($websites as $websiteId) {
@@ -203,7 +209,7 @@ class Mage_CatalogInventory_Model_Resource_Stock_Status extends Mage_Core_Model_
      *
      * @param Varien_Db_Select $select
      * @param Mage_Core_Model_Website $website
-     * @return Mage_CatalogInventory_Model_Resource_Stock_Status
+     * @return $this
      */
     public function addStockStatusToSelect(Varien_Db_Select $select, Mage_Core_Model_Website $website)
     {
@@ -223,7 +229,7 @@ class Mage_CatalogInventory_Model_Resource_Stock_Status extends Mage_Core_Model_
      * @param Varien_Db_Select $select
      * @param string|Zend_Db_Expr $entityField
      * @param string|Zend_Db_Expr $websiteField
-     * @return Mage_CatalogInventory_Model_Resource_Stock_Status
+     * @return $this
      */
     public function prepareCatalogProductIndexSelect(Varien_Db_Select $select, $entityField, $websiteField)
     {
@@ -241,15 +247,14 @@ class Mage_CatalogInventory_Model_Resource_Stock_Status extends Mage_Core_Model_
      * Add only is in stock products filter to product collection
      *
      * @param Mage_Catalog_Model_Resource_Product_Collection $collection
-     * @return Mage_CatalogInventory_Model_Resource_Stock_Status
+     * @return $this
      */
     public function addIsInStockFilterToCollection($collection)
     {
         $websiteId = Mage::app()->getStore($collection->getStoreId())->getWebsiteId();
         $joinCondition = $this->_getReadAdapter()
             ->quoteInto('e.entity_id = stock_status_index.product_id'
-                . ' AND stock_status_index.website_id = ?', $websiteId
-            );
+                . ' AND stock_status_index.website_id = ?', $websiteId);
 
         $joinCondition .= $this->_getReadAdapter()->quoteInto(
             ' AND stock_status_index.stock_id = ?',

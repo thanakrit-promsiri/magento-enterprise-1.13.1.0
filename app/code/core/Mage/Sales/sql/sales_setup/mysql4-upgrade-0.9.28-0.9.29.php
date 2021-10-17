@@ -1,31 +1,31 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Sales
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 $installer = $this;
-/* @var $installer Mage_Sales_Model_Mysql4_Setup */
+/* @var Mage_Sales_Model_Mysql4_Setup $installer */
 
 $installer->getConnection()->addColumn($this->getTable('sales_order'), 'discount_refunded', 'decimal(12,4) default NULL AFTER `subtotal_canceled`');
 $installer->getConnection()->addColumn($this->getTable('sales_order'), 'discount_canceled', 'decimal(12,4) default NULL AFTER `discount_refunded`');
@@ -70,7 +70,8 @@ $baseDiscountAttributeTable = $installer->getAttributeTable($entityTypeId, 'base
 
 $temporaryTableName = 'sales_sql_update' . crc32(uniqid('sales'));
 
-$preparedSql = 'CREATE TEMPORARY TABLE ' . $installer->getConnection()->quoteIdentifier($temporaryTableName) . ' ' . sprintf($sql,
+$preparedSql = 'CREATE TEMPORARY TABLE ' . $installer->getConnection()->quoteIdentifier($temporaryTableName) . ' ' . sprintf(
+    $sql,
     $orderAttributeTable,
     $discountAttributeTable,
     $discountAttributeId,
@@ -82,8 +83,9 @@ $preparedSql = 'CREATE TEMPORARY TABLE ' . $installer->getConnection()->quoteIde
 
 $installer->getConnection()->query($preparedSql);
 $select = $installer->getConnection()->select();
-$select->join(array('to_update' => $temporaryTableName), 
-    'to_update.order_id = main_table.entity_id', 
+$select->join(
+    array('to_update' => $temporaryTableName),
+    'to_update.order_id = main_table.entity_id',
     array(
         'discount_refunded' => 'order_discount',
         'base_discount_refunded' => 'order_base_discount'
@@ -93,7 +95,7 @@ $select->join(array('to_update' => $temporaryTableName),
 $installer->getConnection()->query(
     $select->crossUpdateFromSelect(array('main_table'=>$ordersTable))
 );
- 
+
 $installer->getConnection()->query(
     'DROP TEMPORARY TABLE ' . $installer->getConnection()->quoteIdentifier($temporaryTableName)
 );
@@ -107,7 +109,8 @@ $discountAttributeTable = $installer->getAttributeTable($entityTypeId, 'discount
 $baseDiscountAttributeId = $installer->getAttributeId($entityTypeId, 'base_discount_amount');
 $baseDiscountAttributeTable = $installer->getAttributeTable($entityTypeId, 'base_discount_amount');
 
-$preparedSql = 'CREATE TEMPORARY TABLE ' . $installer->getConnection()->quoteIdentifier($temporaryTableName) . ' ' . sprintf($sql,
+$preparedSql = 'CREATE TEMPORARY TABLE ' . $installer->getConnection()->quoteIdentifier($temporaryTableName) . ' ' . sprintf(
+    $sql,
     $orderAttributeTable,
     $discountAttributeTable,
     $discountAttributeId,
@@ -119,8 +122,9 @@ $preparedSql = 'CREATE TEMPORARY TABLE ' . $installer->getConnection()->quoteIde
 
 $installer->getConnection()->query($preparedSql);
 $select = $installer->getConnection()->select();
-$select->join(array('to_update' => $temporaryTableName), 
-    'to_update.order_id = main_table.entity_id', 
+$select->join(
+    array('to_update' => $temporaryTableName),
+    'to_update.order_id = main_table.entity_id',
     array(
         'discount_invoiced' => 'order_discount',
         'base_discount_invoiced' => 'order_base_discount'
@@ -130,7 +134,7 @@ $select->join(array('to_update' => $temporaryTableName),
 $installer->getConnection()->query(
     $select->crossUpdateFromSelect(array('main_table'=>$ordersTable))
 );
- 
+
 $installer->getConnection()->query(
     'DROP TEMPORARY TABLE ' . $installer->getConnection()->quoteIdentifier($temporaryTableName)
 );
@@ -142,9 +146,9 @@ $statusAttributeTable = $installer->getTable($ordersTable.'_varchar');
 
 $select = $installer->getConnection()->select();
 $select->from(
-        array('s' => $statusAttributeTable),
-        array('order_id' => 's.entity_id')
-    )
+    array('s' => $statusAttributeTable),
+    array('order_id' => 's.entity_id')
+)
     ->where('s.attribute_id=?', $statusAttributeId)
     ->where('s.value=?', Mage_Sales_Model_Order::STATE_CANCELED);
 

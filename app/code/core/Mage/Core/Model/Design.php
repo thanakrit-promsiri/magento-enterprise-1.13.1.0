@@ -1,29 +1,28 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Core
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
-
 
 /**
  * Enter description here ...
@@ -31,13 +30,15 @@
  * @method Mage_Core_Model_Resource_Design _getResource()
  * @method Mage_Core_Model_Resource_Design getResource()
  * @method int getStoreId()
- * @method Mage_Core_Model_Design setStoreId(int $value)
+ * @method $this setStoreId(int $value)
  * @method string getDesign()
- * @method Mage_Core_Model_Design setDesign(string $value)
+ * @method $this setDesign(string $value)
  * @method string getDateFrom()
- * @method Mage_Core_Model_Design setDateFrom(string $value)
+ * @method $this setDateFrom(string $value)
  * @method string getDateTo()
- * @method Mage_Core_Model_Design setDateTo(string $value)
+ * @method $this setDateTo(string $value)
+ * @method string getPackage()
+ * @method string getTheme()
  *
  * @category    Mage
  * @package     Mage_Core
@@ -50,12 +51,20 @@ class Mage_Core_Model_Design extends Mage_Core_Model_Abstract
         $this->_init('core/design');
     }
 
+    /**
+     * @return $this
+     */
     public function validate()
     {
         $this->getResource()->validate($this);
         return $this;
     }
 
+    /**
+     * @param int $storeId
+     * @param string|null $date
+     * @return $this
+     */
     public function loadChange($storeId, $date = null)
     {
         $result = $this->getResource()

@@ -1,31 +1,34 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Weee
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 /**
  * Model to calculate Weee amount
+ *
+ * @method Mage_Weee_Model_Resource_Tax _getResource()
+ * @method Mage_Weee_Model_Resource_Tax getResource()
  */
 class Mage_Weee_Model_Tax extends Mage_Core_Model_Abstract
 {
@@ -61,6 +64,13 @@ class Mage_Weee_Model_Tax extends Mage_Core_Model_Abstract
     protected $_productDiscounts = array();
 
     /**
+     * Tax helper
+     *
+     * @var Mage_Tax_Helper_Data
+     */
+    protected $_taxHelper;
+
+    /**
      * Initialize resource
      */
     protected function _construct()
@@ -68,6 +78,17 @@ class Mage_Weee_Model_Tax extends Mage_Core_Model_Abstract
         $this->_init('weee/tax', 'weee/tax');
     }
 
+
+    /**
+     * Initialize tax helper
+     *
+     * @param array $args
+     */
+    public function __construct(array $args = array())
+    {
+        parent::__construct();
+        $this->_taxHelper = !empty($args['helper']) ? $args['helper'] : Mage::helper('tax');
+    }
 
     /**
      * Calculate weee amount for a product
@@ -86,8 +107,8 @@ class Mage_Weee_Model_Tax extends Mage_Core_Model_Abstract
         $billing = null,
         $website = null,
         $calculateTax = false,
-        $ignoreDiscount = false)
-    {
+        $ignoreDiscount = false
+    ) {
         $amount = 0;
         $attributes = $this->getProductWeeeAttributes(
             $product,
@@ -136,9 +157,9 @@ class Mage_Weee_Model_Tax extends Mage_Core_Model_Abstract
      * Get Weee amounts associated with a product
      *
      * @param Mage_Catalog_Model_Product $product
-     * @param Mage_Customer_Model_Address_Abstract $shipping
-     * @param Mage_Customer_Model_Address_Abstract $billing
-     * @param mixed $website
+     * @param Mage_Sales_Model_Quote_Address $shipping
+     * @param Mage_Sales_Model_Quote_Address $billing
+     * @param int $website
      * @param boolean $calculateTax
      * @param boolean $ignoreDiscount
      * @return array|\Varien_Object
@@ -149,8 +170,8 @@ class Mage_Weee_Model_Tax extends Mage_Core_Model_Abstract
         $billing = null,
         $website = null,
         $calculateTax = null,
-        $ignoreDiscount = false)
-    {
+        $ignoreDiscount = false
+    ) {
         $result = array();
         $allWeee = $this->getWeeeTaxAttributeCodes();
         if (!$allWeee) {
@@ -178,10 +199,10 @@ class Mage_Weee_Model_Tax extends Mage_Core_Model_Abstract
 
         if (!$currentPercent) {
             $currentPercent = Mage::getSingleton('tax/calculation')->getRate(
-                $rateRequest->setProductClassId($product->getTaxClassId()));
+                $rateRequest->setProductClassId($product->getTaxClassId())
+            );
         }
 
-        $defaultRateRequest = $calculator->getRateRequest(false, false, false, $store);
         $discountPercent = 0;
 
         if (!$ignoreDiscount && Mage::helper('weee')->isDiscounted($store)) {
@@ -213,16 +234,21 @@ class Mage_Weee_Model_Tax extends Mage_Core_Model_Abstract
                     $taxAmount = 0;
                     $amount    = $value;
                     if ($calculateTax && Mage::helper('weee')->isTaxable($store)) {
-                        $defaultPercent = Mage::getModel('tax/calculation')
-                            ->getRate($defaultRateRequest
-                            ->setProductClassId($product->getTaxClassId()));
+                        if ($this->_taxHelper->isCrossBorderTradeEnabled($store)) {
+                            $defaultPercent = $currentPercent;
+                        } else {
+                            $defaultRateRequest = $calculator->getDefaultRateRequest($store);
+                            $defaultPercent = Mage::getModel('tax/calculation')
+                                ->getRate($defaultRateRequest
+                                ->setProductClassId($product->getTaxClassId()));
+                        }
 
                         if (Mage::helper('weee')->isTaxIncluded($store)) {
                             $taxAmount = Mage::app()->getStore()
                                     ->roundPrice($value / (100 + $defaultPercent) * $currentPercent);
                             $amount =  $amount - $taxAmount;
                         } else {
-                            $appliedRates = Mage::getModel('tax/calculation')->getAppliedRates($defaultRateRequest);
+                            $appliedRates = Mage::getModel('tax/calculation')->getAppliedRates($rateRequest);
                             if (count($appliedRates) > 1) {
                                 $taxAmount = 0;
                                 foreach ($appliedRates as $appliedRate) {
@@ -230,7 +256,7 @@ class Mage_Weee_Model_Tax extends Mage_Core_Model_Abstract
                                     $taxAmount += Mage::app()->getStore()->roundPrice($value * $taxRate / 100);
                                 }
                             } else {
-                                $taxAmount = Mage::app()->getStore()->roundPrice($value * $defaultPercent / 100);
+                                $taxAmount = Mage::app()->getStore()->roundPrice($value * $currentPercent / 100);
                             }
                         }
                     }
@@ -274,7 +300,7 @@ class Mage_Weee_Model_Tax extends Mage_Core_Model_Abstract
     /**
      * Update discounts for FPT amounts of all products
      *
-     * @return Mage_Weee_Model_Tax
+     * @return $this
      */
     public function updateDiscountPercents()
     {
@@ -286,7 +312,7 @@ class Mage_Weee_Model_Tax extends Mage_Core_Model_Abstract
      * Update discounts for FPT amounts base on products condiotion
      *
      * @param  mixed $products
-     * @return Mage_Weee_Model_Tax
+     * @return $this
      */
     public function updateProductsDiscountPercent($products)
     {

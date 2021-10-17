@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_CatalogSearch
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 /**
@@ -127,7 +127,7 @@ class Mage_CatalogSearch_Helper_Data extends Mage_Core_Helper_Abstract
             if ($this->_queryText === null) {
                 $this->_queryText = '';
             } else {
-                /* @var $stringHelper Mage_Core_Helper_String */
+                /* @var Mage_Core_Helper_String $stringHelper */
                 $stringHelper = Mage::helper('core/string');
                 $this->_queryText = is_array($this->_queryText) ? ''
                     : $stringHelper->cleanString(trim($this->_queryText));
@@ -256,7 +256,7 @@ class Mage_CatalogSearch_Helper_Data extends Mage_Core_Helper_Abstract
      * Add Note message
      *
      * @param string $message
-     * @return Mage_CatalogSearch_Helper_Data
+     * @return $this
      */
     public function addNoteMessage($message)
     {
@@ -268,7 +268,7 @@ class Mage_CatalogSearch_Helper_Data extends Mage_Core_Helper_Abstract
      * Set Note messages
      *
      * @param array $messages
-     * @return Mage_CatalogSearch_Helper_Data
+     * @return $this
      */
     public function setNoteMessages(array $messages)
     {
@@ -290,7 +290,7 @@ class Mage_CatalogSearch_Helper_Data extends Mage_Core_Helper_Abstract
      * Check query of a warnings
      *
      * @param mixed $store
-     * @return Mage_CatalogSearch_Helper_Data
+     * @return void
      */
     public function checkNotes($store = null)
     {
@@ -298,7 +298,7 @@ class Mage_CatalogSearch_Helper_Data extends Mage_Core_Helper_Abstract
             $this->addNoteMessage($this->__('Maximum Search query length is %s. Your query was cut.', $this->getMaxQueryLength()));
         }
 
-        /* @var $stringHelper Mage_Core_Helper_String */
+        /* @var Mage_Core_Helper_String $stringHelper */
         $stringHelper = Mage::helper('core/string');
 
         $searchType = Mage::getStoreConfig(Mage_CatalogSearch_Model_Fulltext::XML_PATH_CATALOG_SEARCH_TYPE);
@@ -310,7 +310,7 @@ class Mage_CatalogSearch_Helper_Data extends Mage_Core_Helper_Abstract
             if (count($wordsFull) > count($wordsLike)) {
                 $wordsCut = array_map(array($this, 'escapeHtml'), array_diff($wordsFull, $wordsLike));
                 $this->addNoteMessage(
-                    $this->__('Maximum words count is %1$s. In your search query was cut next part: %2$s.', $this->getMaxQueryWords(), join(' ', $wordsCut))
+                    $this->__('Maximum words count is %1$s. In your search query was cut next part: %2$s.', $this->getMaxQueryWords(), implode(' ', $wordsCut))
                 );
             }
         }
@@ -330,12 +330,11 @@ class Mage_CatalogSearch_Helper_Data extends Mage_Core_Helper_Abstract
         foreach ($index as $value) {
             if (!is_array($value)) {
                 $_index[] = $value;
-            }
-            else {
+            } else {
                 $_index = array_merge($_index, $value);
             }
         }
-        return join($separator, $_index);
+        return implode($separator, $_index);
     }
 
     /**

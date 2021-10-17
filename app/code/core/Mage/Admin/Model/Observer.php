@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Admin
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 /**
@@ -34,6 +34,7 @@
 class Mage_Admin_Model_Observer
 {
     const FLAG_NO_LOGIN = 'no-login';
+
     /**
      * Handler for controller_action_predispatch event
      *
@@ -42,12 +43,14 @@ class Mage_Admin_Model_Observer
      */
     public function actionPreDispatchAdmin($observer)
     {
+        /** @var Mage_Admin_Model_Session $session */
         $session = Mage::getSingleton('admin/session');
-        /** @var $session Mage_Admin_Model_Session */
+
+        /** @var Mage_Core_Controller_Request_Http $request */
         $request = Mage::app()->getRequest();
         $user = $session->getUser();
 
-        $requestedActionName = $request->getActionName();
+        $requestedActionName = strtolower($request->getActionName());
         $openActions = array(
             'forgotpassword',
             'resetpassword',
@@ -58,24 +61,40 @@ class Mage_Admin_Model_Observer
         if (in_array($requestedActionName, $openActions)) {
             $request->setDispatched(true);
         } else {
-            if($user) {
+            if ($user) {
                 $user->reload();
             }
             if (!$user || !$user->getId()) {
                 if ($request->getPost('login')) {
-                    $postLogin  = $request->getPost('login');
-                    $username   = isset($postLogin['username']) ? $postLogin['username'] : '';
-                    $password   = isset($postLogin['password']) ? $postLogin['password'] : '';
-                    $session->login($username, $password, $request);
-                    $request->setPost('login', null);
+
+                    /** @var Mage_Core_Model_Session $coreSession */
+                    $coreSession = Mage::getSingleton('core/session');
+
+                    if ($coreSession->validateFormKey($request->getPost("form_key"))) {
+                        $postLogin = $request->getPost('login');
+                        $username = isset($postLogin['username']) ? $postLogin['username'] : '';
+                        $password = isset($postLogin['password']) ? $postLogin['password'] : '';
+                        $session->login($username, $password, $request);
+                        $request->setPost('login', null);
+                    } else {
+                        if ($request && !$request->getParam('messageSent')) {
+                            Mage::getSingleton('adminhtml/session')->addError(
+                                Mage::helper('adminhtml')->__('Invalid Form Key. Please refresh the page.')
+                            );
+                            $request->setParam('messageSent', true);
+                        }
+                    }
+
+                    $coreSession->renewFormKey();
                 }
-                if (!$request->getParam('forwarded')) {
+                if (!$request->getInternallyForwarded()) {
+                    $request->setInternallyForwarded();
                     if ($request->getParam('isIframe')) {
                         $request->setParam('forwarded', true)
                             ->setControllerName('index')
                             ->setActionName('deniedIframe')
                             ->setDispatched(false);
-                    } elseif($request->getParam('isAjax')) {
+                    } elseif ($request->getParam('isAjax')) {
                         $request->setParam('forwarded', true)
                             ->setControllerName('index')
                             ->setActionName('deniedJson')
@@ -103,5 +122,35 @@ class Mage_Admin_Model_Observer
      */
     public function actionPostDispatchAdmin($event)
     {
+    }
+
+    /**
+     * Validate admin password and upgrade hash version
+     *
+     * @param Varien_Event_Observer $observer
+     */
+    public function actionAdminAuthenticate($observer)
+    {
+        $password = $observer->getEvent()->getPassword();
+        $user = $observer->getEvent()->getUser();
+        $authResult = $observer->getEvent()->getResult();
+
+        if (!$authResult) {
+            return;
+        }
+
+        if (
+            !(bool) $user->getPasswordUpgraded()
+            && !Mage::helper('core')->getEncryptor()->validateHashByVersion(
+                $password,
+                $user->getPassword(),
+                Mage_Core_Model_Encryption::HASH_VERSION_SHA256
+            )
+        ) {
+            $user
+                ->setNewPassword($password)->setForceNewPassword(true)
+                ->save();
+            $user->setPasswordUpgraded(true);
+        }
     }
 }

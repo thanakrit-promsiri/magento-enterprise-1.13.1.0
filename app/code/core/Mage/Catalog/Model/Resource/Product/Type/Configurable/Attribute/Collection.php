@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Catalog
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 
@@ -31,6 +31,8 @@
  * @category    Mage
  * @package     Mage_Catalog
  * @author      Magento Core Team <core@magentocommerce.com>
+ *
+ * @method Mage_Catalog_Model_Product_Type_Configurable_Attribute getItemById(int $value)
  */
 class Mage_Catalog_Model_Resource_Product_Type_Configurable_Attribute_Collection
     extends Mage_Core_Model_Resource_Db_Collection_Abstract
@@ -81,7 +83,7 @@ class Mage_Catalog_Model_Resource_Product_Type_Configurable_Attribute_Collection
      * Set Product filter (Configurable)
      *
      * @param Mage_Catalog_Model_Product $product
-     * @return Mage_Catalog_Model_Resource_Product_Type_Configurable_Attribute_Collection
+     * @return $this
      */
     public function setProductFilter($product)
     {
@@ -93,7 +95,7 @@ class Mage_Catalog_Model_Resource_Product_Type_Configurable_Attribute_Collection
      * Set order collection by Position
      *
      * @param string $dir
-     * @return Mage_Catalog_Model_Resource_Product_Type_Configurable_Attribute_Collection
+     * @return $this
      */
     public function orderByPosition($dir = self::SORT_ORDER_ASC)
     {
@@ -114,7 +116,7 @@ class Mage_Catalog_Model_Resource_Product_Type_Configurable_Attribute_Collection
     /**
      * After load collection process
      *
-     * @return Mage_Catalog_Model_Resource_Product_Type_Configurable_Attribute_Collection
+     * @return $this
      */
     protected function _afterLoad()
     {
@@ -137,7 +139,7 @@ class Mage_Catalog_Model_Resource_Product_Type_Configurable_Attribute_Collection
     /**
      * Add product attributes to collection items
      *
-     * @return Mage_Catalog_Model_Resource_Product_Type_Configurable_Attribute_Collection
+     * @return $this
      */
     protected function _addProductAttributes()
     {
@@ -152,19 +154,19 @@ class Mage_Catalog_Model_Resource_Product_Type_Configurable_Attribute_Collection
     /**
      * Add Associated Product Filters (From Product Type Instance)
      *
-     * @return Mage_Catalog_Model_Resource_Product_Type_Configurable_Attribute_Collection
+     * @return $this
      */
     public function _addAssociatedProductFilters()
     {
         $this->getProduct()->getTypeInstance(true)
-            ->getUsedProducts($this->getColumnValues('attribute_id'), $this->getProduct()); // Filter associated products
+            ->getUsedProducts($this->getColumnValues('attribute_id'), $this->getProduct()); //Filter associated products
         return $this;
     }
 
     /**
      * Load attribute labels
      *
-     * @return Mage_Catalog_Model_Resource_Product_Type_Configurable_Attribute_Collection
+     * @return $this
      */
     protected function _loadLabels()
     {
@@ -185,7 +187,10 @@ class Mage_Catalog_Model_Resource_Product_Type_Configurable_Attribute_Collection
                 ->from(array('def' => $this->_labelTable))
                 ->joinLeft(
                     array('store' => $this->_labelTable),
-                    $this->getConnection()->quoteInto('store.product_super_attribute_id = def.product_super_attribute_id AND store.store_id = ?', $this->getStoreId()),
+                    $this->getConnection()->quoteInto(
+                        'store.product_super_attribute_id = def.product_super_attribute_id AND store.store_id = ?',
+                        $this->getStoreId()
+                    ),
                     array(
                         'use_default' => $useDefaultCheck,
                         'label' => $labelCheck
@@ -205,7 +210,7 @@ class Mage_Catalog_Model_Resource_Product_Type_Configurable_Attribute_Collection
     /**
      * Load attribute prices information
      *
-     * @return Mage_Catalog_Model_Resource_Product_Type_Configurable_Attribute_Collection
+     * @return $this
      */
     protected function _loadPrices()
     {
@@ -238,36 +243,49 @@ class Mage_Catalog_Model_Resource_Product_Type_Configurable_Attribute_Collection
             }
 
             $values = array();
-
+            $sortOrder = 1;
             foreach ($this->_items as $item) {
-               $productAttribute = $item->getProductAttribute();
-               if (!($productAttribute instanceof Mage_Eav_Model_Entity_Attribute_Abstract)) {
-                   continue;
-               }
-               $options = $productAttribute->getFrontend()->getSelectOptions();
-               foreach ($options as $option) {
-                   foreach ($this->getProduct()->getTypeInstance(true)->getUsedProducts(null, $this->getProduct()) as $associatedProduct) {
-                        if (!empty($option['value'])
-                            && $option['value'] == $associatedProduct->getData(
-                                                        $productAttribute->getAttributeCode())) {
-                            // If option available in associated product
-                            if (!isset($values[$item->getId() . ':' . $option['value']])) {
-                                // If option not added, we will add it.
-                                $values[$item->getId() . ':' . $option['value']] = array(
-                                    'product_super_attribute_id' => $item->getId(),
-                                    'value_index'                => $option['value'],
-                                    'label'                      => $option['label'],
-                                    'default_label'              => $option['label'],
-                                    'store_label'                => $option['label'],
-                                    'is_percent'                 => 0,
-                                    'pricing_value'              => null,
-                                    'use_default_value'          => true
-                                );
-                            }
+                $productAttribute = $item->getProductAttribute();
+                if (!($productAttribute instanceof Mage_Eav_Model_Entity_Attribute_Abstract)) {
+                    continue;
+                }
+                $options = $productAttribute->getFrontend()->getSelectOptions();
+
+                $optionsByValue = array();
+                foreach ($options as $option) {
+                    $optionsByValue[$option['value']] = array('label' => $option['label'], 'order' => $sortOrder++);
+                }
+
+                /** @var Mage_Catalog_Model_Product $associatedProduct */
+                foreach ($this->getProduct()->getTypeInstance(true)
+                             ->getUsedProducts(array($productAttribute->getAttributeCode()), $this->getProduct())
+                         as $associatedProduct) {
+
+                    $optionValue = $associatedProduct->getData($productAttribute->getAttributeCode());
+
+                    if (array_key_exists($optionValue, $optionsByValue)) {
+                        // If option available in associated product
+                        if (!isset($values[$item->getId() . ':' . $optionValue])) {
+                            // If option not added, we will add it.
+                            $values[$item->getId() . ':' . $optionValue] = array(
+                                'product_super_attribute_id' => $item->getId(),
+                                'value_index'                => $optionValue,
+                                'label'                      => $optionsByValue[$optionValue]['label'],
+                                'default_label'              => $optionsByValue[$optionValue]['label'],
+                                'store_label'                => $optionsByValue[$optionValue]['label'],
+                                'is_percent'                 => 0,
+                                'pricing_value'              => null,
+                                'use_default_value'          => true,
+                                'order'                      => $optionsByValue[$optionValue]['order']
+                            );
                         }
-                   }
-               }
+                    }
+                }
             }
+
+            uasort($values, function($a, $b) {
+                return $a['order'] - $b['order'];
+            });
 
             foreach ($pricings[0] as $pricing) {
                 // Addding pricing to options

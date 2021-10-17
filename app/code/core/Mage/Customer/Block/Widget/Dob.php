@@ -1,29 +1,33 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Customer
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
+/**
+ * @method string getTime()
+ * @method $this setTime(string $value)
+ */
 class Mage_Customer_Block_Widget_Dob extends Mage_Customer_Block_Widget_Abstract
 {
     /**
@@ -41,16 +45,26 @@ class Mage_Customer_Block_Widget_Dob extends Mage_Customer_Block_Widget_Abstract
         $this->setTemplate('customer/widget/dob.phtml');
     }
 
+    /**
+     * @return bool
+     */
     public function isEnabled()
     {
         return (bool)$this->_getAttribute('dob')->getIsVisible();
     }
 
+    /**
+     * @return bool
+     */
     public function isRequired()
     {
         return (bool)$this->_getAttribute('dob')->getIsRequired();
     }
 
+    /**
+     * @param string $date
+     * @return $this
+     */
     public function setDate($date)
     {
         $this->setTime($date ? strtotime($date) : false);
@@ -58,16 +72,25 @@ class Mage_Customer_Block_Widget_Dob extends Mage_Customer_Block_Widget_Abstract
         return $this;
     }
 
+    /**
+     * @return false|string
+     */
     public function getDay()
     {
         return $this->getTime() ? date('d', $this->getTime()) : '';
     }
 
+    /**
+     * @return false|string
+     */
     public function getMonth()
     {
         return $this->getTime() ? date('m', $this->getTime()) : '';
     }
 
+    /**
+     * @return false|string
+     */
     public function getYear()
     {
         return $this->getTime() ? date('Y', $this->getTime()) : '';
@@ -113,7 +136,11 @@ class Mage_Customer_Block_Widget_Dob extends Mage_Customer_Block_Widget_Abstract
 
         $dateFormat = preg_replace('/[^\%\w]/', '\\1', $this->getDateFormat());
 
-        return sprintf(strtr($dateFormat, $strtr),
-            $this->_dateInputs['m'], $this->_dateInputs['d'], $this->_dateInputs['y']);
+        return sprintf(
+            strtr($dateFormat, $strtr),
+            $this->_dateInputs['m'],
+            $this->_dateInputs['d'],
+            $this->_dateInputs['y']
+        );
     }
 }

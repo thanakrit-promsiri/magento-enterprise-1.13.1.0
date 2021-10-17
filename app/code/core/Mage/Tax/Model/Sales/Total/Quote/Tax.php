@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Tax
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 /**
@@ -108,7 +108,7 @@ class Mage_Tax_Model_Sales_Total_Quote_Tax extends Mage_Sales_Model_Quote_Addres
      * Round the total amounts in address
      *
      * @param Mage_Sales_Model_Quote_Address $address
-     * @return Mage_Tax_Model_Sales_Total_Quote_Tax
+     * @return $this
      */
     protected function _roundTotals(Mage_Sales_Model_Quote_Address $address)
     {
@@ -152,7 +152,7 @@ class Mage_Tax_Model_Sales_Total_Quote_Tax extends Mage_Sales_Model_Quote_Addres
      * Collect tax totals for quote address
      *
      * @param   Mage_Sales_Model_Quote_Address $address
-     * @return  Mage_Tax_Model_Sales_Total_Quote
+     * @return  $this
      */
     public function collect(Mage_Sales_Model_Quote_Address $address)
     {
@@ -185,10 +185,14 @@ class Mage_Tax_Model_Sales_Total_Quote_Tax extends Mage_Sales_Model_Quote_Addres
         );
 
         if ($this->_config->priceIncludesTax($this->_store)) {
-            $this->_areTaxRequestsSimilar = $this->_calculator->compareRequests(
-                $this->_calculator->getRateOriginRequest($this->_store),
-                $request
-            );
+            if ($this->_helper->isCrossBorderTradeEnabled($this->_store)) {
+                $this->_areTaxRequestsSimilar = true;
+            } else {
+                $this->_areTaxRequestsSimilar = $this->_calculator->compareRequests(
+                    $this->_calculator->getRateOriginRequest($this->_store),
+                    $request
+                );
+            }
         }
 
         switch ($this->_config->getAlgorithm($this->_store)) {
@@ -286,8 +290,11 @@ class Mage_Tax_Model_Sales_Total_Quote_Tax extends Mage_Sales_Model_Quote_Addres
      * @param string $taxId
      */
     protected function _calculateShippingTaxByRate(
-        Mage_Sales_Model_Quote_Address $address, $rate, $appliedRates, $taxId = null)
-    {
+        Mage_Sales_Model_Quote_Address $address,
+        $rate,
+        $appliedRates,
+        $taxId = null
+    ) {
         $inclTax = $address->getIsShippingInclTax();
         $shipping = $address->getShippingTaxable();
         $baseShipping = $address->getBaseShippingTaxable();
@@ -370,11 +377,11 @@ class Mage_Tax_Model_Sales_Total_Quote_Tax extends Mage_Sales_Model_Quote_Addres
     }
 
     /**
-     * Tax caclulation for shipping price
+     * Tax calculation for shipping price
      *
      * @param   Mage_Sales_Model_Quote_Address $address
      * @param   Varien_Object $taxRateRequest
-     * @return  Mage_Tax_Model_Sales_Total_Quote
+     * @return  $this
      */
     protected function _calculateShippingTax(Mage_Sales_Model_Quote_Address $address, $taxRateRequest)
     {
@@ -403,7 +410,8 @@ class Mage_Tax_Model_Sales_Total_Quote_Tax extends Mage_Sales_Model_Quote_Addres
      * Calculate address tax amount based on one unit price and tax amount
      *
      * @param   Mage_Sales_Model_Quote_Address $address
-     * @return  Mage_Tax_Model_Sales_Total_Quote
+     * @param $taxRateRequest
+     * @return $this
      */
     protected function _unitBaseCalculation(Mage_Sales_Model_Quote_Address $address, $taxRateRequest)
     {
@@ -420,12 +428,22 @@ class Mage_Tax_Model_Sales_Total_Quote_Tax extends Mage_Sales_Model_Quote_Addres
             if ($item->getHasChildren() && $item->isChildrenCalculated()) {
                 foreach ($item->getChildren() as $child) {
                     $this->_unitBaseProcessItemTax(
-                        $address, $child, $taxRateRequest, $itemTaxGroups, $catalogPriceInclTax);
+                        $address,
+                        $child,
+                        $taxRateRequest,
+                        $itemTaxGroups,
+                        $catalogPriceInclTax
+                    );
                 }
                 $this->_recalculateParent($item);
             } else {
                 $this->_unitBaseProcessItemTax(
-                    $address, $item, $taxRateRequest, $itemTaxGroups, $catalogPriceInclTax);
+                    $address,
+                    $item,
+                    $taxRateRequest,
+                    $itemTaxGroups,
+                    $catalogPriceInclTax
+                );
             }
         }
         if ($address->getQuote()->getTaxesForItems()) {
@@ -444,9 +462,12 @@ class Mage_Tax_Model_Sales_Total_Quote_Tax extends Mage_Sales_Model_Quote_Addres
      * @param boolean $catalogPriceInclTax
      */
     protected function _unitBaseProcessItemTax(
-        $address, $item, $taxRateRequest, &$itemTaxGroups, $catalogPriceInclTax
-    )
-    {
+        $address,
+        $item,
+        $taxRateRequest,
+        &$itemTaxGroups,
+        $catalogPriceInclTax
+    ) {
         $taxRateRequest->setProductClassId($item->getProduct()->getTaxClassId());
         $rate = $this->_calculator->getRate($taxRateRequest);
 
@@ -462,7 +483,8 @@ class Mage_Tax_Model_Sales_Total_Quote_Tax extends Mage_Sales_Model_Quote_Addres
             $qty = $item->getTotalQty();
             $item->setRowTotalInclTax($this->_store->roundPrice($item->getTaxableAmount() * $qty));
             $item->setBaseRowTotalInclTax(
-                $this->_store->roundPrice($item->getBaseTaxableAmount() * $qty));
+                $this->_store->roundPrice($item->getBaseTaxableAmount() * $qty)
+            );
             $recalculateRowTotalInclTax = true;
         }
 
@@ -471,7 +493,12 @@ class Mage_Tax_Model_Sales_Total_Quote_Tax extends Mage_Sales_Model_Quote_Addres
         if ($catalogPriceInclTax) {
             $this->_calcUnitTaxAmount($item, $rate);
             $this->_saveAppliedTaxes(
-                $address, $appliedRates, $item->getTaxAmount(), $item->getBaseTaxAmount(), $rate);
+                $address,
+                $appliedRates,
+                $item->getTaxAmount(),
+                $item->getBaseTaxAmount(),
+                $rate
+            );
         } else {
             //need to calculate each tax separately
             $taxGroups = array();
@@ -480,7 +507,12 @@ class Mage_Tax_Model_Sales_Total_Quote_Tax extends Mage_Sales_Model_Quote_Addres
                 $taxRate = $appliedTax['percent'];
                 $this->_calcUnitTaxAmount($item, $taxRate, $taxGroups, $taxId, $recalculateRowTotalInclTax);
                 $this->_saveAppliedTaxes(
-                    $address, array($appliedTax), $taxGroups[$taxId]['tax'], $taxGroups[$taxId]['base_tax'], $taxRate);
+                    $address,
+                    array($appliedTax),
+                    $taxGroups[$taxId]['tax'],
+                    $taxGroups[$taxId]['base_tax'],
+                    $taxRate
+                );
             }
             //We need to calculate weeeAmountInclTax using multiple tax rate here
             //because the _calculateWeeeTax and _calculateRowWeeeTax only take one tax rate
@@ -505,12 +537,15 @@ class Mage_Tax_Model_Sales_Total_Quote_Tax extends Mage_Sales_Model_Quote_Addres
      * @param   array $taxGroups
      * @param   string $taxId
      * @param   boolean $recalculateRowTotalInclTax
-     * @return  Mage_Tax_Model_Sales_Total_Quote
+     * @return  $this
      */
     protected function _calcUnitTaxAmount(
-        $item, $rate, &$taxGroups = null, $taxId = null, $recalculateRowTotalInclTax = false
-    )
-    {
+        $item,
+        $rate,
+        &$taxGroups = null,
+        $taxId = null,
+        $recalculateRowTotalInclTax = false
+    ) {
         $qty = $item->getTotalQty();
         $inclTax = $item->getIsPriceInclTax();
         $price = $item->getTaxableAmount();
@@ -550,7 +585,7 @@ class Mage_Tax_Model_Sales_Total_Quote_Tax extends Mage_Sales_Model_Quote_Addres
                 $baseDiscountAmount = $item->getBaseDiscountAmount() / $qty;
 
                 //We want to remove weee
-                if ($isWeeeEnabled) {
+                if ($isWeeeEnabled && $this->_weeeHelper->includeInSubtotal()) {
                     $discountAmount = $discountAmount - $item->getWeeeDiscount() / $qty;
                     $baseDiscountAmount = $baseDiscountAmount - $item->getBaseWeeeDiscount() / $qty;
                 }
@@ -638,10 +673,12 @@ class Mage_Tax_Model_Sales_Total_Quote_Tax extends Mage_Sales_Model_Quote_Addres
                 $item->setBaseRowTotalInclTax($basePrice * $qty);
             } else {
                 $item->setRowTotalInclTax(
-                    $item->getRowTotalInclTax() + ($unitTaxBeforeDiscount - $weeeTaxBeforeDiscount) * $qty);
+                    $item->getRowTotalInclTax() + ($unitTaxBeforeDiscount - $weeeTaxBeforeDiscount) * $qty
+                );
                 $item->setBaseRowTotalInclTax(
                     $item->getBaseRowTotalInclTax() +
-                    ($baseUnitTaxBeforeDiscount - $baseWeeeTaxBeforeDiscount) * $qty);
+                    ($baseUnitTaxBeforeDiscount - $baseWeeeTaxBeforeDiscount) * $qty
+                );
             }
         }
 
@@ -653,7 +690,7 @@ class Mage_Tax_Model_Sales_Total_Quote_Tax extends Mage_Sales_Model_Quote_Addres
      *
      * @param   Mage_Sales_Model_Quote_Address $address
      * @param   Varien_Object $taxRateRequest
-     * @return  Mage_Tax_Model_Sales_Total_Quote
+     * @return  $this
      */
     protected function _rowBaseCalculation(Mage_Sales_Model_Quote_Address $address, $taxRateRequest)
     {
@@ -669,12 +706,22 @@ class Mage_Tax_Model_Sales_Total_Quote_Tax extends Mage_Sales_Model_Quote_Addres
             if ($item->getHasChildren() && $item->isChildrenCalculated()) {
                 foreach ($item->getChildren() as $child) {
                     $this->_rowBaseProcessItemTax(
-                        $address, $child, $taxRateRequest, $itemTaxGroups, $catalogPriceInclTax);
+                        $address,
+                        $child,
+                        $taxRateRequest,
+                        $itemTaxGroups,
+                        $catalogPriceInclTax
+                    );
                 }
                 $this->_recalculateParent($item);
             } else {
                 $this->_rowBaseProcessItemTax(
-                    $address, $item, $taxRateRequest, $itemTaxGroups, $catalogPriceInclTax);
+                    $address,
+                    $item,
+                    $taxRateRequest,
+                    $itemTaxGroups,
+                    $catalogPriceInclTax
+                );
             }
         }
 
@@ -717,7 +764,12 @@ class Mage_Tax_Model_Sales_Total_Quote_Tax extends Mage_Sales_Model_Quote_Addres
         if ($catalogPriceInclTax) {
             $this->_calcRowTaxAmount($item, $rate);
             $this->_saveAppliedTaxes(
-                $address, $appliedRates, $item->getTaxAmount(), $item->getBaseTaxAmount(), $rate);
+                $address,
+                $appliedRates,
+                $item->getTaxAmount(),
+                $item->getBaseTaxAmount(),
+                $rate
+            );
         } else {
             //need to calculate each tax separately
             $taxGroups = array();
@@ -726,7 +778,12 @@ class Mage_Tax_Model_Sales_Total_Quote_Tax extends Mage_Sales_Model_Quote_Addres
                 $taxRate = $appliedTax['percent'];
                 $this->_calcRowTaxAmount($item, $taxRate, $taxGroups, $taxId, $recalculateRowTotalInclTax);
                 $this->_saveAppliedTaxes(
-                    $address, array($appliedTax), $taxGroups[$taxId]['tax'], $taxGroups[$taxId]['base_tax'], $taxRate);
+                    $address,
+                    array($appliedTax),
+                    $taxGroups[$taxId]['tax'],
+                    $taxGroups[$taxId]['base_tax'],
+                    $taxRate
+                );
             }
             //We need to calculate weeeAmountInclTax using multiple tax rate here
             //because the _calculateWeeeTax and _calculateRowWeeeTax only take one tax rate
@@ -751,12 +808,15 @@ class Mage_Tax_Model_Sales_Total_Quote_Tax extends Mage_Sales_Model_Quote_Addres
      * @param   array $taxGroups
      * @param   string $taxId
      * @param   boolean $recalculateRowTotalInclTax
-     * @return  Mage_Tax_Model_Sales_Total_Quote
+     * @return  $this
      */
     protected function _calcRowTaxAmount(
-        $item, $rate, &$taxGroups = null, $taxId = null, $recalculateRowTotalInclTax = false
-    )
-    {
+        $item,
+        $rate,
+        &$taxGroups = null,
+        $taxId = null,
+        $recalculateRowTotalInclTax = false
+    ) {
         $inclTax = $item->getIsPriceInclTax();
         $subtotal = $taxSubtotal = $item->getTaxableAmount();
         $baseSubtotal = $baseTaxSubtotal = $item->getBaseTaxableAmount();
@@ -794,7 +854,7 @@ class Mage_Tax_Model_Sales_Total_Quote_Tax extends Mage_Sales_Model_Quote_Addres
                 $discountAmount = $item->getDiscountAmount();
                 $baseDiscountAmount = $item->getBaseDiscountAmount();
 
-                if ($isWeeeEnabled) {
+                if ($isWeeeEnabled && $this->_weeeHelper->includeInSubtotal()) {
                     $discountAmount = $discountAmount - $item->getWeeeDiscount();
                     $baseDiscountAmount = $baseDiscountAmount - $item->getBaseWeeeDiscount();
                 }
@@ -891,7 +951,8 @@ class Mage_Tax_Model_Sales_Total_Quote_Tax extends Mage_Sales_Model_Quote_Addres
                 $item->setBaseRowTotalInclTax($baseSubtotal);
             } else {
                 $item->setRowTotalInclTax(
-                    $item->getRowTotalInclTax() + $rowTaxBeforeDiscount - $weeeRowTaxBeforeDiscount);
+                    $item->getRowTotalInclTax() + $rowTaxBeforeDiscount - $weeeRowTaxBeforeDiscount
+                );
                 $item->setBaseRowTotalInclTax($item->getBaseRowTotalInclTax() +
                 $baseRowTaxBeforeDiscount - $baseWeeeRowTaxBeforeDiscount);
             }
@@ -904,7 +965,7 @@ class Mage_Tax_Model_Sales_Total_Quote_Tax extends Mage_Sales_Model_Quote_Addres
      *
      * @param   Mage_Sales_Model_Quote_Address $address
      * @param   Varien_Object $taxRateRequest
-     * @return  Mage_Tax_Model_Sales_Total_Quote
+     * @return  $this
      */
     protected function _totalBaseCalculation(Mage_Sales_Model_Quote_Address $address, $taxRateRequest)
     {
@@ -922,12 +983,22 @@ class Mage_Tax_Model_Sales_Total_Quote_Tax extends Mage_Sales_Model_Quote_Addres
             if ($item->getHasChildren() && $item->isChildrenCalculated()) {
                 foreach ($item->getChildren() as $child) {
                     $this->_totalBaseProcessItemTax(
-                        $child, $taxRateRequest, $taxGroups, $itemTaxGroups, $catalogPriceInclTax);
+                        $child,
+                        $taxRateRequest,
+                        $taxGroups,
+                        $itemTaxGroups,
+                        $catalogPriceInclTax
+                    );
                 }
                 $this->_recalculateParent($item);
             } else {
                 $this->_totalBaseProcessItemTax(
-                    $item, $taxRateRequest, $taxGroups, $itemTaxGroups, $catalogPriceInclTax);
+                    $item,
+                    $taxRateRequest,
+                    $taxGroups,
+                    $itemTaxGroups,
+                    $catalogPriceInclTax
+                );
             }
         }
 
@@ -965,9 +1036,12 @@ class Mage_Tax_Model_Sales_Total_Quote_Tax extends Mage_Sales_Model_Quote_Addres
      * @param boolean $catalogPriceInclTax
      */
     protected function _totalBaseProcessItemTax(
-        $item, $taxRateRequest, &$taxGroups, &$itemTaxGroups, $catalogPriceInclTax
-    )
-    {
+        $item,
+        $taxRateRequest,
+        &$taxGroups,
+        &$itemTaxGroups,
+        $catalogPriceInclTax
+    ) {
         $taxRateRequest->setProductClassId($item->getProduct()->getTaxClassId());
         $rate = $this->_calculator->getRate($taxRateRequest);
 
@@ -1019,12 +1093,17 @@ class Mage_Tax_Model_Sales_Total_Quote_Tax extends Mage_Sales_Model_Quote_Addres
      * @param   Mage_Sales_Model_Quote_Item_Abstract $item
      * @param   float $rate
      * @param   array $taxGroups
-     * @return  Mage_Tax_Model_Sales_Total_Quote
+     * @param null|string $taxId
+     * @param bool $recalculateRowTotalInclTax
+     * @return  $this
      */
     protected function _aggregateTaxPerRate(
-        $item, $rate, &$taxGroups, $taxId = null, $recalculateRowTotalInclTax = false
-    )
-    {
+        $item,
+        $rate,
+        &$taxGroups,
+        $taxId = null,
+        $recalculateRowTotalInclTax = false
+    ) {
         $inclTax = $item->getIsPriceInclTax();
         $rateKey = ($taxId == null) ? (string)$rate : $taxId;
         $taxSubtotal = $subtotal = $item->getTaxableAmount();
@@ -1062,14 +1141,24 @@ class Mage_Tax_Model_Sales_Total_Quote_Tax extends Mage_Sales_Model_Quote_Addres
                     $baseWeeeRowTaxBeforeDiscount = $this->_calculateRowWeeeTax(0, $item, $rate);
                     $rowTaxBeforeDiscount += $weeeRowTaxBeforeDiscount;
                     $baseRowTaxBeforeDiscount += $baseWeeeRowTaxBeforeDiscount;
-                    $taxGroups[$rateKey]['weee_tax'][] = $this->_deltaRound($weeeRowTaxBeforeDiscount,
-                        $rateKey, $inclTax);
-                    $taxGroups[$rateKey]['base_weee_tax'][] = $this->_deltaRound($baseWeeeRowTaxBeforeDiscount,
-                        $rateKey, $inclTax);
+                    $taxGroups[$rateKey]['weee_tax'][] = $this->_deltaRound(
+                        $weeeRowTaxBeforeDiscount,
+                        $rateKey,
+                        $inclTax
+                    );
+                    $taxGroups[$rateKey]['base_weee_tax'][] = $this->_deltaRound(
+                        $baseWeeeRowTaxBeforeDiscount,
+                        $rateKey,
+                        $inclTax
+                    );
                 }
                 $taxBeforeDiscountRounded = $rowTax = $this->_deltaRound($rowTaxBeforeDiscount, $rateKey, $inclTax);
-                $baseTaxBeforeDiscountRounded = $baseRowTax = $this->_deltaRound($baseRowTaxBeforeDiscount,
-                    $rateKey, $inclTax, 'base');
+                $baseTaxBeforeDiscountRounded = $baseRowTax = $this->_deltaRound(
+                    $baseRowTaxBeforeDiscount,
+                    $rateKey,
+                    $inclTax,
+                    'base'
+                );
                 $item->setTaxAmount($item->getTaxAmount() + max(0, $rowTax));
                 $item->setBaseTaxAmount($item->getBaseTaxAmount() + max(0, $baseRowTax));
                 break;
@@ -1084,7 +1173,7 @@ class Mage_Tax_Model_Sales_Total_Quote_Tax extends Mage_Sales_Model_Quote_Addres
                 }
 
                 //We remove weee discount from discount if weee is not taxed
-                if ($isWeeeEnabled) {
+                if ($isWeeeEnabled && $this->_weeeHelper->includeInSubtotal()) {
                     $discount = $discount - $item->getWeeeDiscount();
                     $baseDiscount = $baseDiscount - $item->getBaseWeeeDiscount();
                 }
@@ -1169,11 +1258,13 @@ class Mage_Tax_Model_Sales_Total_Quote_Tax extends Mage_Sales_Model_Quote_Addres
                 $item->setBaseRowTotalInclTax($baseSubtotal);
             } else {
                 $item->setRowTotalInclTax(
-                    $item->getRowTotalInclTax() + $taxBeforeDiscountRounded - $weeeRowTaxBeforeDiscount);
+                    $item->getRowTotalInclTax() + $taxBeforeDiscountRounded - $weeeRowTaxBeforeDiscount
+                );
                 $item->setBaseRowTotalInclTax(
                     $item->getBaseRowTotalInclTax()
                     + $baseTaxBeforeDiscountRounded
-                    - $baseWeeeRowTaxBeforeDiscount);
+                    - $baseWeeeRowTaxBeforeDiscount
+                );
             }
         }
 
@@ -1227,15 +1318,31 @@ class Mage_Tax_Model_Sales_Total_Quote_Tax extends Mage_Sales_Model_Quote_Addres
                 $weeeAmountInclTax = $this->_calculator->round($weeeRowAmountInclTax / $item->getQty());
             }
             if ($base) {
-                $this->_weeeHelper->setWeeeTaxesAppliedProperty($item, $tax['title'],
-                    'base_amount_incl_tax', $weeeAmountInclTax);
-                $this->_weeeHelper->setWeeeTaxesAppliedProperty($item, $tax['title'],
-                    'base_row_amount_incl_tax', $weeeRowAmountInclTax);
+                $this->_weeeHelper->setWeeeTaxesAppliedProperty(
+                    $item,
+                    $tax['title'],
+                    'base_amount_incl_tax',
+                    $weeeAmountInclTax
+                );
+                $this->_weeeHelper->setWeeeTaxesAppliedProperty(
+                    $item,
+                    $tax['title'],
+                    'base_row_amount_incl_tax',
+                    $weeeRowAmountInclTax
+                );
             } else {
-                $this->_weeeHelper->setWeeeTaxesAppliedProperty($item, $tax['title'],
-                    'amount_incl_tax', $weeeAmountInclTax);
-                $this->_weeeHelper->setWeeeTaxesAppliedProperty($item, $tax['title'],
-                    'row_amount_incl_tax', $weeeRowAmountInclTax);
+                $this->_weeeHelper->setWeeeTaxesAppliedProperty(
+                    $item,
+                    $tax['title'],
+                    'amount_incl_tax',
+                    $weeeAmountInclTax
+                );
+                $this->_weeeHelper->setWeeeTaxesAppliedProperty(
+                    $item,
+                    $tax['title'],
+                    'row_amount_incl_tax',
+                    $weeeRowAmountInclTax
+                );
             }
         }
         return;
@@ -1272,17 +1379,23 @@ class Mage_Tax_Model_Sales_Total_Quote_Tax extends Mage_Sales_Model_Quote_Addres
             //We want to update the tax calculated on Weee to the Item with out discount for display purpose
             $weeeAmountInclTax = $weeeTaxWithOutDiscount + $weeeAmountExclTax;
             if ($base) {
-                $this->_weeeHelper->setWeeeTaxesAppliedProperty($item, $tax['title'],
-                    'base_amount_incl_tax', $weeeAmountInclTax);
+                $this->_weeeHelper->setWeeeTaxesAppliedProperty(
+                    $item,
+                    $tax['title'],
+                    'base_amount_incl_tax',
+                    $weeeAmountInclTax
+                );
             } else {
-                $this->_weeeHelper->setWeeeTaxesAppliedProperty($item, $tax['title'],
-                    'amount_incl_tax', $weeeAmountInclTax);
+                $this->_weeeHelper->setWeeeTaxesAppliedProperty(
+                    $item,
+                    $tax['title'],
+                    'amount_incl_tax',
+                    $weeeAmountInclTax
+                );
             }
 
             $totalWeeeAmountInclTax += $weeeAmountInclTax;
             $totalWeeeAmountExclTax += $weeeAmountExclTax;
-
-
         }
         return $this->_getWeeeTax($rate, $item, $discountAmount, $totalWeeeAmountInclTax, $totalWeeeAmountExclTax);
     }
@@ -1325,11 +1438,19 @@ class Mage_Tax_Model_Sales_Total_Quote_Tax extends Mage_Sales_Model_Quote_Addres
             //We do not show the discount to the user.
             $weeeAmountIncludingTax = $weeeTaxWithOutDiscount + $weeeAmountExclTax;
             if ($base) {
-                $this->_weeeHelper->setWeeeTaxesAppliedProperty($item, $tax['title'],
-                    'base_row_amount_incl_tax', $weeeAmountIncludingTax);
+                $this->_weeeHelper->setWeeeTaxesAppliedProperty(
+                    $item,
+                    $tax['title'],
+                    'base_row_amount_incl_tax',
+                    $weeeAmountIncludingTax
+                );
             } else {
-                $this->_weeeHelper->setWeeeTaxesAppliedProperty($item, $tax['title'],
-                    'row_amount_incl_tax', $weeeAmountIncludingTax);
+                $this->_weeeHelper->setWeeeTaxesAppliedProperty(
+                    $item,
+                    $tax['title'],
+                    'row_amount_incl_tax',
+                    $weeeAmountIncludingTax
+                );
             }
             $totalWeeeAmountInclTax += $weeeAmountInclTax;
             $totalWeeeAmountExclTax += $weeeAmountExclTax;
@@ -1352,7 +1473,9 @@ class Mage_Tax_Model_Sales_Total_Quote_Tax extends Mage_Sales_Model_Quote_Addres
     {
         $isWeeeTaxAlreadyIncluded = $this->_weeeHelper->isTaxIncluded($this->_store);
 
-        if ($rate == $this->_calculator->getStoreRateForItem($item) && $isWeeeTaxAlreadyIncluded) {
+        $sameRateAsStore = $this->_helper->isCrossBorderTradeEnabled($this->_store) ||
+                ($rate == $this->_calculator->getStoreRateForItem($item));
+        if ($sameRateAsStore && $isWeeeTaxAlreadyIncluded) {
             if (!$discountAmount || $discountAmount <= 0) {
                 //We want to skip the re calculation and return the difference
                 return max($weeeAmountIncludingTax - $weeeAmountExclTax, 0);
@@ -1393,7 +1516,7 @@ class Mage_Tax_Model_Sales_Total_Quote_Tax extends Mage_Sales_Model_Quote_Addres
      * Recalculate parent item amounts base on children data
      *
      * @param   Mage_Sales_Model_Quote_Item_Abstract $item
-     * @return  Mage_Tax_Model_Sales_Total_Quote
+     * @return $this
      */
     protected function _recalculateParent(Mage_Sales_Model_Quote_Item_Abstract $item)
     {
@@ -1417,9 +1540,13 @@ class Mage_Tax_Model_Sales_Total_Quote_Tax extends Mage_Sales_Model_Quote_Addres
      * @param   float $baseAmount
      * @param   float $rate
      */
-    protected function _saveAppliedTaxes(Mage_Sales_Model_Quote_Address $address,
-                                         $applied, $amount, $baseAmount, $rate)
-    {
+    protected function _saveAppliedTaxes(
+        Mage_Sales_Model_Quote_Address $address,
+        $applied,
+        $amount,
+        $baseAmount,
+        $rate
+    ) {
         $previouslyAppliedTaxes = $address->getAppliedTaxes();
         $process = count($previouslyAppliedTaxes);
 
@@ -1464,7 +1591,7 @@ class Mage_Tax_Model_Sales_Total_Quote_Tax extends Mage_Sales_Model_Quote_Addres
      * Add tax totals information to address object
      *
      * @param   Mage_Sales_Model_Quote_Address $address
-     * @return  Mage_Tax_Model_Sales_Total_Quote
+     * @return  $this
      */
     public function fetch(Mage_Sales_Model_Quote_Address $address)
     {
@@ -1530,7 +1657,7 @@ class Mage_Tax_Model_Sales_Total_Quote_Tax extends Mage_Sales_Model_Quote_Addres
      * This method can be used for changing totals collect sort order
      *
      * @param   array $config
-     * @param   store $store
+     * @param   Mage_Core_Model_Store $store
      * @return  array
      */
     public function processConfigArray($config, $store)

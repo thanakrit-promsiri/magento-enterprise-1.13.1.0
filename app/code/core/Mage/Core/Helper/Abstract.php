@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Core
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 /**
@@ -55,7 +55,7 @@ abstract class Mage_Core_Helper_Abstract
     /**
      * Retrieve request object
      *
-     * @return Zend_Controller_Request_Http
+     * @return Mage_Core_Controller_Request_Http
      */
     protected function _getRequest()
     {
@@ -79,12 +79,13 @@ abstract class Mage_Core_Helper_Abstract
     /**
      * Saving cache
      *
-     * @param   mixed $data
-     * @param   string $id
-     * @param   array $tags
+     * @param mixed $data
+     * @param string $id
+     * @param array $tags
+     * @param null|false|int $lifeTime
      * @return  Mage_Core_Helper_Abstract
      */
-    protected function _saveCache($data, $id, $tags=array(), $lifeTime=false)
+    protected function _saveCache($data, $id, $tags = array(), $lifeTime = false)
     {
         Mage::app()->saveCache($data, $id, $tags, $lifeTime);
         return $this;
@@ -108,7 +109,7 @@ abstract class Mage_Core_Helper_Abstract
      * @param   array $tags
      * @return  Mage_Core_Helper_Abstract
      */
-    protected function _cleanCache($tags=array())
+    protected function _cleanCache($tags = array())
     {
         Mage::app()->cleanCache($tags);
         return $this;
@@ -187,8 +188,11 @@ abstract class Mage_Core_Helper_Abstract
     }
 
     /**
-     * @deprecated after 1.4.0.0-rc1
+     * @param array $data
+     * @param array $allowedTags
+     * @return mixed
      * @see self::escapeHtml()
+     * @deprecated after 1.4.0.0-rc1
      */
     public function htmlEscape($data, $allowedTags = null)
     {
@@ -198,7 +202,7 @@ abstract class Mage_Core_Helper_Abstract
     /**
      * Escape html entities
      *
-     * @param   mixed $data
+     * @param   string|array $data
      * @param   array $allowedTags
      * @return  mixed
      */
@@ -212,7 +216,7 @@ abstract class Mage_Core_Helper_Abstract
         } else {
             // process single item
             if (strlen($data)) {
-                if (is_array($allowedTags) and !empty($allowedTags)) {
+                if (is_array($allowedTags) && !empty($allowedTags)) {
                     $allowed = implode('|', $allowedTags);
                     $result = preg_replace('/<([\/\s\r\n]*)(' . $allowed . ')([\/\s\r\n]*)>/si', '##$1$2$3##', $data);
                     $result = htmlspecialchars($result, ENT_COMPAT, 'UTF-8', false);
@@ -235,7 +239,13 @@ abstract class Mage_Core_Helper_Abstract
      */
     public function removeTags($html)
     {
-        $html = preg_replace("# <(?![/a-z]) | (?<=\s)>(?![a-z]) #exi", "htmlentities('$0')", $html);
+        $html = preg_replace_callback(
+            "# <(?![/a-z]) | (?<=\s)>(?![a-z]) #xi",
+            function ($matches) {
+                return htmlentities($matches[0]);
+            },
+            $html
+        );
         $html =  strip_tags($html);
         return htmlspecialchars_decode($html);
     }
@@ -255,6 +265,8 @@ abstract class Mage_Core_Helper_Abstract
     }
 
     /**
+     * @param string $data
+     * @return string
      * @deprecated after 1.4.0.0-rc1
      * @see self::escapeHtml()
      */
@@ -271,17 +283,55 @@ abstract class Mage_Core_Helper_Abstract
      */
     public function escapeUrl($data)
     {
-        return htmlspecialchars($data);
+        return htmlspecialchars(
+            $this->escapeScriptIdentifiers((string) $data),
+            ENT_COMPAT | ENT_HTML5 | ENT_HTML401,
+            'UTF-8'
+        );
+    }
+
+    /**
+     * Remove `\t`,`\n`,`\r`,`\0`,`\x0B:` symbols from the string.
+     *
+     * @param string $data
+     * @return string
+     */
+    public function escapeSpecial($data)
+    {
+        $specialSymbolsFiltrationPattern = '/[\t\n\r\0\x0B]+/';
+
+        return (string) preg_replace($specialSymbolsFiltrationPattern, '', $data);
+    }
+
+    /**
+     * Remove `javascript:`, `vbscript:`, `data:` words from the string.
+     *
+     * @param string $data
+     * @return string
+     */
+    public function escapeScriptIdentifiers($data)
+    {
+        $scripIdentifiersFiltrationPattern = '/((javascript(\\\\x3a|:|%3A))|(data(\\\\x3a|:|%3A))|(vbscript:))|'
+            . '((\\\\x6A\\\\x61\\\\x76\\\\x61\\\\x73\\\\x63\\\\x72\\\\x69\\\\x70\\\\x74(\\\\x3a|:|%3A))|'
+            . '(\\\\x64\\\\x61\\\\x74\\\\x61(\\\\x3a|:|%3A)))/i';
+
+        $preFilteredData = $this->escapeSpecial($data);
+        $filteredData = preg_replace($scripIdentifiersFiltrationPattern, ':', $preFilteredData) ?: '';
+        if (preg_match($scripIdentifiersFiltrationPattern, $filteredData)) {
+            $filteredData = $this->escapeScriptIdentifiers($filteredData);
+        }
+
+        return $filteredData;
     }
 
     /**
      * Escape quotes in java script
      *
-     * @param moxed $data
+     * @param mixed $data
      * @param string $quote
      * @return mixed
      */
-    public function jsQuoteEscape($data, $quote='\'')
+    public function jsQuoteEscape($data, $quote = '\'')
     {
         if (is_array($data)) {
             $result = array();
@@ -367,6 +417,21 @@ abstract class Mage_Core_Helper_Abstract
     }
 
     /**
+     *  base64_decode() and escape quotes in url
+     *
+     *  @param    string $url
+     *  @return   string
+     */
+    public function urlDecodeAndEscape($url)
+    {
+        $url = $this->urlDecode($url);
+        $quote = array ('\'', '"');
+        $replace = array('%27', '%22');
+        $url = str_replace($quote, $replace, $url);
+        return $url;
+    }
+
+    /**
      *   Translate array
      *
      *  @param    array $arr
@@ -383,5 +448,43 @@ abstract class Mage_Core_Helper_Abstract
             $arr[$k] = $v;
         }
         return $arr;
+    }
+
+    /**
+     * Check for tags in multidimensional arrays
+     *
+     * @param string|array $data
+     * @param array $arrayKeys keys of the array being checked that are excluded and included in the check
+     * @param bool $skipTags skip transferred array keys, if false then check only them
+     * @return bool
+     */
+    public function hasTags($data, array $arrayKeys = array(), $skipTags = true)
+    {
+        if (is_array($data)) {
+            foreach ($data as $key => $item) {
+                if ($skipTags && in_array($key, $arrayKeys)) {
+                    continue;
+                }
+                if (is_array($item)) {
+                    if ($this->hasTags($item, $arrayKeys, $skipTags)) {
+                        return true;
+                    }
+                } elseif (
+                    (bool)strcmp($item, $this->removeTags($item))
+                    || (bool)strcmp($key, $this->removeTags($key))
+                ) {
+                    if (!$skipTags && !in_array($key, $arrayKeys)) {
+                        continue;
+                    }
+                    return true;
+                }
+            }
+            return false;
+        } elseif (is_string($data)) {
+            if ((bool)strcmp($data, $this->removeTags($data))) {
+                return true;
+            }
+        }
+        return false;
     }
 }

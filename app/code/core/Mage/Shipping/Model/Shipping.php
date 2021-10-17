@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Shipping
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 
@@ -47,7 +47,7 @@ class Mage_Shipping_Model_Shipping
     /**
      * Cached result
      *
-     * @var Mage_Sales_Model_Shipping_Method_Result
+     * @var Mage_Shipping_Model_Rate_Result
      */
     protected $_result = null;
 
@@ -85,7 +85,7 @@ class Mage_Shipping_Model_Shipping
     /**
      * Reset cached result
      *
-     * @return Mage_Shipping_Model_Shipping
+     * @return $this
      */
     public function resetResult()
     {
@@ -106,9 +106,9 @@ class Mage_Shipping_Model_Shipping
     /**
      * Retrieve all methods for supplied shipping data
      *
+     * @param Mage_Shipping_Model_Rate_Request $request
+     * @return $this
      * @todo make it ordered
-     * @param Mage_Shipping_Model_Shipping_Method_Request $data
-     * @return Mage_Shipping_Model_Shipping
      */
     public function collectRates(Mage_Shipping_Model_Rate_Request $request)
     {
@@ -149,11 +149,11 @@ class Mage_Shipping_Model_Shipping
      *
      * @param string                           $carrierCode
      * @param Mage_Shipping_Model_Rate_Request $request
-     * @return Mage_Shipping_Model_Shipping
+     * @return $this
      */
     public function collectCarrierRates($carrierCode, $request)
     {
-        /* @var $carrier Mage_Shipping_Model_Carrier_Abstract */
+        /* @var Mage_Shipping_Model_Carrier_Abstract $carrier */
         $carrier = $this->getCarrierByCode($carrierCode, $request->getStoreId());
         if (!$carrier) {
             return $this;
@@ -167,7 +167,7 @@ class Mage_Shipping_Model_Shipping
         * Result will be false if the admin set not to show the shipping module
         * if the delivery country is not within specific countries
         */
-        if (false !== $result){
+        if (false !== $result) {
             if (!$result instanceof Mage_Shipping_Model_Rate_Result_Error) {
                 if ($carrier->getConfigData('shipment_requesttype')) {
                     $packages = $this->composePackagesForCarrier($carrier, $request);
@@ -264,24 +264,24 @@ class Mage_Shipping_Model_Shipping
             if ($item->getIsQtyDecimal() && $item->getProductType() != Mage_Catalog_Model_Product_Type::TYPE_BUNDLE) {
                 $stockItem = $item->getProduct()->getStockItem();
                 if ($stockItem->getIsDecimalDivided()) {
-                   if ($stockItem->getEnableQtyIncrements() && $stockItem->getQtyIncrements()) {
+                    if ($stockItem->getEnableQtyIncrements() && $stockItem->getQtyIncrements()) {
                         $itemWeight = $itemWeight * $stockItem->getQtyIncrements();
                         $qty        = round(($item->getWeight() / $itemWeight) * $qty);
                         $changeQty  = false;
-                   } else {
-                       $itemWeight = $itemWeight * $item->getQty();
-                       if ($itemWeight > $maxWeight) {
-                           $qtyItem = floor($itemWeight / $maxWeight);
-                           $decimalItems[] = array('weight' => $maxWeight, 'qty' => $qtyItem);
-                           $weightItem = Mage::helper('core')->getExactDivision($itemWeight, $maxWeight);
-                           if ($weightItem) {
-                               $decimalItems[] = array('weight' => $weightItem, 'qty' => 1);
-                           }
-                           $checkWeight = false;
-                       } else {
-                           $itemWeight = $itemWeight * $item->getQty();
-                       }
-                   }
+                    } else {
+                        $itemWeight = $itemWeight * $item->getQty();
+                        if ($itemWeight > $maxWeight) {
+                            $qtyItem = floor($itemWeight / $maxWeight);
+                            $decimalItems[] = array('weight' => $maxWeight, 'qty' => $qtyItem);
+                            $weightItem = Mage::helper('core')->getExactDivision($itemWeight, $maxWeight);
+                            if ($weightItem) {
+                                $decimalItems[] = array('weight' => $weightItem, 'qty' => 1);
+                            }
+                            $checkWeight = false;
+                        } else {
+                            $itemWeight = $itemWeight * $item->getQty();
+                        }
+                    }
                 } else {
                     $itemWeight = $itemWeight * $item->getQty();
                 }
@@ -299,7 +299,8 @@ class Mage_Shipping_Model_Shipping
 
             if (!empty($decimalItems)) {
                 foreach ($decimalItems as $decimalItem) {
-                    $fullItems = array_merge($fullItems,
+                    $fullItems = array_merge(
+                        $fullItems,
                         array_fill(0, $decimalItem['qty'] * $qty, $decimalItem['weight'])
                     );
                 }
@@ -335,16 +336,16 @@ class Mage_Shipping_Model_Shipping
                 }
                 unset($items[$key]);
                 $sumWeight = $weight;
-                foreach ($items as $key => $weight) {
-                    if (($sumWeight + $weight) < $maxWeight) {
-                        unset($items[$key]);
-                        $sumWeight += $weight;
-                    } elseif (($sumWeight + $weight) > $maxWeight) {
+                foreach ($items as $keyItem => $weightItem) {
+                    if (($sumWeight + $weightItem) < $maxWeight) {
+                        unset($items[$keyItem]);
+                        $sumWeight += $weightItem;
+                    } elseif (($sumWeight + $weightItem) > $maxWeight) {
                         $pieces[] = (string)(float)$sumWeight;
                         break;
                     } else {
-                        unset($items[$key]);
-                        $pieces[] = (string)(float)($sumWeight + $weight);
+                        unset($items[$keyItem]);
+                        $pieces[] = (string)(float)($sumWeight + $weightItem);
                         $sumWeight = 0;
                         break;
                     }
@@ -364,11 +365,11 @@ class Mage_Shipping_Model_Shipping
      *
      * @param Varien_Object $address
      * @param null|bool|array $limitCarrier
-     * @return Mage_Shipping_Model_Shipping
+     * @return $this
      */
     public function collectRatesByAddress(Varien_Object $address, $limitCarrier = null)
     {
-        /** @var $request Mage_Shipping_Model_Rate_Request */
+        /** @var Mage_Shipping_Model_Rate_Request $request */
         $request = Mage::getModel('shipping/rate_request');
         $request->setAllItems($address->getAllItems());
         $request->setDestCountryId($address->getCountryId());
@@ -395,7 +396,7 @@ class Mage_Shipping_Model_Shipping
      * Set part of carrier xml config path
      *
      * @param string $code
-     * @return Mage_Shipping_Model_Shipping
+     * @return $this
      */
     public function setCarrierAvailabilityConfigField($code = 'active')
     {

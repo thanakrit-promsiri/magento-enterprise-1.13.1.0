@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Api
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 /**
@@ -41,6 +41,12 @@ abstract class Mage_Api_Model_Server_Handler_Abstract
         Mage::app()->loadAreaPart(Mage_Core_Model_App_Area::AREA_ADMINHTML, Mage_Core_Model_App_Area::PART_EVENTS);
     }
 
+    /**
+     * @param int $errorCode
+     * @param string $errorMessage
+     * @param string $errorFile
+     * @return bool
+     */
     public function handlePhpError($errorCode, $errorMessage, $errorFile)
     {
         Mage::log($errorMessage . $errorFile);
@@ -87,7 +93,7 @@ abstract class Mage_Api_Model_Server_Handler_Abstract
      * @param string $sessionId
      * @return Mage_Api_Model_Server_Handler_Abstract
      */
-    protected function _startSession($sessionId=null)
+    protected function _startSession($sessionId = null)
     {
         $this->_getSession()->setSessionId($sessionId);
         $this->_getSession()->init('api', 'api');
@@ -102,7 +108,7 @@ abstract class Mage_Api_Model_Server_Handler_Abstract
      * @param   string $privilege
      * @return  bool
      */
-    protected function _isAllowed($resource, $privilege=null)
+    protected function _isAllowed($resource, $privilege = null)
     {
         return $this->_getSession()->isAllowed($resource, $privilege);
     }
@@ -112,7 +118,7 @@ abstract class Mage_Api_Model_Server_Handler_Abstract
      *
      *  @return  boolean
      */
-    protected function _isSessionExpired ()
+    protected function _isSessionExpired()
     {
         return $this->_getSession()->isSessionExpired();
     }
@@ -124,7 +130,7 @@ abstract class Mage_Api_Model_Server_Handler_Abstract
      * @param string $resourceName
      * @param string $customMessage
      */
-    protected function _fault($faultName, $resourceName=null, $customMessage=null)
+    protected function _fault($faultName, $resourceName = null, $customMessage = null)
     {
         $faults = $this->_getConfig()->getFaults($resourceName);
         if (!isset($faults[$faultName]) && !is_null($resourceName)) {
@@ -148,7 +154,7 @@ abstract class Mage_Api_Model_Server_Handler_Abstract
      * @param string $customMessage
      * @return array
      */
-    protected function _faultAsArray($faultName, $resourceName=null, $customMessage=null)
+    protected function _faultAsArray($faultName, $resourceName = null, $customMessage = null)
     {
         $faults = $this->_getConfig()->getFaults($resourceName);
         if (!isset($faults[$faultName]) && !is_null($resourceName)) {
@@ -180,7 +186,7 @@ abstract class Mage_Api_Model_Server_Handler_Abstract
      * End web service session
      *
      * @param string $sessionId
-     * @return boolean
+     * @return true
      */
     public function endSession($sessionId)
     {
@@ -262,7 +268,6 @@ abstract class Mage_Api_Model_Server_Handler_Abstract
             && isset($resources->$resourceName->acl)
             && !$this->_isAllowed((string)$resources->$resourceName->acl)) {
             return $this->_fault('access_denied');
-
         }
 
 
@@ -288,13 +293,15 @@ abstract class Mage_Api_Model_Server_Handler_Abstract
             }
 
             if (method_exists($model, $method)) {
+                $result = array();
                 if (isset($methodInfo->arguments) && ((string)$methodInfo->arguments) == 'array') {
-                    return $model->$method((is_array($args) ? $args : array($args)));
+                    $result = $model->$method((is_array($args) ? $args : array($args)));
                 } elseif (!is_array($args)) {
-                    return $model->$method($args);
+                    $result = $model->$method($args);
                 } else {
-                    return call_user_func_array(array(&$model, $method), $args);
+                    $result = call_user_func_array(array(&$model, $method), $args);
                 }
+                return $this->processingMethodResult($result);
             } else {
                 throw new Mage_Api_Exception('resource_path_not_callable');
             }
@@ -312,7 +319,7 @@ abstract class Mage_Api_Model_Server_Handler_Abstract
      * @param string $sessionId
      * @param array $calls
      * @param array $options
-     * @return array
+     * @return array|void
      */
     public function multiCall($sessionId, array $calls = array(), $options = array())
     {
@@ -401,13 +408,15 @@ abstract class Mage_Api_Model_Server_Handler_Abstract
                 }
 
                 if (method_exists($model, $method)) {
+                    $callResult = array();
                     if (isset($methodInfo->arguments) && ((string)$methodInfo->arguments) == 'array') {
-                        $result[] = $model->$method((is_array($args) ? $args : array($args)));
+                        $callResult = $model->$method((is_array($args) ? $args : array($args)));
                     } elseif (!is_array($args)) {
-                        $result[] = $model->$method($args);
+                        $callResult = $model->$method($args);
                     } else {
-                        $result[] = call_user_func_array(array(&$model, $method), $args);
+                        $callResult = call_user_func_array(array(&$model, $method), $args);
                     }
+                    $result[] = $this->processingMethodResult($callResult);
                 } else {
                     throw new Mage_Api_Exception('resource_path_not_callable');
                 }
@@ -436,7 +445,7 @@ abstract class Mage_Api_Model_Server_Handler_Abstract
      * List of available resources
      *
      * @param string $sessionId
-     * @return array
+     * @return array|void
      */
     public function resources($sessionId)
     {
@@ -466,9 +475,9 @@ abstract class Mage_Api_Model_Server_Handler_Abstract
                 }
                 $methodAliases = array();
                 if (isset($resourcesAlias[$resourceName])) {
-                   foreach ($resourcesAlias[$resourceName] as $alias) {
-                       $methodAliases[] =  $alias . '.' . $methodName;
-                   }
+                    foreach ($resourcesAlias[$resourceName] as $alias) {
+                        $methodAliases[] =  $alias . '.' . $methodName;
+                    }
                 }
 
                 $methods[] = array(
@@ -501,7 +510,7 @@ abstract class Mage_Api_Model_Server_Handler_Abstract
      *
      * @param string $sessionId
      * @param string $resourceName
-     * @return array
+     * @return array|void
      */
     public function resourceFaults($sessionId, $resourceName)
     {
@@ -543,4 +552,46 @@ abstract class Mage_Api_Model_Server_Handler_Abstract
         $this->_startSession($sessionId);
         return array_values($this->_getConfig()->getFaults());
     }
-} // Class Mage_Api_Model_Server_Handler_Abstract End
+
+    /**
+     * Prepare Api data for XML exporting
+     * See allowed characters in XML:
+     * @link http://www.w3.org/TR/2000/REC-xml-20001006#NT-Char
+     *
+     * @param mixed $result
+     * @return mixed
+     */
+    public function processingMethodResult($result)
+    {
+        if (is_null($result) || is_bool($result) || is_numeric($result) || is_object($result)) {
+            return $result;
+        } elseif (is_array($result)) {
+            foreach ($result as $key => $value) {
+                $result[$key] = $this->processingMethodResult($value);
+            }
+        } else {
+            $result = $this->processingRow($result);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Prepare Api row data for XML exporting
+     * Convert not allowed symbol to numeric character reference
+     *
+     * @param mixed $row
+     * @return mixed
+     */
+    public function processingRow($row)
+    {
+        $row = preg_replace_callback(
+            '/[^\x{0009}\x{000a}\x{000d}\x{0020}-\x{D7FF}\x{E000}-\x{FFFD}\x{10000}-\x{10FFFF}]/u',
+            function ($matches) {
+                return '&#' . Mage::helper('core/string')->uniOrd($matches[0]) . ';';
+            },
+            $row
+        );
+        return $row;
+    }
+}

@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Api2
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 /**
@@ -128,13 +128,13 @@ class Mage_Api2_Model_Acl_Global_Rule_Tree extends Mage_Core_Helper_Abstract
 
         switch ($this->_type) {
             case self::TYPE_ATTRIBUTE:
-                /** @var $operationSource Mage_Api2_Model_Acl_Filter_Attribute_Operation */
+                /** @var Mage_Api2_Model_Acl_Filter_Attribute_Operation $operationSource */
                 $operationSource = Mage::getModel('api2/acl_filter_attribute_operation');
                 $this->_existOperations = $operationSource->toArray();
                 break;
 
             case self::TYPE_PRIVILEGE:
-                /** @var $privilegeSource Mage_Api2_Model_Acl_Global_Rule_Privilege */
+                /** @var Mage_Api2_Model_Acl_Global_Rule_Privilege $privilegeSource */
                 $privilegeSource = Mage::getModel('api2/acl_global_rule_privilege');
                 $this->_existPrivileges = $privilegeSource->toArray();
                 break;
@@ -148,7 +148,7 @@ class Mage_Api2_Model_Acl_Global_Rule_Tree extends Mage_Core_Helper_Abstract
     /**
      * Initialize block
      *
-     * @return Mage_Api2_Model_Acl_Global_Rule_Tree
+     * @return $this
      * @throws Exception
      */
     protected function _init()
@@ -157,7 +157,7 @@ class Mage_Api2_Model_Acl_Global_Rule_Tree extends Mage_Core_Helper_Abstract
             return $this;
         }
 
-        /** @var $config Mage_Api2_Model_Config */
+        /** @var Mage_Api2_Model_Config $config */
         $config = Mage::getModel('api2/config');
         $this->_resourcesConfig = $config->getResourceGroups();
 
@@ -325,7 +325,7 @@ class Mage_Api2_Model_Acl_Global_Rule_Tree extends Mage_Core_Helper_Abstract
             }
         }
 
-        /** @var $child Varien_Simplexml_Element */
+        /** @var Varien_Simplexml_Element $child */
         foreach ($children as $child) {
             if ($child->getName() != 'title' && $child->getName() != 'sort_order') {
                 if (!(string) $child->title) {
@@ -482,7 +482,7 @@ class Mage_Api2_Model_Acl_Global_Rule_Tree extends Mage_Core_Helper_Abstract
      * Set role
      *
      * @param Mage_Api2_Model_Acl_Global_Role $role
-     * @return Mage_Api2_Model_Acl_Global_Rule_Tree
+     * @return $this
      */
     public function setRole($role)
     {
@@ -504,7 +504,7 @@ class Mage_Api2_Model_Acl_Global_Rule_Tree extends Mage_Core_Helper_Abstract
      * Set resources permissions
      *
      * @param array $resourcesPermissions
-     * @return Mage_Api2_Model_Acl_Global_Rule_Tree
+     * @return $this
      */
     public function setResourcesPermissions($resourcesPermissions)
     {
@@ -526,7 +526,7 @@ class Mage_Api2_Model_Acl_Global_Rule_Tree extends Mage_Core_Helper_Abstract
      * Set has entity only attributes flag
      *
      * @param bool $hasEntityOnlyAttributes
-     * @return Mage_Api2_Model_Acl_Global_Rule_Tree
+     * @return $this
      */
     public function setHasEntityOnlyAttributes($hasEntityOnlyAttributes)
     {

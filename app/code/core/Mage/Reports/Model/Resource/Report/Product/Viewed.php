@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Reports
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 
@@ -52,7 +52,9 @@ class Mage_Reports_Model_Resource_Report_Product_Viewed extends Mage_Sales_Model
      *
      * @param mixed $from
      * @param mixed $to
-     * @return Mage_Sales_Model_Resource_Report_Bestsellers
+     * @return Mage_Reports_Model_Resource_Report_Product_Viewed
+     * @throws Mage_Core_Exception
+     * @throws Zend_Db_Select_Exception
      */
     public function aggregate($from = null, $to = null)
     {
@@ -68,7 +70,10 @@ class Mage_Reports_Model_Resource_Report_Product_Viewed extends Mage_Sales_Model
         if ($from !== null || $to !== null) {
             $subSelect = $this->_getTableDateRangeSelect(
                 $this->getTable('reports/event'),
-                'logged_at', 'logged_at', $from, $to
+                'logged_at',
+                'logged_at',
+                $from,
+                $to
             );
         } else {
             $subSelect = null;
@@ -78,7 +83,9 @@ class Mage_Reports_Model_Resource_Report_Product_Viewed extends Mage_Sales_Model
         $periodExpr = $adapter->getDatePartSql(
             $this->getStoreTZOffsetQuery(
                 array('source_table' => $this->getTable('reports/event')),
-                'source_table.logged_at', $from, $to
+                'source_table.logged_at',
+                $from,
+                $to
             )
         );
 
@@ -98,16 +105,21 @@ class Mage_Reports_Model_Resource_Report_Product_Viewed extends Mage_Sales_Model
             'store_id'               => 'source_table.store_id',
             'product_id'             => 'source_table.object_id',
             'product_name'           => new Zend_Db_Expr(
-                sprintf('MIN(%s)',
-                    $adapter->getIfNullSql('product_name.value','product_default_name.value')
+                sprintf(
+                    'MIN(%s)',
+                    $adapter->getIfNullSql('product_name.value', 'product_default_name.value')
                 )
             ),
             'product_price'          => new Zend_Db_Expr(
-                sprintf('%s',
+                sprintf(
+                    '%s',
                     $helper->prepareColumn(
-                        sprintf('MIN(%s)',
+                        sprintf(
+                            'MIN(%s)',
                             $adapter->getIfNullSql(
-                                $adapter->getIfNullSql('product_price.value','product_default_price.value'), 0)
+                                $adapter->getIfNullSql('product_price.value', 'product_default_price.value'),
+                                0
+                            )
                         ),
                         $select->getPart(Zend_Db_Select::GROUP)
                     )
@@ -120,7 +132,8 @@ class Mage_Reports_Model_Resource_Report_Product_Viewed extends Mage_Sales_Model
             ->from(
                 array(
                     'source_table' => $this->getTable('reports/event')),
-                $columns)
+                $columns
+            )
             ->where('source_table.event_type_id = ?', Mage_Reports_Model_Event::EVENT_PRODUCT_VIEW);
 
         /** @var Mage_Catalog_Model_Resource_Product $product */
@@ -194,8 +207,11 @@ class Mage_Reports_Model_Resource_Report_Product_Viewed extends Mage_Sales_Model
         $select->having(implode(' AND ', $havingPart));
 
         $select->useStraightJoin();
-        $insertQuery = $helper->getInsertFromSelectUsingAnalytic($select, $this->getMainTable(),
-            array_keys($columns));
+        $insertQuery = $helper->getInsertFromSelectUsingAnalytic(
+            $select,
+            $this->getMainTable(),
+            array_keys($columns)
+        );
         $adapter->query($insertQuery);
 
         Mage::getResourceHelper('reports')

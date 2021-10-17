@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Api
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 /**
@@ -31,10 +31,15 @@
  * @package    Mage_Api
  * @author     Magento Core Team <core@magentocommerce.com>
  */
-class Mage_Api_Model_Server_Adapter_Soap
-    extends Varien_Object
-    implements Mage_Api_Model_Server_Adapter_Interface
+class Mage_Api_Model_Server_Adapter_Soap extends Varien_Object implements Mage_Api_Model_Server_Adapter_Interface
 {
+    /**
+     * Wsdl config
+     *
+     * @var Varien_Object
+     */
+    protected $wsdlConfig = null;
+
     /**
      * Soap server
      *
@@ -43,10 +48,37 @@ class Mage_Api_Model_Server_Adapter_Soap
     protected $_soap = null;
 
     /**
+     * Internal constructor
+     */
+    protected function _construct()
+    {
+        $this->wsdlConfig = $this->_getWsdlConfig();
+    }
+
+    /**
+     * Get wsdl config
+     *
+     * @return Varien_Object
+     */
+    protected function _getWsdlConfig()
+    {
+        $wsdlConfig = new Varien_Object();
+        $queryParams = $this->getController()->getRequest()->getQuery();
+        if (isset($queryParams['wsdl'])) {
+            unset($queryParams['wsdl']);
+        }
+
+        $wsdlConfig->setUrl(Mage::helper('api')->getServiceUrl('*/*/*', array('_query' => $queryParams), true));
+        $wsdlConfig->setName('Magento');
+        $wsdlConfig->setHandler($this->getHandler());
+        return $wsdlConfig;
+    }
+
+    /**
      * Set handler class name for webservice
      *
      * @param string $handler
-     * @return Mage_Api_Model_Server_Adapter_Soap
+     * @return $this
      */
     public function setHandler($handler)
     {
@@ -68,7 +100,7 @@ class Mage_Api_Model_Server_Adapter_Soap
      * Set webservice api controller
      *
      * @param Mage_Api_Controller_Action $controller
-     * @return Mage_Api_Model_Server_Adapter_Soap
+     * @return $this
      */
     public function setController(Mage_Api_Controller_Action $controller)
     {
@@ -79,7 +111,7 @@ class Mage_Api_Model_Server_Adapter_Soap
     /**
      * Retrive webservice api controller. If no controller have been set - emulate it by the use of Varien_Object
      *
-     * @return Mage_Api_Controller_Action|Varien_Object
+     * @return Varien_Object
      */
     public function getController()
     {
@@ -98,8 +130,8 @@ class Mage_Api_Model_Server_Adapter_Soap
     /**
      * Run webservice
      *
-     * @param Mage_Api_Controller_Action $controller
-     * @return Mage_Api_Model_Server_Adapter_Soap
+     * @return $this
+     * @throws SoapFault
      */
     public function run()
     {
@@ -114,21 +146,11 @@ class Mage_Api_Model_Server_Adapter_Soap
 
             $template = Mage::getModel('core/email_template_filter');
 
-            $wsdlConfig = new Varien_Object();
-            $queryParams = $this->getController()->getRequest()->getQuery();
-            if (isset($queryParams['wsdl'])) {
-                unset($queryParams['wsdl']);
-            }
-
-            $wsdlConfig->setUrl(htmlspecialchars(Mage::getUrl('*/*/*', array('_query'=>$queryParams))));
-            $wsdlConfig->setName('Magento');
-            $wsdlConfig->setHandler($this->getHandler());
-
-            $template->setVariables(array('wsdl' => $wsdlConfig));
+            $template->setVariables(array('wsdl' => $this->wsdlConfig));
 
             $this->getController()->getResponse()
                 ->clearHeaders()
-                ->setHeader('Content-Type','text/xml; charset='.$apiConfigCharset)
+                ->setHeader('Content-Type', 'text/xml; charset='.$apiConfigCharset)
                 ->setBody(
                     preg_replace(
                         '/<\?xml version="([^\"]+)"([^\>]+)>/i',
@@ -142,18 +164,18 @@ class Mage_Api_Model_Server_Adapter_Soap
 
                 $this->getController()->getResponse()
                     ->clearHeaders()
-                    ->setHeader('Content-Type','text/xml; charset='.$apiConfigCharset)
+                    ->setHeader('Content-Type', 'text/xml; charset='.$apiConfigCharset)
                     ->setBody(
-                            preg_replace(
-                                '/<\?xml version="([^\"]+)"([^\>]+)>/i',
-                                '<?xml version="$1" encoding="'.$apiConfigCharset.'"?>',
-                                $this->_soap->handle()
-                            )
+                        preg_replace(
+                            '/<\?xml version="([^\"]+)"([^\>]+)>/i',
+                            '<?xml version="$1" encoding="'.$apiConfigCharset.'"?>',
+                            $this->_soap->handle()
+                        )
                     );
-            } catch( Zend_Soap_Server_Exception $e ) {
-                $this->fault( $e->getCode(), $e->getMessage() );
-            } catch( Exception $e ) {
-                $this->fault( $e->getCode(), $e->getMessage() );
+            } catch (Zend_Soap_Server_Exception $e) {
+                $this->fault($e->getCode(), $e->getMessage());
+            } catch (Exception $e) {
+                $this->fault($e->getCode(), $e->getMessage());
             }
         }
 
@@ -180,7 +202,6 @@ class Mage_Api_Model_Server_Adapter_Soap
                 </SOAP-ENV:Body>
                 </SOAP-ENV:Envelope>');
         }
-
     }
 
     /**
@@ -196,8 +217,10 @@ class Mage_Api_Model_Server_Adapter_Soap
     /**
      * Transform wsdl url if $_SERVER["PHP_AUTH_USER"] is set
      *
-     * @param array
-     * @return String
+     * @param array $params
+     * @param bool $withAuth
+     * @return string
+     * @throws Zend_Uri_Exception
      */
     protected function getWsdlUrl($params = null, $withAuth = true)
     {
@@ -205,17 +228,22 @@ class Mage_Api_Model_Server_Adapter_Soap
             ->setUseSession(false);
 
         $wsdlUrl = $params !== null
-            ? $urlModel->getUrl('*/*/*', array('_current' => true, '_query' => $params))
-            : $urlModel->getUrl('*/*/*');
+            ? Mage::helper('api')->getServiceUrl('*/*/*', array('_current' => true, '_query' => $params))
+            : Mage::helper('api')->getServiceUrl('*/*/*');
 
-        if ( $withAuth ) {
-            $phpAuthUser = $this->getController()->getRequest()->getServer('PHP_AUTH_USER', false);
-            $phpAuthPw = $this->getController()->getRequest()->getServer('PHP_AUTH_PW', false);
-            $scheme = $this->getController()->getRequest()->getScheme();
+        if ($withAuth) {
+            $phpAuthUser = rawurlencode($this->getController()->getRequest()->getServer('PHP_AUTH_USER', false));
+            $phpAuthPw = rawurlencode($this->getController()->getRequest()->getServer('PHP_AUTH_PW', false));
+            $scheme = rawurlencode($this->getController()->getRequest()->getScheme());
 
             if ($phpAuthUser && $phpAuthPw) {
-                $wsdlUrl = sprintf("%s://%s:%s@%s", $scheme, $phpAuthUser, $phpAuthPw,
-                    str_replace($scheme . '://', '', $wsdlUrl));
+                $wsdlUrl = sprintf(
+                    "%s://%s:%s@%s",
+                    $scheme,
+                    $phpAuthUser,
+                    $phpAuthPw,
+                    str_replace($scheme . '://', '', $wsdlUrl)
+                );
             }
         }
 
@@ -243,11 +271,15 @@ class Mage_Api_Model_Server_Adapter_Soap
         do {
             $retry = false;
             try {
-                $this->_soap = new Zend_Soap_Server($this->getWsdlUrl(array("wsdl" => 1)),
-                    array('encoding' => $apiConfigCharset));
+                $this->_soap = new Zend_Soap_Server(
+                    $this->getWsdlUrl(array("wsdl" => 1)),
+                    array('encoding' => $apiConfigCharset)
+                );
             } catch (SoapFault $e) {
-                if (false !== strpos($e->getMessage(),
-                    "can't import schema from 'http://schemas.xmlsoap.org/soap/encoding/'")
+                if (false !== strpos(
+                    $e->getMessage(),
+                    "can't import schema from 'http://schemas.xmlsoap.org/soap/encoding/'"
+                )
                 ) {
                     $retry = true;
                     sleep(1);

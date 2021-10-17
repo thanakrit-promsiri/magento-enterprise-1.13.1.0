@@ -1,36 +1,40 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Admin
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
-
 
 /**
  * Acl model
- * 
+ *
  * @category   Mage
  * @package    Mage_Admin
  * @author      Magento Core Team <core@magentocommerce.com>
+ *
+ * @property Mage_Admin_Model_Acl_Role_Registry $_roleRegistry
+ *
+ * @method Mage_Admin_Model_Resource_Acl _getResource()
+ * @method Mage_Admin_Model_Resource_Acl getResource()
  */
 class Mage_Admin_Model_Acl extends Zend_Acl
 {
@@ -39,31 +43,31 @@ class Mage_Admin_Model_Acl extends Zend_Acl
      *
      */
     const ROLE_TYPE_GROUP = 'G';
-    
+
     /**
      * All the user roles are prepended by U
      *
      */
     const ROLE_TYPE_USER = 'U';
-    
+
     /**
      * Permission level to deny access
      *
      */
     const RULE_PERM_DENY = 0;
-    
+
     /**
      * Permission level to inheric access from parent role
      *
      */
     const RULE_PERM_INHERIT = 1;
-    
+
     /**
      * Permission level to allow access
      *
      */
     const RULE_PERM_ALLOW = 2;
-    
+
     /**
      * Get role registry object or create one
      *
@@ -76,13 +80,13 @@ class Mage_Admin_Model_Acl extends Zend_Acl
         }
         return $this->_roleRegistry;
     }
-    
+
     /**
      * Add parent to role object
      *
-     * @param Zend_Acl_Role $role
-     * @param Zend_Acl_Role $parent
-     * @return Mage_Admin_Model_Acl
+     * @param Zend_Acl_Role|string $role
+     * @param Zend_Acl_Role|string $parent
+     * @return $this
      */
     public function addRoleParent($role, $parent)
     {

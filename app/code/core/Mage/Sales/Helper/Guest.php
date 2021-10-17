@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Sales
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 /**
@@ -50,22 +50,18 @@ class Mage_Sales_Helper_Guest extends Mage_Core_Helper_Data
         }
 
         $post = Mage::app()->getRequest()->getPost();
+        $errors = false;
 
-        $type           = '';
-        $incrementId    = '';
-        $lastName       = '';
-        $email          = '';
-        $zip            = '';
-        $protectCode    = '';
-        $errors         = false;
-
-        /** @var $order Mage_Sales_Model_Order */
+        /** @var Mage_Sales_Model_Order $order */
         $order = Mage::getModel('sales/order');
+        /** @var Mage_Core_Model_Cookie $cookieModel */
+        $cookieModel = Mage::getSingleton('core/cookie');
+        $errorMessage = 'Entered data is incorrect. Please try again.';
 
-        if (empty($post) && !Mage::getSingleton('core/cookie')->get($this->_cookieName)) {
+        if (empty($post) && !$cookieModel->get($this->_cookieName)) {
             Mage::app()->getResponse()->setRedirect(Mage::getUrl('sales/guest/form'));
             return false;
-        } elseif (!empty($post) && isset($post['oar_order_id']) && isset($post['oar_type']))  {
+        } elseif (!empty($post) && isset($post['oar_order_id']) && isset($post['oar_type'])) {
             $type           = $post['oar_type'];
             $incrementId    = $post['oar_order_id'];
             $lastName       = $post['oar_billing_lastname'];
@@ -85,7 +81,7 @@ class Mage_Sales_Helper_Guest extends Mage_Core_Helper_Data
                 $billingAddress = $order->getBillingAddress();
                 if ((strtolower($lastName) != strtolower($billingAddress->getLastname()))
                     || ($type == 'email'
-                        && strtolower($email) != strtolower($billingAddress->getEmail()))
+                        && strtolower($email) != strtolower($order->getCustomerEmail()))
                     || ($type == 'zip'
                         && (strtolower($zip) != strtolower($billingAddress->getPostcode())))
                 ) {
@@ -95,18 +91,26 @@ class Mage_Sales_Helper_Guest extends Mage_Core_Helper_Data
                 $errors = true;
             }
 
-            if (!$errors) {
-                $toCookie = base64_encode($order->getProtectCode());
-                Mage::getSingleton('core/cookie')->set($this->_cookieName, $toCookie, $this->_lifeTime, '/');
+            if ($errors === false && !is_null($order->getCustomerId())) {
+                $errorMessage = 'Please log in to view your order details.';
+                $errors = true;
             }
-        } elseif (Mage::getSingleton('core/cookie')->get($this->_cookieName)) {
-            $fromCookie     = Mage::getSingleton('core/cookie')->get($this->_cookieName);
-            $protectCode    = base64_decode($fromCookie);
 
-            if (!empty($protectCode)) {
-                $order->loadByAttribute('protect_code', $protectCode);
-
-                Mage::getSingleton('core/cookie')->renew($this->_cookieName, $this->_lifeTime, '/');
+            if (!$errors) {
+                $toCookie = base64_encode($order->getProtectCode() . ':' . $incrementId);
+                $cookieModel->set($this->_cookieName, $toCookie, $this->_lifeTime, '/');
+            }
+        } elseif ($cookieModel->get($this->_cookieName)) {
+            $cookie = $cookieModel->get($this->_cookieName);
+            $cookieOrder = $this->_loadOrderByCookie($cookie);
+            if (!is_null($cookieOrder)) {
+                if (is_null($cookieOrder->getCustomerId())) {
+                    $cookieModel->renew($this->_cookieName, $this->_lifeTime, '/');
+                    $order = $cookieOrder;
+                } else {
+                    $errorMessage = 'Please log in to view your order details.';
+                    $errors = true;
+                }
             } else {
                 $errors = true;
             }
@@ -117,9 +121,7 @@ class Mage_Sales_Helper_Guest extends Mage_Core_Helper_Data
             return true;
         }
 
-        Mage::getSingleton('core/session')->addError(
-            $this->__('Entered data is incorrect. Please try again.')
-        );
+        Mage::getSingleton('core/session')->addError($this->__($errorMessage));
         Mage::app()->getResponse()->setRedirect(Mage::getUrl('sales/guest/form'));
         return false;
     }
@@ -149,4 +151,39 @@ class Mage_Sales_Helper_Guest extends Mage_Core_Helper_Data
         );
     }
 
+    /**
+     * Try to load order by cookie hash
+     *
+     * @param string|null $cookie
+     * @return null|Mage_Sales_Model_Order
+     */
+    protected function _loadOrderByCookie($cookie = null)
+    {
+        if (!is_null($cookie)) {
+            $cookieData = explode(':', base64_decode($cookie));
+            $protectCode = isset($cookieData[0]) ? $cookieData[0] : null;
+            $incrementId = isset($cookieData[1]) ? $cookieData[1] : null;
+
+            if (!empty($protectCode) && !empty($incrementId)) {
+                /** @var Mage_Sales_Model_Order $order */
+                $order = Mage::getModel('sales/order');
+                $order->loadByIncrementId($incrementId);
+
+                if ($order->getProtectCode() === $protectCode) {
+                    return $order;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Getter for $this->_cookieName
+     *
+     * @return string
+     */
+    public function getCookieName()
+    {
+        return $this->_cookieName;
+    }
 }

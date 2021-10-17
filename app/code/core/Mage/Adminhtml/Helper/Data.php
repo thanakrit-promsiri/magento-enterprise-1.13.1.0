@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Adminhtml
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 /**
@@ -31,24 +31,39 @@
  * @package    Mage_Adminhtml
  * @author      Magento Core Team <core@magentocommerce.com>
  */
-class Mage_Adminhtml_Helper_Data extends Mage_Core_Helper_Abstract
+class Mage_Adminhtml_Helper_Data extends Mage_Adminhtml_Helper_Help_Mapping
 {
     const XML_PATH_ADMINHTML_ROUTER_FRONTNAME   = 'admin/routers/adminhtml/args/frontName';
     const XML_PATH_USE_CUSTOM_ADMIN_URL         = 'default/admin/url/use_custom';
     const XML_PATH_USE_CUSTOM_ADMIN_PATH        = 'default/admin/url/use_custom_path';
     const XML_PATH_CUSTOM_ADMIN_PATH            = 'default/admin/url/custom_path';
+    const XML_PATH_ADMINHTML_SECURITY_USE_FORM_KEY = 'admin/security/use_form_key';
 
     protected $_pageHelpUrl;
 
-    public function getPageHelpUrl()
+    /**
+     * Get mapped help pages url
+     *
+     * @param null|string $url
+     * @param null|string $suffix
+     * @return mixed
+     */
+    public function getPageHelpUrl($url = null, $suffix = null)
     {
         if (!$this->_pageHelpUrl) {
-            $this->setPageHelpUrl();
+            $this->setPageHelpUrl($url, $suffix);
         }
         return $this->_pageHelpUrl;
     }
 
-    public function setPageHelpUrl($url=null)
+    /**
+     * Set help page url
+     *
+     * @param null|string $url
+     * @param null|string $suffix
+     * @return $this
+     */
+    public function setPageHelpUrl($url = null, $suffix = null)
     {
         if (is_null($url)) {
             $request = Mage::app()->getRequest();
@@ -62,11 +77,17 @@ class Mage_Adminhtml_Helper_Data extends Mage_Core_Helper_Abstract
                     $frontModule = $frontModule[0];
                 }
             }
-            $url = 'http://www.magentocommerce.com/gethelp/';
-            $url.= Mage::app()->getLocale()->getLocaleCode().'/';
-            $url.= $frontModule.'/';
-            $url.= $request->getControllerName().'/';
-            $url.= $request->getActionName().'/';
+            $url = "http://merch.docs.magento.com/{$this->getHelpTargetVersion()}/user_guide/";
+
+            $moduleName = $frontModule;
+            $controllerName = $request->getControllerName();
+            $actionName = $request->getActionName() . (!is_null($suffix) ? $suffix : '');
+
+            if ($mappingUrl = $this->findInMapping($moduleName, $controllerName, $actionName)) {
+                $url .= $mappingUrl;
+            } else {
+                $url = 'http://magento.com/help/documentation';
+            }
 
             $this->_pageHelpUrl = $url;
         }
@@ -75,9 +96,15 @@ class Mage_Adminhtml_Helper_Data extends Mage_Core_Helper_Abstract
         return $this;
     }
 
+    /**
+     * Add suffix for help page url
+     *
+     * @param string $suffix
+     * @return $this
+     */
     public function addPageHelpUrl($suffix)
     {
-        $this->_pageHelpUrl = $this->getPageHelpUrl().$suffix;
+        $this->_pageHelpUrl = $this->getPageHelpUrl(null, $suffix);
         return $this;
     }
 
@@ -121,5 +148,15 @@ class Mage_Adminhtml_Helper_Data extends Mage_Core_Helper_Abstract
     public function decodeFilter(&$value)
     {
         $value = trim(rawurldecode($value));
+    }
+
+    /**
+     * Check if enabled "Add Secret Key to URLs" functionality
+     *
+     * @return bool
+     */
+    public function isEnabledSecurityKeyUrl()
+    {
+        return Mage::getStoreConfigFlag(self::XML_PATH_ADMINHTML_SECURITY_USE_FORM_KEY);
     }
 }

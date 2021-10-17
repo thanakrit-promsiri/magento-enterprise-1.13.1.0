@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Tax
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 /**
@@ -29,12 +29,18 @@
  *
  * @method Mage_Tax_Model_Resource_Calculation_Rule _getResource()
  * @method Mage_Tax_Model_Resource_Calculation_Rule getResource()
+ * @method Mage_Tax_Model_Resource_Calculation_Rule_Collection getCollection()
+ *
+ * @method $this setCalculateSubtotal(float $value)
  * @method string getCode()
- * @method Mage_Tax_Model_Calculation_Rule setCode(string $value)
+ * @method $this setCode(string $value)
  * @method int getPriority()
- * @method Mage_Tax_Model_Calculation_Rule setPriority(int $value)
+ * @method $this setPriority(int $value)
  * @method int getPosition()
- * @method Mage_Tax_Model_Calculation_Rule setPosition(int $value)
+ * @method $this setPosition(int $value)
+ * @method float getTaxRate()
+ * @method string getTaxCustomerClass()
+ * @method string getTaxProductClass()
  *
  * @category    Mage
  * @package     Mage_Tax
@@ -103,7 +109,7 @@ class Mage_Tax_Model_Calculation_Rule extends Mage_Core_Model_Abstract
      * After save rule
      * Re - declared for populate rate calculations
      *
-     * @return Mage_Tax_Model_Calculation_Rule
+     * @return $this
      */
     protected function _afterSave()
     {
@@ -117,7 +123,7 @@ class Mage_Tax_Model_Calculation_Rule extends Mage_Core_Model_Abstract
      * After rule delete
      * redeclared for dispatch tax_settings_change_after event
      *
-     * @return Mage_Tax_Model_Calculation_Rule
+     * @inheritDoc
      */
     protected function _afterDelete()
     {
@@ -200,4 +206,3 @@ class Mage_Tax_Model_Calculation_Rule extends Mage_Core_Model_Abstract
         return $this->getResource()->fetchRuleCodes($rateId, $customerTaxClassId, $productTaxClassId);
     }
 }
-

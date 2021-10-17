@@ -1,29 +1,28 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Core
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
-
 
 /**
  * Core cookie model
@@ -38,6 +37,7 @@ class Mage_Core_Model_Cookie
     const XML_PATH_COOKIE_PATH      = 'web/cookie/cookie_path';
     const XML_PATH_COOKIE_LIFETIME  = 'web/cookie/cookie_lifetime';
     const XML_PATH_COOKIE_HTTPONLY  = 'web/cookie/cookie_httponly';
+    const XML_PATH_COOKIE_SAMESITE  = 'web/cookie/cookie_samesite';
 
     protected $_lifetime;
 
@@ -52,7 +52,7 @@ class Mage_Core_Model_Cookie
      * Set Store object
      *
      * @param mixed $store
-     * @return Mage_Core_Model_Cookie
+     * @return $this
      */
     public function setStore($store)
     {
@@ -153,7 +153,7 @@ class Mage_Core_Model_Cookie
      * Set cookie lifetime
      *
      * @param int $lifetime
-     * @return Mage_Core_Model_Cookie
+     * @return $this
      */
     public function setLifetime($lifetime)
     {
@@ -176,6 +176,20 @@ class Mage_Core_Model_Cookie
     }
 
     /**
+     * Retrieve use SameSite
+     *
+     * @return string
+     */
+    public function getSameSite(): string
+    {
+        $sameSite = Mage::getStoreConfig(self::XML_PATH_COOKIE_SAMESITE, $this->getStore());
+        if (is_null($sameSite)) {
+            return 'None';
+        }
+        return (string)$sameSite;
+    }
+
+    /**
      * Is https secure request
      * Use secure on adminhtml only
      *
@@ -185,6 +199,10 @@ class Mage_Core_Model_Cookie
     {
         if ($this->getStore()->isAdmin()) {
             return $this->_getRequest()->isSecure();
+        }
+        // Use secure cookie if unsecure base url is actually secure
+        if (preg_match('/^https:/', $this->getStore()->getBaseUrl(Mage_Core_Model_Store::URL_TYPE_LINK, false))) {
+            return true;
         }
         return false;
     }
@@ -199,9 +217,10 @@ class Mage_Core_Model_Cookie
      * @param string $domain
      * @param int|bool $secure
      * @param bool $httponly
-     * @return Mage_Core_Model_Cookie
+     * @param string $sameSite
+     * @return $this
      */
-    public function set($name, $value, $period = null, $path = null, $domain = null, $secure = null, $httponly = null)
+    public function set($name, $value, $period = null, $path = null, $domain = null, $secure = null, $httponly = null, $sameSite = null)
     {
         /**
          * Check headers sent
@@ -218,8 +237,7 @@ class Mage_Core_Model_Cookie
 
         if ($period == 0) {
             $expire = 0;
-        }
-        else {
+        } else {
             $expire = time() + $period;
         }
         if (is_null($path)) {
@@ -234,8 +252,34 @@ class Mage_Core_Model_Cookie
         if (is_null($httponly)) {
             $httponly = $this->getHttponly();
         }
+        if (is_null($sameSite)) {
+            $sameSite = $this->getSameSite();
+        }
 
-        setcookie($name, $value, $expire, $path, $domain, $secure, $httponly);
+        if ($sameSite === 'None') {
+            // Enforce specification SameSite None requires secure
+            $secure = true;
+        }
+
+        if (PHP_VERSION_ID >= 70300) {
+            setcookie(
+                $name,
+                $value,
+                [
+                    'expires'  => $expire,
+                    'path'     => $path,
+                    'domain'   => $domain,
+                    'secure'   => $secure,
+                    'httponly' => $httponly,
+                    'samesite' => $sameSite
+                ]
+            );
+        } else {
+            if (!empty($sameSite)) {
+                $path.= "; samesite=${sameSite}";
+            }
+            setcookie($name, $value, $expire, $path, $domain, $secure, $httponly);
+        }
 
         return $this;
     }
@@ -248,16 +292,18 @@ class Mage_Core_Model_Cookie
      * @param string $path
      * @param string $domain
      * @param int|bool $secure
-     * @return Mage_Core_Model_Cookie
+     * @param bool $httponly
+     * @param string $sameSite
+     * @return $this
      */
-    public function renew($name, $period = null, $path = null, $domain = null, $secure = null, $httponly = null)
+    public function renew($name, $period = null, $path = null, $domain = null, $secure = null, $httponly = null, $sameSite = null)
     {
         if (($period === null) && !$this->getLifetime()) {
             return $this;
         }
         $value = $this->_getRequest()->getCookie($name, false);
         if ($value !== false) {
-            $this->set($name, $value, $period, $path, $domain, $secure, $httponly);
+            $this->set($name, $value, $period, $path, $domain, $secure, $httponly, $sameSite);
         }
         return $this;
     }
@@ -265,7 +311,7 @@ class Mage_Core_Model_Cookie
     /**
      * Retrieve cookie or false if not exists
      *
-     * @param string $neme The cookie name
+     * @param string $name The cookie name
      * @return mixed
      */
     public function get($name = null)
@@ -281,9 +327,10 @@ class Mage_Core_Model_Cookie
      * @param string $domain
      * @param int|bool $secure
      * @param int|bool $httponly
-     * @return Mage_Core_Model_Cookie
+     * @param string $sameSite
+     * @return $this
      */
-    public function delete($name, $path = null, $domain = null, $secure = null, $httponly = null)
+    public function delete($name, $path = null, $domain = null, $secure = null, $httponly = null, $sameSite = null)
     {
         /**
          * Check headers sent
@@ -292,20 +339,6 @@ class Mage_Core_Model_Cookie
             return $this;
         }
 
-        if (is_null($path)) {
-            $path = $this->getPath();
-        }
-        if (is_null($domain)) {
-            $domain = $this->getDomain();
-        }
-        if (is_null($secure)) {
-            $secure = $this->isSecure();
-        }
-        if (is_null($httponly)) {
-            $httponly = $this->getHttponly();
-        }
-
-        setcookie($name, null, null, $path, $domain, $secure, $httponly);
-        return $this;
+        return $this->set($name, null, null, $path, $domain, $secure, $httponly, $sameSite);
     }
 }

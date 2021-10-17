@@ -1,29 +1,28 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Core
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
-
 
 /**
  * Resources and connections registry and factory
@@ -50,7 +49,7 @@ class Mage_Core_Model_Resource
     /**
      * Instances of actual connections
      *
-     * @var array
+     * @var Varien_Db_Adapter_Interface[]|false
      */
     protected $_connections        = array();
 
@@ -79,7 +78,7 @@ class Mage_Core_Model_Resource
      * Creates a connection to resource whenever needed
      *
      * @param string $name
-     * @return Varien_Db_Adapter_Interface
+     * @return Varien_Db_Adapter_Interface|false
      */
     public function getConnection($name)
     {
@@ -91,6 +90,7 @@ class Mage_Core_Model_Resource
             }
             return $connection;
         }
+        /** @var Mage_Core_Model_Config_Element $connConfig */
         $connConfig = Mage::getConfig()->getResourceConnectionConfig($name);
 
         if (!$connConfig) {
@@ -122,6 +122,16 @@ class Mage_Core_Model_Resource
         }
 
         return $connection;
+    }
+
+    /**
+     * Get Instances of actual connections
+     *
+     * @return Varien_Db_Adapter_Interface[]|false
+     */
+    public function getConnections()
+    {
+        return $this->_connections;
     }
 
     /**
@@ -222,7 +232,7 @@ class Mage_Core_Model_Resource
      *
      * @param string $model
      * @param string $entity
-     * @return Varien_Simplexml_Config
+     * @return SimpleXMLElement|Varien_Simplexml_Config
      */
     public function getEntity($model, $entity)
     {
@@ -301,7 +311,7 @@ class Mage_Core_Model_Resource
      *
      * @param string $tableName
      * @param string $mappedName
-     * @return Mage_Core_Model_Resource
+     * @return $this
      */
     public function setMappedTableName($tableName, $mappedName)
     {
@@ -328,13 +338,13 @@ class Mage_Core_Model_Resource
      * Clean db row
      *
      * @param array $row
-     * @return Mage_Core_Model_Resource
+     * @return $this
      */
     public function cleanDbRow(&$row)
     {
         $zeroDate = $this->getConnection(self::DEFAULT_READ_RESOURCE)->getSuggestedZeroDate();
         if (!empty($row) && is_array($row)) {
-            foreach ($row as $key=>&$value) {
+            foreach ($row as $key => &$value) {
                 if (is_string($value) && $value === $zeroDate) {
                     $value = '';
                 }
@@ -349,7 +359,7 @@ class Mage_Core_Model_Resource
      * @param string $name
      * @param string $type
      * @param array $config
-     * @return unknown
+     * @return Varien_Db_Adapter_Interface
      */
     public function createConnection($name, $type, $config)
     {
@@ -368,12 +378,19 @@ class Mage_Core_Model_Resource
         }
     }
 
+    /**
+     * @return int
+     */
     public function getAutoUpdate()
     {
         return self::AUTO_UPDATE_ALWAYS;
         #return Mage::app()->loadCache(self::AUTO_UPDATE_CACHE_KEY);
     }
 
+    /**
+     * @param mixed $value
+     * @return $this
+     */
     public function setAutoUpdate($value)
     {
         #Mage::app()->saveCache($value, self::AUTO_UPDATE_CACHE_KEY);
@@ -405,7 +422,11 @@ class Mage_Core_Model_Resource
     public function getFkName($priTableName, $priColumnName, $refTableName, $refColumnName)
     {
         return $this->getConnection(self::DEFAULT_READ_RESOURCE)
-            ->getForeignKeyName($this->getTableName($priTableName), $priColumnName,
-                $this->getTableName($refTableName), $refColumnName);
+            ->getForeignKeyName(
+                $this->getTableName($priTableName),
+                $priColumnName,
+                $this->getTableName($refTableName),
+                $refColumnName
+            );
     }
 }

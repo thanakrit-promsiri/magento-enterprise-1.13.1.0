@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Checkout
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 /**
@@ -30,6 +30,12 @@
  * @category    Mage
  * @package     Mage_Checkout
  * @author      Magento Core Team <core@magentocommerce.com>
+ *
+ * @method string getCartTemplate()
+ * @method string getEmptyTemplate()
+ * @method $this setIsWishlistActive(bool $value)
+ * @method int getItemsCount()
+ * @method Mage_Sales_Model_Quote_Item[] getCustomItems()
  */
 class Mage_Checkout_Block_Cart extends Mage_Checkout_Block_Cart_Abstract
 {
@@ -50,7 +56,7 @@ class Mage_Checkout_Block_Cart extends Mage_Checkout_Block_Cart_Abstract
     public function prepareItemUrls()
     {
         $products = array();
-        /* @var $item Mage_Sales_Model_Quote_Item */
+        /* @var Mage_Sales_Model_Quote_Item $item */
         foreach ($this->getItems() as $item) {
             $product    = $item->getProduct();
             $option     = $item->getOptionByCode('product_type');
@@ -60,8 +66,7 @@ class Mage_Checkout_Block_Cart extends Mage_Checkout_Block_Cart_Abstract
 
             if ($item->getStoreId() != Mage::app()->getStore()->getId()
                 && !$item->getRedirectUrl()
-                && !$product->isVisibleInSiteVisibility())
-            {
+                && !$product->isVisibleInSiteVisibility()) {
                 $products[$product->getId()] = $item->getStoreId();
             }
         }
@@ -94,16 +99,25 @@ class Mage_Checkout_Block_Cart extends Mage_Checkout_Block_Cart_Abstract
         }
     }
 
+    /**
+     * @return bool
+     */
     public function hasError()
     {
         return $this->getQuote()->getHasError();
     }
 
+    /**
+     * @return float|int|mixed
+     */
     public function getItemsSummaryQty()
     {
         return $this->getQuote()->getItemsSummaryQty();
     }
 
+    /**
+     * @return bool|mixed
+     */
     public function isWishlistActive()
     {
         $isActive = $this->_getData('is_wishlist_active');
@@ -115,11 +129,27 @@ class Mage_Checkout_Block_Cart extends Mage_Checkout_Block_Cart_Abstract
         return $isActive;
     }
 
+    /**
+     * @return string
+     */
     public function getCheckoutUrl()
     {
         return $this->getUrl('checkout/onepage', array('_secure'=>true));
     }
 
+    /**
+     * Return "cart" form action url
+     *
+     * @return string
+     */
+    public function getFormActionUrl()
+    {
+        return $this->getUrl('checkout/cart/updatePost', array('_secure' => $this->_isSecure()));
+    }
+
+    /**
+     * @return mixed|string
+     */
     public function getContinueShoppingUrl()
     {
         $url = $this->getData('continue_shopping_url');
@@ -133,6 +163,9 @@ class Mage_Checkout_Block_Cart extends Mage_Checkout_Block_Cart_Abstract
         return $url;
     }
 
+    /**
+     * @return bool
+     */
     public function getIsVirtual()
     {
         return $this->helper('checkout/cart')->getIsVirtualQuote();
@@ -170,7 +203,7 @@ class Mage_Checkout_Block_Cart extends Mage_Checkout_Block_Cart_Abstract
     /**
      * Return customer quote items
      *
-     * @return array
+     * @return Mage_Sales_Model_Quote_Item[]
      */
     public function getItems()
     {

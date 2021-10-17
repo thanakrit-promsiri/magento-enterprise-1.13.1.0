@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Sales
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 /**
@@ -48,6 +48,8 @@ class Mage_Sales_DownloadController extends Mage_Core_Controller_Front_Action
                 throw new Exception();
             }
 
+            $this->_validateFilePath($info);
+
             $filePath = Mage::getBaseDir() . $info['order_path'];
             if ((!is_file($filePath) || !is_readable($filePath)) && !$this->_processDatabaseFile($filePath)) {
                 //try get file from quote
@@ -62,6 +64,19 @@ class Mage_Sales_DownloadController extends Mage_Core_Controller_Front_Action
             ));
         } catch (Exception $e) {
             $this->_forward('noRoute');
+        }
+    }
+
+    /**
+     * @param array $info
+     * @throws Exception
+     */
+    protected function _validateFilePath($info)
+    {
+        $optionFile = Mage::getModel('catalog/product_option_type_file');
+        $optionStoragePath = $optionFile->getOrderTargetDir(true);
+        if (strpos($info['order_path'], $optionStoragePath) !== 0) {
+            throw new Exception('Unexpected file path');
         }
     }
 
@@ -112,7 +127,7 @@ class Mage_Sales_DownloadController extends Mage_Core_Controller_Front_Action
 
         $orderItemInfo = $recurringProfile->getData('order_item_info');
         try {
-            $request = unserialize($orderItemInfo['info_buyRequest']);
+            $request = unserialize($orderItemInfo['info_buyRequest'], ['allowed_classes' => false]);
 
             if ($request['product'] != $orderItemInfo['product_id']) {
                 $this->_forward('noRoute');
@@ -148,7 +163,7 @@ class Mage_Sales_DownloadController extends Mage_Core_Controller_Front_Action
     public function downloadCustomOptionAction()
     {
         $quoteItemOptionId = $this->getRequest()->getParam('id');
-        /** @var $option Mage_Sales_Model_Quote_Item_Option */
+        /** @var Mage_Sales_Model_Quote_Item_Option $option */
         $option = Mage::getModel('sales/quote_item_option')->load($quoteItemOptionId);
 
         if (!$option->getId()) {
@@ -165,7 +180,7 @@ class Mage_Sales_DownloadController extends Mage_Core_Controller_Front_Action
         }
         $productOption = null;
         if ($optionId) {
-            /** @var $productOption Mage_Catalog_Model_Product_Option */
+            /** @var Mage_Catalog_Model_Product_Option $productOption */
             $productOption = Mage::getModel('catalog/product_option')->load($optionId);
         }
         if (!$productOption || !$productOption->getId()
@@ -176,7 +191,7 @@ class Mage_Sales_DownloadController extends Mage_Core_Controller_Front_Action
         }
 
         try {
-            $info = unserialize($option->getValue());
+            $info = Mage::helper('core/unserializeArray')->unserialize($option->getValue());
             $this->_downloadFileAction($info);
         } catch (Exception $e) {
             $this->_forward('noRoute');

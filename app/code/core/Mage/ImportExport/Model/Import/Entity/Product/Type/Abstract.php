@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_ImportExport
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 /**
@@ -162,9 +162,10 @@ abstract class Mage_ImportExport_Model_Import_Entity_Product_Type_Abstract
 
         foreach (Mage::getResourceModel('eav/entity_attribute_set_collection')
                 ->setEntityTypeFilter($this->_entityModel->getEntityTypeId()) as $attributeSet) {
+            /** @var Mage_Eav_Model_Entity_Attribute_Set $attributeSet */
             foreach (Mage::getResourceModel('catalog/product_attribute_collection')
                 ->setAttributeSetFilter($attributeSet->getId()) as $attribute) {
-
+                /** @var Mage_Eav_Model_Entity_Attribute $attribute */
                 $attributeCode = $attribute->getAttributeCode();
                 $attributeId   = $attribute->getId();
 
@@ -256,19 +257,19 @@ abstract class Mage_ImportExport_Model_Import_Entity_Product_Type_Abstract
                 // check value for non-empty in the case of required attribute?
                 if (isset($rowData[$attrCode]) && strlen($rowData[$attrCode])) {
                     $error |= !$this->_entityModel->isAttributeValid($attrCode, $attrParams, $rowData, $rowNum);
-                } elseif (
-                    $this->_isAttributeRequiredCheckNeeded($attrCode)
+                } elseif ($this->_isAttributeRequiredCheckNeeded($attrCode)
                     && $attrParams['is_required']) {
                         // For the default scope - if this is a new product or
                         // for an old product, if the imported doc has the column present for the attrCode
-                        if (Mage_ImportExport_Model_Import_Entity_Product::SCOPE_DEFAULT == $rowScope &&
+                    if (Mage_ImportExport_Model_Import_Entity_Product::SCOPE_DEFAULT == $rowScope &&
                             ($isNewProduct || array_key_exists($attrCode, $rowData))) {
-                            $this->_entityModel->addRowError(
-                                Mage_ImportExport_Model_Import_Entity_Product::ERROR_VALUE_IS_REQUIRED,
-                                    $rowNum, $attrCode
-                            );
-                            $error = true;
-                        }
+                        $this->_entityModel->addRowError(
+                            Mage_ImportExport_Model_Import_Entity_Product::ERROR_VALUE_IS_REQUIRED,
+                            $rowNum,
+                            $attrCode
+                        );
+                        $error = true;
+                    }
                 }
             }
         }

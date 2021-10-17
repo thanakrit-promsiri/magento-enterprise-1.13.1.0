@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Rss
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 /**
@@ -32,23 +32,29 @@
  * @author      Magento Core Team <core@magentocommerce.com>
  */
 
-class Mage_Rss_OrderController extends Mage_Core_Controller_Front_Action
+class Mage_Rss_OrderController extends Mage_Rss_Controller_Abstract
 {
     public function newAction()
     {
-        $this->getResponse()->setHeader('Content-type', 'text/xml; charset=UTF-8');
-        $this->loadLayout(false);
-        $this->renderLayout();
+        if ($this->checkFeedEnable('order/new')) {
+            $this->loadLayout(false);
+            $this->renderLayout();
+        }
     }
 
+    /**
+     * @return $this|void
+     * @throws Mage_Core_Model_Store_Exception
+     */
     public function customerAction()
     {
-        if (Mage::app()->getStore()->isCurrentlySecure()) {
-            $this->getResponse()->setHeader('Content-type', 'text/xml; charset=UTF-8');
-            Mage::helper('rss')->authFrontend();
-        } else {
-            $this->_redirect('rss/order/customer', array('_secure'=>true));
-            return $this;
+        if ($this->checkFeedEnable('order/customer')) {
+            if (Mage::app()->getStore()->isCurrentlySecure()) {
+                Mage::helper('rss')->authFrontend();
+            } else {
+                $this->_redirect('rss/order/customer', array('_secure'=>true));
+                return $this;
+            }
         }
     }
 
@@ -57,13 +63,15 @@ class Mage_Rss_OrderController extends Mage_Core_Controller_Front_Action
      */
     public function statusAction()
     {
-        $order = Mage::helper('rss/order')->getOrderByStatusUrlKey((string)$this->getRequest()->getParam('data'));
-        if (!is_null($order)) {
-            Mage::register('current_order', $order);
-            $this->getResponse()->setHeader('Content-type', 'text/xml; charset=UTF-8');
-            $this->loadLayout(false);
-            $this->renderLayout();
-            return;
+        if ($this->isFeedEnable('order/status_notified')) {
+            $order = Mage::helper('rss/order')->getOrderByStatusUrlKey((string)$this->getRequest()->getParam('data'));
+            if (!is_null($order)) {
+                Mage::register('current_order', $order);
+                $this->getResponse()->setHeader('Content-type', 'text/xml; charset=UTF-8');
+                $this->loadLayout(false);
+                $this->renderLayout();
+                return;
+            }
         }
         $this->_forward('nofeed', 'index', 'rss');
     }
@@ -71,11 +79,12 @@ class Mage_Rss_OrderController extends Mage_Core_Controller_Front_Action
     /**
      * Controller predispatch method to change area for some specific action.
      *
-     * @return Mage_Rss_OrderController
+     * @return $this
      */
     public function preDispatch()
     {
-        if ($this->getRequest()->getActionName() == 'new') {
+        $action = strtolower($this->getRequest()->getActionName());
+        if ($action == 'new' && $this->isFeedEnable('order/new')) {
             $this->_currentArea = 'adminhtml';
             Mage::helper('rss')->authAdmin('sales/order');
         }

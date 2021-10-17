@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Bundle
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 
@@ -111,7 +111,7 @@ class Mage_Bundle_Model_Resource_Price_Index extends Mage_Core_Model_Resource_Db
     /**
      * Retrieve product ids array by product condition
      *
-     * @param Mage_Core_Model_Product|Mage_Catalog_Model_Product_Condition_Interface|array|int $product
+     * @param Mage_Catalog_Model_Product|Mage_Catalog_Model_Product_Condition_Interface|array|int $product
      * @param int $lastEntityId
      * @param int $limit
      * @return array
@@ -144,7 +144,7 @@ class Mage_Bundle_Model_Resource_Price_Index extends Mage_Core_Model_Resource_Db
 
         $select->joinLeft(
             array($priceTypeAlias => $priceType->getBackend()->getTable()),
-            join(' AND ', $joinConds),
+            implode(' AND ', $joinConds),
             array('price_type' => $priceTypeAlias . '.value')
         );
 
@@ -161,8 +161,8 @@ class Mage_Bundle_Model_Resource_Price_Index extends Mage_Core_Model_Resource_Db
     /**
      * Reindex Bundle product Price Index
      *
-     * @param Mage_Core_Model_Product|Mage_Catalog_Model_Product_Condition_Interface|array|int $products
-     * @return Mage_Bundle_Model_Resource_Price_Index
+     * @param Mage_Catalog_Model_Product|Mage_Catalog_Model_Product_Condition_Interface|array|int $products
+     * @return $this
      */
     public function reindex($products = null)
     {
@@ -187,7 +187,7 @@ class Mage_Bundle_Model_Resource_Price_Index extends Mage_Core_Model_Resource_Db
      *
      * @param int $productId
      * @param int $priceType
-     * @return Mage_Bundle_Model_Resource_Price_Index
+     * @return $this
      */
     protected function _reindexProduct($productId, $priceType)
     {
@@ -213,9 +213,9 @@ class Mage_Bundle_Model_Resource_Price_Index extends Mage_Core_Model_Resource_Db
             $priceData = $this->getProductsPriceData($productId, $website);
             $priceData = $priceData[$productId];
 
-            /* @var $website Mage_Core_Model_Website */
+            /* @var Mage_Core_Model_Website $website */
             foreach ($this->_getCustomerGroups() as $group) {
-                /* @var $group Mage_Customer_Model_Group */
+                /* @var Mage_Customer_Model_Group $group */
                 if ($priceType == Mage_Bundle_Model_Product_Price::PRICE_TYPE_FIXED) {
                     $basePrice     = $this->_getBasePrice($productId, $priceData, $website, $group);
                     $customOptions = $this->getCustomOptions($productId, $website);
@@ -223,8 +223,16 @@ class Mage_Bundle_Model_Resource_Price_Index extends Mage_Core_Model_Resource_Db
                     $basePrice = 0;
                 }
 
-                list($minPrice, $maxPrice) = $this->_calculateBundleSelections($options, $salableStatus,
-                    $productId, $priceType, $basePrice, $priceData, $priceIndex, $website, $group
+                list($minPrice, $maxPrice) = $this->_calculateBundleSelections(
+                    $options,
+                    $salableStatus,
+                    $productId,
+                    $priceType,
+                    $basePrice,
+                    $priceData,
+                    $priceIndex,
+                    $website,
+                    $group
                 );
 
                 if ($priceType == Mage_Bundle_Model_Product_Price::PRICE_TYPE_FIXED) {
@@ -247,15 +255,20 @@ class Mage_Bundle_Model_Resource_Price_Index extends Mage_Core_Model_Resource_Db
      * @param int $groupId
      * @param float $minPrice
      * @param float $maxPrice
-     * @return Mage_Bundle_Model_Resource_Price_Index
+     * @return $this
      */
     protected function _savePriceIndex($productId, $websiteId, $groupId, $minPrice, $maxPrice)
     {
         $adapter = $this->_getWriteAdapter();
         $adapter->beginTransaction();
-        $bind = array($productId, $websiteId, $groupId, $minPrice, $maxPrice);
-        $adapter->insertOnDuplicate($this->getMainTable(), $bind, array('min_price', 'max_price'));
-        $adapter->commit();
+        try {
+            $bind = array($productId, $websiteId, $groupId, $minPrice, $maxPrice);
+            $adapter->insertOnDuplicate($this->getMainTable(), $bind, array('min_price', 'max_price'));
+            $adapter->commit();
+        } catch (Exception $e) {
+            $adapter->rollBack();
+            throw $e;
+        }
 
         return $this;
     }
@@ -345,7 +358,6 @@ class Mage_Bundle_Model_Resource_Price_Index extends Mage_Core_Model_Resource_Db
                 array('status' => 't_status.value')
             );
         } else {
-
             $statusField = $read->getCheckSql(
                 't2_status.value_id > 0',
                 't2_status.value',
@@ -384,7 +396,7 @@ class Mage_Bundle_Model_Resource_Price_Index extends Mage_Core_Model_Resource_Db
         $query = $read->query($select, $bind);
         while ($row = $query->fetch()) {
             $salable = isset($row['salable']) ? $row['salable'] : true;
-            $website = $row['website_id'] > 0 ? true : false;
+            $website = $row['website_id'] > 0;
             $status  = $row['status'];
 
             $productsData[$row['entity_id']] = $salable && $status && $website;
@@ -456,11 +468,13 @@ class Mage_Bundle_Model_Resource_Price_Index extends Mage_Core_Model_Resource_Db
      * @param Varien_Db_Select $select
      * @param string $attributeCode
      * @param Mage_Core_Model_Website $website
-     * @return Mage_Bundle_Model_Resource_Price_Index
+     * @return $this
      */
-    protected function _addAttributeDataToSelect(Varien_Db_Select $select, $attributeCode,
-        Mage_Core_Model_Website $website)
-    {
+    protected function _addAttributeDataToSelect(
+        Varien_Db_Select $select,
+        $attributeCode,
+        Mage_Core_Model_Website $website
+    ) {
         $attribute  = $this->_getAttribute($attributeCode);
         $store      = $website->getDefaultStore();
         if ($attribute->isScopeGlobal()) {
@@ -584,7 +598,8 @@ class Mage_Bundle_Model_Resource_Price_Index extends Mage_Core_Model_Resource_Db
                         'value_id'   => $valueIdCond,
                         'price'      => $priceCond,
                         'price_type' => $priceTypeCond
-                    ))
+                    )
+                )
                 ->joinLeft(
                     array('price_store_table' => $this->getTable('catalog/product_option_price')),
                     'option_table.option_id = price_store_table.option_id' .
@@ -724,9 +739,17 @@ class Mage_Bundle_Model_Resource_Price_Index extends Mage_Core_Model_Resource_Db
      * @param Mage_Customer_Model_Group $group
      * @return array
      */
-    public function _calculateBundleSelections(array $options, array $salableStatus, $productId, $priceType, $basePrice,
-        $priceData, $priceIndex, $website, $group)
-    {
+    public function _calculateBundleSelections(
+        array $options,
+        array $salableStatus,
+        $productId,
+        $priceType,
+        $basePrice,
+        $priceData,
+        $priceIndex,
+        $website,
+        $group
+    ) {
         $minPrice = $maxPrice = $basePrice;
         $optPrice = 0;
 
@@ -747,7 +770,7 @@ class Mage_Bundle_Model_Resource_Price_Index extends Mage_Core_Model_Resource_Db
 
                 // calculate selection price
                 if ($priceType == Mage_Bundle_Model_Product_Price::PRICE_TYPE_DYNAMIC) {
-                    $priceIndexKey = join('-', array(
+                    $priceIndexKey = implode('-', array(
                         $selection['product_id'],
                         $website->getId(),
                         $group->getId()
@@ -759,8 +782,11 @@ class Mage_Bundle_Model_Resource_Price_Index extends Mage_Core_Model_Resource_Db
                     if ($selection['price_type']) { // percent
                         $selectionPrice = $basePrice * $selection['price_value'] / 100;
                     } else {
-                        $selectionPrice = $this->_calculateSpecialPrice($selection['price_value'],
-                        $priceData, $website);
+                        $selectionPrice = $this->_calculateSpecialPrice(
+                            $selection['price_value'],
+                            $priceData,
+                            $website
+                        );
                     }
                 }
 
@@ -809,8 +835,11 @@ class Mage_Bundle_Model_Resource_Price_Index extends Mage_Core_Model_Resource_Db
         $specialPrice       = $priceData['special_price'];
 
         if (!is_null($specialPrice) && $specialPrice != false) {
-            if (Mage::app()->getLocale()->isStoreDateInInterval($store, $priceData['special_from_date'],
-            $priceData['special_to_date'])) {
+            if (Mage::app()->getLocale()->isStoreDateInInterval(
+                $store,
+                $priceData['special_from_date'],
+                $priceData['special_to_date']
+            )) {
                 $specialPrice   = ($finalPrice * $specialPrice) / 100;
                 $finalPrice     = min($finalPrice, $specialPrice);
             }

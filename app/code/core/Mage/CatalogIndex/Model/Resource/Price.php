@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_CatalogIndex
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 
@@ -37,21 +37,21 @@ class Mage_CatalogIndex_Model_Resource_Price extends Mage_CatalogIndex_Model_Res
     /**
      * Enter description here ...
      *
-     * @var unknown
+     * @var float
      */
     protected $_rate               = 1;
 
     /**
      * Enter description here ...
      *
-     * @var unknown
+     * @var int
      */
     protected $_customerGroupId;
 
     /**
      * Enter description here ...
      *
-     * @var unknown
+     * @var array
      */
     protected $_taxRates           = null;
 
@@ -67,7 +67,7 @@ class Mage_CatalogIndex_Model_Resource_Price extends Mage_CatalogIndex_Model_Res
     /**
      * Enter description here ...
      *
-     * @param unknown_type $rate
+     * @param float $rate
      */
     public function setRate($rate)
     {
@@ -77,7 +77,7 @@ class Mage_CatalogIndex_Model_Resource_Price extends Mage_CatalogIndex_Model_Res
     /**
      * Enter description here ...
      *
-     * @return unknown
+     * @return float
      */
     public function getRate()
     {
@@ -90,7 +90,7 @@ class Mage_CatalogIndex_Model_Resource_Price extends Mage_CatalogIndex_Model_Res
     /**
      * Enter description here ...
      *
-     * @param unknown_type $customerGroupId
+     * @param int $customerGroupId
      */
     public function setCustomerGroupId($customerGroupId)
     {
@@ -100,7 +100,7 @@ class Mage_CatalogIndex_Model_Resource_Price extends Mage_CatalogIndex_Model_Res
     /**
      * Enter description here ...
      *
-     * @return unknown
+     * @return int
      */
     public function getCustomerGroupId()
     {
@@ -110,9 +110,9 @@ class Mage_CatalogIndex_Model_Resource_Price extends Mage_CatalogIndex_Model_Res
     /**
      * Enter description here ...
      *
-     * @param unknown_type $attribute
-     * @param unknown_type $entitySelect
-     * @return unknown
+     * @param Mage_Eav_Model_Entity_Attribute $attribute
+     * @param Zend_Db_Select $entitySelect
+     * @return float|int
      */
     public function getMaxValue($attribute, $entitySelect)
     {
@@ -149,10 +149,10 @@ class Mage_CatalogIndex_Model_Resource_Price extends Mage_CatalogIndex_Model_Res
     /**
      * Enter description here ...
      *
-     * @param unknown_type $range
-     * @param unknown_type $attribute
-     * @param unknown_type $entitySelect
-     * @return unknown
+     * @param int $range
+     * @param Mage_Eav_Model_Entity_Attribute $attribute
+     * @param Zend_Db_Select $entitySelect
+     * @return array
      */
     public function getCount($range, $attribute, $entitySelect)
     {
@@ -199,12 +199,12 @@ class Mage_CatalogIndex_Model_Resource_Price extends Mage_CatalogIndex_Model_Res
     /**
      * Enter description here ...
      *
-     * @param unknown_type $range
-     * @param unknown_type $index
-     * @param unknown_type $attribute
-     * @param unknown_type $entityIdsFilter
-     * @param unknown_type $tableName
-     * @return unknown
+     * @param int $range
+     * @param int $index
+     * @param Mage_Eav_Model_Entity_Attribute $attribute
+     * @param array $entityIdsFilter
+     * @param string $tableName
+     * @return array
      */
     public function getFilteredEntities($range, $index, $attribute, $entityIdsFilter, $tableName = 'price_table')
     {
@@ -241,12 +241,12 @@ class Mage_CatalogIndex_Model_Resource_Price extends Mage_CatalogIndex_Model_Res
     /**
      * Enter description here ...
      *
-     * @param unknown_type $collection
-     * @param unknown_type $attribute
-     * @param unknown_type $range
-     * @param unknown_type $index
-     * @param unknown_type $tableName
-     * @return Mage_CatalogIndex_Model_Resource_Price
+     * @param Mage_Eav_Model_Resource_Entity_Attribute_Collection $collection
+     * @param Mage_Eav_Model_Entity_Attribute $attribute
+     * @param int $range
+     * @param int $index
+     * @param string $tableName
+     * @return $this
      */
     public function applyFilterToCollection($collection, $attribute, $range, $index, $tableName = 'price_table')
     {
@@ -290,8 +290,8 @@ class Mage_CatalogIndex_Model_Resource_Price extends Mage_CatalogIndex_Model_Res
     /**
      * Enter description here ...
      *
-     * @param unknown_type $ids
-     * @return unknown
+     * @param array $ids
+     * @return array
      */
     public function getMinimalPrices($ids)
     {
@@ -299,8 +299,10 @@ class Mage_CatalogIndex_Model_Resource_Price extends Mage_CatalogIndex_Model_Res
             return array();
         }
         $select = $this->_getReadAdapter()->select();
-        $select->from(array('price_table'=>$this->getTable('catalogindex/minimal_price')),
-            array('price_table.entity_id', 'value'=>"(price_table.value)", 'tax_class_id'=>'(price_table.tax_class_id)'))
+        $select->from(
+            array('price_table'=>$this->getTable('catalogindex/minimal_price')),
+            array('price_table.entity_id', 'value'=>"(price_table.value)", 'tax_class_id'=>'(price_table.tax_class_id)')
+        )
             ->where('price_table.entity_id in (?)', $ids)
             ->where('price_table.website_id = ?', $this->getWebsiteId())
             ->where('price_table.customer_group_id = ?', $this->getCustomerGroupId());

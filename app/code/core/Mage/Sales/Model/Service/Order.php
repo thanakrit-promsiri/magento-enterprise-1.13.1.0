@@ -1,31 +1,33 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Sales
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 /**
  * Quote submit service model
+ *
+ * @method $this setEmailSent(bool $value)
  */
 class Mage_Sales_Model_Service_Order
 {
@@ -80,7 +82,7 @@ class Mage_Sales_Model_Service_Order
      * Updates numeric data taking into account locale
      *
      * @param array $data
-     * @return Mage_Sales_Model_Service_Order
+     * @return $this
      */
     public function updateLocaleNumbers(&$data)
     {
@@ -124,20 +126,25 @@ class Mage_Sales_Model_Service_Order
             $item = $this->_convertor->itemToInvoiceItem($orderItem);
             if ($orderItem->isDummy()) {
                 $qty = $orderItem->getQtyOrdered() ? $orderItem->getQtyOrdered() : 1;
-            } else if (!empty($qtys)) {
+            } else {
                 if (isset($qtys[$orderItem->getId()])) {
                     $qty = (float) $qtys[$orderItem->getId()];
+                } elseif (!count($qtys)) {
+                    $qty = $orderItem->getQtyToInvoice();
+                } else {
+                    $qty = 0;
                 }
-            } else {
-                $qty = $orderItem->getQtyToInvoice();
             }
+
             $totalQty += $qty;
             $item->setQty($qty);
             $invoice->addItem($item);
         }
+
         $invoice->setTotalQty($totalQty);
         $invoice->collectTotals();
         $this->_order->getInvoiceCollection()->addItem($invoice);
+
         return $invoice;
     }
 
@@ -164,7 +171,7 @@ class Mage_Sales_Model_Service_Order
                 if (isset($qtys[$orderItem->getParentItemId()])) {
                     $productOptions = $orderItem->getProductOptions();
                     if (isset($productOptions['bundle_selection_attributes'])) {
-                        $bundleSelectionAttributes = unserialize($productOptions['bundle_selection_attributes']);
+                        $bundleSelectionAttributes = unserialize($productOptions['bundle_selection_attributes'], ['allowed_classes' => false]);
 
                         if ($bundleSelectionAttributes) {
                             $qty = $bundleSelectionAttributes['qty'] * $qtys[$orderItem->getParentItemId()];
@@ -258,10 +265,10 @@ class Mage_Sales_Model_Service_Order
         $creditmemo->setInvoice($invoice);
 
         $invoiceQtysRefunded = array();
-        foreach($invoice->getOrder()->getCreditmemosCollection() as $createdCreditmemo) {
+        foreach ($invoice->getOrder()->getCreditmemosCollection() as $createdCreditmemo) {
             if ($createdCreditmemo->getState() != Mage_Sales_Model_Order_Creditmemo::STATE_CANCELED
                 && $createdCreditmemo->getInvoiceId() == $invoice->getId()) {
-                foreach($createdCreditmemo->getAllItems() as $createdCreditmemoItem) {
+                foreach ($createdCreditmemo->getAllItems() as $createdCreditmemoItem) {
                     $orderItemId = $createdCreditmemoItem->getOrderItem()->getId();
                     if (isset($invoiceQtysRefunded[$orderItemId])) {
                         $invoiceQtysRefunded[$orderItemId] += $createdCreditmemoItem->getQty();
@@ -273,7 +280,7 @@ class Mage_Sales_Model_Service_Order
         }
 
         $invoiceQtysRefundLimits = array();
-        foreach($invoice->getAllItems() as $invoiceItem) {
+        foreach ($invoice->getAllItems() as $invoiceItem) {
             $invoiceQtyCanBeRefunded = $invoiceItem->getQty();
             $orderItemId = $invoiceItem->getOrderItem()->getId();
             if (isset($invoiceQtysRefunded[$orderItemId])) {
@@ -361,7 +368,7 @@ class Mage_Sales_Model_Service_Order
      * @param array $qtys
      * @return bool
      */
-    protected function _canInvoiceItem($item, $qtys=array())
+    protected function _canInvoiceItem($item, $qtys = array())
     {
         if ($item->getLockedDoInvoice()) {
             return false;
@@ -382,7 +389,7 @@ class Mage_Sales_Model_Service_Order
                     }
                 }
                 return false;
-            } else if($item->getParentItem()) {
+            } elseif ($item->getParentItem()) {
                 $parent = $item->getParentItem();
                 if (empty($qtys)) {
                     return $parent->getQtyToInvoice() > 0;
@@ -403,7 +410,7 @@ class Mage_Sales_Model_Service_Order
      * @param array $qtys
      * @return bool
      */
-    protected function _canShipItem($item, $qtys=array())
+    protected function _canShipItem($item, $qtys = array())
     {
         if ($item->getIsVirtual() || $item->getLockedDoShip()) {
             return false;
@@ -430,7 +437,7 @@ class Mage_Sales_Model_Service_Order
                     }
                 }
                 return false;
-            } else if($item->getParentItem()) {
+            } elseif ($item->getParentItem()) {
                 $parent = $item->getParentItem();
                 if (empty($qtys)) {
                     return $parent->getQtyToShip() > 0;
@@ -451,7 +458,7 @@ class Mage_Sales_Model_Service_Order
      * @param array $invoiceQtysRefundLimits
      * @return bool
      */
-    protected function _canRefundItem($item, $qtys=array(), $invoiceQtysRefundLimits=array())
+    protected function _canRefundItem($item, $qtys = array(), $invoiceQtysRefundLimits = array())
     {
         $this->updateLocaleNumbers($qtys);
         if ($item->isDummy()) {
@@ -468,7 +475,7 @@ class Mage_Sales_Model_Service_Order
                     }
                 }
                 return false;
-            } else if($item->getParentItem()) {
+            } elseif ($item->getParentItem()) {
                 $parent = $item->getParentItem();
                 if (empty($qtys)) {
                     return $this->_canRefundNoDummyItem($parent, $invoiceQtysRefundLimits);
@@ -488,7 +495,7 @@ class Mage_Sales_Model_Service_Order
      * @param array $invoiceQtysRefundLimits
      * @return bool
      */
-    protected function _canRefundNoDummyItem($item, $invoiceQtysRefundLimits=array())
+    protected function _canRefundNoDummyItem($item, $invoiceQtysRefundLimits = array())
     {
         if ($item->getQtyToRefund() < 0) {
             return false;
@@ -500,5 +507,4 @@ class Mage_Sales_Model_Service_Order
 
         return true;
     }
-
 }

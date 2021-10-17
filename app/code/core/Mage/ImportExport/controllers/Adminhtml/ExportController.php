@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_ImportExport
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 /**
@@ -47,7 +47,7 @@ class Mage_ImportExport_Adminhtml_ExportController extends Mage_Adminhtml_Contro
     /**
      * Initialize layout.
      *
-     * @return Mage_ImportExport_Adminhtml_ExportController
+     * @return $this
      */
     protected function _initAction()
     {
@@ -71,19 +71,22 @@ class Mage_ImportExport_Adminhtml_ExportController extends Mage_Adminhtml_Contro
     /**
      * Load data with filter applying and create file for download.
      *
-     * @return Mage_ImportExport_Adminhtml_ExportController
+     * @return Mage_Adminhtml_Controller_Action
      */
     public function exportAction()
     {
         if ($this->getRequest()->getPost(Mage_ImportExport_Model_Export::FILTER_ELEMENT_GROUP)) {
             try {
-                /** @var $model Mage_ImportExport_Model_Export */
+                /** @var Mage_ImportExport_Model_Export $model */
                 $model = Mage::getModel('importexport/export');
                 $model->setData($this->getRequest()->getParams());
 
+                $result         = $model->exportFile();
+                $result['type'] = 'filename';
+
                 return $this->_prepareDownloadResponse(
                     $model->getFileName(),
-                    $model->export(),
+                    $result,
                     $model->getContentType()
                 );
             } catch (Mage_Core_Exception $e) {
@@ -124,9 +127,9 @@ class Mage_ImportExport_Adminhtml_ExportController extends Mage_Adminhtml_Contro
             try {
                 $this->loadLayout();
 
-                /** @var $attrFilterBlock Mage_ImportExport_Block_Adminhtml_Export_Filter */
+                /** @var Mage_ImportExport_Block_Adminhtml_Export_Filter $attrFilterBlock */
                 $attrFilterBlock = $this->getLayout()->getBlock('export.filter');
-                /** @var $export Mage_ImportExport_Model_Export */
+                /** @var Mage_ImportExport_Model_Export $export */
                 $export = Mage::getModel('importexport/export');
 
                 $export->filterAttributeCollection(

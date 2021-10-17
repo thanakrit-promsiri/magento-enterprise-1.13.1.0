@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Reports
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 
@@ -42,18 +42,19 @@ class Mage_Reports_Model_Resource_Product_Sold_Collection extends Mage_Reports_M
     {
         parent::_construct();
         $this->_useAnalyticFunction = true;
+        // skip adding stock information to collection for perfromance reasons
+        $this->setFlag('no_stock_data', true);
     }
     /**
      * Set Date range to collection
      *
      * @param int $from
      * @param int $to
-     * @return Mage_Reports_Model_Resource_Product_Sold_Collection
+     * @return $this
      */
     public function setDateRange($from, $to)
     {
         $this->_reset()
-            ->addAttributeToSelect('*')
             ->addOrderedQty($from, $to)
             ->setOrder('ordered_qty', self::SORT_ORDER_DESC);
         return $this;
@@ -63,7 +64,7 @@ class Mage_Reports_Model_Resource_Product_Sold_Collection extends Mage_Reports_M
      * Set store filter to collection
      *
      * @param array $storeIds
-     * @return Mage_Reports_Model_Resource_Product_Sold_Collection
+     * @return $this
      */
     public function setStoreIds($storeIds)
     {
@@ -76,7 +77,7 @@ class Mage_Reports_Model_Resource_Product_Sold_Collection extends Mage_Reports_M
     /**
      * Add website product limitation
      *
-     * @return Mage_Reports_Model_Resource_Product_Sold_Collection
+     * @return $this
      */
     protected function _productLimitationJoinWebsite()
     {
@@ -87,11 +88,12 @@ class Mage_Reports_Model_Resource_Product_Sold_Collection extends Mage_Reports_M
                 ->quoteInto('product_website.website_id IN(?)', $filters['website_ids']);
 
             $subQuery = $this->getConnection()->select()
-                ->from(array('product_website' => $this->getTable('catalog/product_website')),
+                ->from(
+                    array('product_website' => $this->getTable('catalog/product_website')),
                     array('product_website.product_id')
                 )
-                ->where(join(' AND ', $conditions));
-            $this->getSelect()->where('e.entity_id IN( '.$subQuery.' )');
+                ->where(implode(' AND ', $conditions));
+            $this->getSelect()->where('e.entity_id IN( ' . $subQuery . ' )');
         }
 
         return $this;

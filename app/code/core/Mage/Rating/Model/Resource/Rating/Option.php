@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Rating
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 /**
@@ -109,7 +109,7 @@ class Mage_Rating_Model_Resource_Rating_Option extends Mage_Core_Model_Resource_
      * Add vote
      *
      * @param Mage_Rating_Model_Rating_Option $option
-     * @return Mage_Rating_Model_Resource_Rating_Option
+     * @return $this
      */
     public function addVote($option)
     {
@@ -146,7 +146,7 @@ class Mage_Rating_Model_Resource_Rating_Option extends Mage_Core_Model_Resource_
             }
             $adapter->commit();
         } catch (Exception $e) {
-            $adapter->rollback();
+            $adapter->rollBack();
             throw new Exception($e->getMessage());
         }
         return $this;
@@ -185,20 +185,29 @@ class Mage_Rating_Model_Resource_Rating_Option extends Mage_Core_Model_Resource_
         $appVoteValueSumCond = $readAdapter->getCheckSql('review.status_id=1', 'vote.value', '0');
 
         $select = $readAdapter->select()
-            ->from(array('vote'=>$this->_ratingVoteTable),
+            ->from(
+                array('vote'=>$this->_ratingVoteTable),
                 array(
                     'vote_count'         => new Zend_Db_Expr('COUNT(vote.vote_id)'),
                     'vote_value_sum'     => new Zend_Db_Expr('SUM(vote.value)'),
                     'app_vote_count'     => new Zend_Db_Expr("COUNT({$appVoteCountCond})"),
-                    'app_vote_value_sum' => new Zend_Db_Expr("SUM({$appVoteValueSumCond})") ))
-            ->join(array('review'   =>$this->_reviewTable),
+                'app_vote_value_sum' => new Zend_Db_Expr("SUM({$appVoteValueSumCond})") )
+            )
+            ->join(
+                array('review'   =>$this->_reviewTable),
                 'vote.review_id=review.review_id',
-                array())
-            ->joinLeft(array('store'=>$this->_reviewStoreTable),
-                'vote.review_id=store.review_id', 'store_id')
-            ->join(array('rstore'   =>$this->_ratingStoreTable),
+                array()
+            )
+            ->joinLeft(
+                array('store'=>$this->_reviewStoreTable),
+                'vote.review_id=store.review_id',
+                'store_id'
+            )
+            ->join(
+                array('rstore'   =>$this->_ratingStoreTable),
                 'vote.rating_id=rstore.rating_id AND rstore.store_id=store.store_id',
-                array())
+                array()
+            )
             ->where('vote.rating_id = :rating_id')
             ->where('vote.entity_pk_value = :pk_value')
             ->group(array(
@@ -263,5 +272,4 @@ class Mage_Rating_Model_Resource_Rating_Option extends Mage_Core_Model_Resource_
 
         return $this->_optionData;
     }
-
 }

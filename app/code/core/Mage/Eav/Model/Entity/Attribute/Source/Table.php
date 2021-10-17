@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Eav
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 
@@ -51,10 +51,16 @@ class Mage_Eav_Model_Entity_Attribute_Source_Table extends Mage_Eav_Model_Entity
             $this->_optionsDefault = array();
         }
         if (!isset($this->_options[$storeId])) {
+            $idPrefix = 'ATTRIBUTE_OPTIONS_ID_' . $this->getAttribute()->getId();
+            $tags = array_merge(
+                array('eav', Mage_Core_Model_Translate::CACHE_TAG),
+                $this->getAttribute()->getCacheTags()
+            );
             $collection = Mage::getResourceModel('eav/entity_attribute_option_collection')
                 ->setPositionOrder('asc')
                 ->setAttributeFilter($this->getAttribute()->getId())
                 ->setStoreFilter($this->getAttribute()->getStoreId())
+                ->initCache(Mage::app()->getCache(), $idPrefix, $tags)
                 ->load();
             $this->_options[$storeId]        = $collection->toOptionArray();
             $this->_optionsDefault[$storeId] = $collection->toOptionArray('default_value');
@@ -71,7 +77,7 @@ class Mage_Eav_Model_Entity_Attribute_Source_Table extends Mage_Eav_Model_Entity
      * Get a text for option value
      *
      * @param string|integer $value
-     * @return string
+     * @return string|array|false
      */
     public function getOptionText($value)
     {
@@ -107,7 +113,7 @@ class Mage_Eav_Model_Entity_Attribute_Source_Table extends Mage_Eav_Model_Entity
      * @param Mage_Eav_Model_Entity_Collection_Abstract $collection
      * @param string $dir
      *
-     * @return Mage_Eav_Model_Entity_Attribute_Source_Table
+     * @return $this
      */
     public function addValueSortToCollection($collection, $dir = Varien_Db_Select::SQL_ASC)
     {
@@ -119,7 +125,8 @@ class Mage_Eav_Model_Entity_Attribute_Source_Table extends Mage_Eav_Model_Entity
                 "e.entity_id={$valueTable1}.entity_id"
                 . " AND {$valueTable1}.attribute_id='{$this->getAttribute()->getId()}'"
                 . " AND {$valueTable1}.store_id=0",
-                array())
+                array()
+            )
             ->joinLeft(
                 array($valueTable2 => $this->getAttribute()->getBackend()->getTable()),
                 "e.entity_id={$valueTable2}.entity_id"
@@ -152,7 +159,7 @@ class Mage_Eav_Model_Entity_Attribute_Source_Table extends Mage_Eav_Model_Entity
 
         if (Mage::helper('core')->useDbCompatibleMode()) {
             $columns[$attributeCode] = array(
-                'type'      => $isMulti ? 'varchar(255)' : 'int',
+                'type'      => $isMulti ? 'text' : 'int',
                 'unsigned'  => false,
                 'is_null'   => true,
                 'default'   => null,
@@ -171,7 +178,7 @@ class Mage_Eav_Model_Entity_Attribute_Source_Table extends Mage_Eav_Model_Entity
             $type = ($isMulti) ? Varien_Db_Ddl_Table::TYPE_TEXT : Varien_Db_Ddl_Table::TYPE_INTEGER;
             $columns[$attributeCode] = array(
                 'type'      => $type,
-                'length'    => $isMulti ? '255' : null,
+                'length'    => $isMulti ? '65535' : null,
                 'unsigned'  => false,
                 'nullable'   => true,
                 'default'   => null,

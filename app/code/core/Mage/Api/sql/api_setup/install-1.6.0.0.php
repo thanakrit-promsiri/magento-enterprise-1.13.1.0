@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Api
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 /**
@@ -32,7 +32,7 @@
  * @author      Magento Core Team <core@magentocommerce.com>
  */
 $installer = $this;
-/* @var $installer Mage_Core_Model_Resource_Setup */
+/* @var Mage_Core_Model_Resource_Setup $installer */
 
 $installer->startSetup();
 
@@ -91,10 +91,14 @@ $table = $installer->getConnection()
         ), 'User id')
     ->addColumn('role_name', Varien_Db_Ddl_Table::TYPE_TEXT, 50, array(
         ), 'Role name')
-    ->addIndex($installer->getIdxName('api/role', array('parent_id', 'sort_order')),
-        array('parent_id', 'sort_order'))
-    ->addIndex($installer->getIdxName('api/role', array('tree_level')),
-        array('tree_level'))
+    ->addIndex(
+        $installer->getIdxName('api/role', array('parent_id', 'sort_order')),
+        array('parent_id', 'sort_order')
+    )
+    ->addIndex(
+        $installer->getIdxName('api/role', array('tree_level')),
+        array('tree_level')
+    )
     ->setComment('Api ACL Roles');
 $installer->getConnection()->createTable($table);
 
@@ -127,13 +131,22 @@ $table = $installer->getConnection()
         ), 'Role type')
     ->addColumn('api_permission', Varien_Db_Ddl_Table::TYPE_TEXT, 10, array(
         ), 'Permission')
-    ->addIndex($installer->getIdxName('api/rule', array('resource_id', 'role_id')),
-        array('resource_id', 'role_id'))
-    ->addIndex($installer->getIdxName('api/rule', array('role_id', 'resource_id')),
-        array('role_id', 'resource_id'))
-    ->addForeignKey($installer->getFkName('api/rule', 'role_id', 'api/role', 'role_id'),
-        'role_id', $installer->getTable('api/role'), 'role_id',
-        Varien_Db_Ddl_Table::ACTION_CASCADE, Varien_Db_Ddl_Table::ACTION_CASCADE)
+    ->addIndex(
+        $installer->getIdxName('api/rule', array('resource_id', 'role_id')),
+        array('resource_id', 'role_id')
+    )
+    ->addIndex(
+        $installer->getIdxName('api/rule', array('role_id', 'resource_id')),
+        array('role_id', 'resource_id')
+    )
+    ->addForeignKey(
+        $installer->getFkName('api/rule', 'role_id', 'api/role', 'role_id'),
+        'role_id',
+        $installer->getTable('api/role'),
+        'role_id',
+        Varien_Db_Ddl_Table::ACTION_CASCADE,
+        Varien_Db_Ddl_Table::ACTION_CASCADE
+    )
     ->setComment('Api ACL Rules');
 $installer->getConnection()->createTable($table);
 
@@ -193,13 +206,22 @@ $table = $installer->getConnection()
         ), 'Login date')
     ->addColumn('sessid', Varien_Db_Ddl_Table::TYPE_TEXT, 40, array(
         ), 'Sessioin id')
-    ->addIndex($installer->getIdxName('api/session', array('user_id')),
-        array('user_id'))
-    ->addIndex($installer->getIdxName('api/session', array('sessid')),
-        array('sessid'))
-    ->addForeignKey($installer->getFkName('api/session', 'user_id', 'api/user', 'user_id'),
-        'user_id', $installer->getTable('api/user'), 'user_id',
-        Varien_Db_Ddl_Table::ACTION_CASCADE, Varien_Db_Ddl_Table::ACTION_CASCADE)
+    ->addIndex(
+        $installer->getIdxName('api/session', array('user_id')),
+        array('user_id')
+    )
+    ->addIndex(
+        $installer->getIdxName('api/session', array('sessid')),
+        array('sessid')
+    )
+    ->addForeignKey(
+        $installer->getFkName('api/session', 'user_id', 'api/user', 'user_id'),
+        'user_id',
+        $installer->getTable('api/user'),
+        'user_id',
+        Varien_Db_Ddl_Table::ACTION_CASCADE,
+        Varien_Db_Ddl_Table::ACTION_CASCADE
+    )
     ->setComment('Api Sessions');
 $installer->getConnection()->createTable($table);
 

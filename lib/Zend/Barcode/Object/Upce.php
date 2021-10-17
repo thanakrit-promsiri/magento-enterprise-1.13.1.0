@@ -15,9 +15,9 @@
  * @category   Zend
  * @package    Zend_Barcode
  * @subpackage Object
- * @copyright  Copyright (c) 2005-2010 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
- * @version    $Id: Upce.php 21667 2010-03-28 17:45:14Z mikaelkael $
+ * @version    $Id$
  */
 
 /**
@@ -35,7 +35,7 @@
  *
  * @category   Zend
  * @package    Zend_Barcode
- * @copyright  Copyright (c) 2005-2010 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
 class Zend_Barcode_Object_Upce extends Zend_Barcode_Object_Ean13
@@ -84,8 +84,8 @@ class Zend_Barcode_Object_Upce extends Zend_Barcode_Object_Ean13
     public function getText()
     {
         $text = parent::getText();
-        if ($text{0} != 1) {
-            $text{0} = 0;
+        if ($text[0] != 1) {
+            $text[0] = 0;
         }
         return $text;
     }
@@ -158,7 +158,7 @@ class Zend_Barcode_Object_Upce extends Zend_Barcode_Object_Ean13
                     $fontSize *= 0.8;
                 }
                 $this->_addText(
-                    $text{$i},
+                    $text[$i],
                     $fontSize * $this->_factor,
                     $this->_rotate(
                         $leftPosition,
@@ -188,8 +188,10 @@ class Zend_Barcode_Object_Upce extends Zend_Barcode_Object_Ean13
     /**
      * Particular validation for Upce barcode objects
      * (to suppress checksum character substitution)
+     *
      * @param string $value
      * @param array  $options
+     * @throws Zend_Barcode_Object_Exception
      */
     protected function _validateText($value, $options = array())
     {
@@ -220,8 +222,8 @@ class Zend_Barcode_Object_Upce extends Zend_Barcode_Object_Ean13
     public function getChecksum($text)
     {
         $text = $this->_addLeadingZeros($text, true);
-        if ($text{0} != 1) {
-            $text{0} = 0;
+        if ($text[0] != 1) {
+            $text[0] = 0;
         }
         return parent::getChecksum($text);
     }

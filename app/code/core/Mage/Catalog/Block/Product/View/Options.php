@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Catalog
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 
@@ -69,7 +69,7 @@ class Mage_Catalog_Block_Product_View_Options extends Mage_Core_Block_Template
      * Set product object
      *
      * @param Mage_Catalog_Model_Product $product
-     * @return Mage_Catalog_Block_Product_View_Options
+     * @return $this
      */
     public function setProduct(Mage_Catalog_Model_Product $product = null)
     {
@@ -83,7 +83,7 @@ class Mage_Catalog_Block_Product_View_Options extends Mage_Core_Block_Template
      * @param string $type
      * @param string $block
      * @param string $template
-     * @return Mage_Catalog_Block_Product_View_Options
+     * @return $this
      */
     public function addOptionRenderer($type, $block, $template)
     {
@@ -110,6 +110,10 @@ class Mage_Catalog_Block_Product_View_Options extends Mage_Core_Block_Template
         return $this->_optionRenders['default'];
     }
 
+    /**
+     * @param $type
+     * @return string
+     */
     public function getGroupOfOption($type)
     {
         $group = Mage::getSingleton('catalog/product_option')->getGroupByType($type);
@@ -127,6 +131,9 @@ class Mage_Catalog_Block_Product_View_Options extends Mage_Core_Block_Template
         return $this->getProduct()->getOptions();
     }
 
+    /**
+     * @return bool
+     */
     public function hasOptions()
     {
         if ($this->getOptions()) {
@@ -163,12 +170,12 @@ class Mage_Catalog_Block_Product_View_Options extends Mage_Core_Block_Template
         $config = array();
 
         foreach ($this->getOptions() as $option) {
-            /* @var $option Mage_Catalog_Model_Product_Option */
+            /* @var Mage_Catalog_Model_Product_Option $option */
             $priceValue = 0;
             if ($option->getGroupByType() == Mage_Catalog_Model_Product_Option::OPTION_GROUP_SELECT) {
                 $_tmpPriceValues = array();
                 foreach ($option->getValues() as $value) {
-                    /* @var $value Mage_Catalog_Model_Product_Option_Value */
+                    /* @var Mage_Catalog_Model_Product_Option_Value $value */
                     $id = $value->getId();
                     $_tmpPriceValues[$id] = $this->_getPriceConfiguration($value);
                 }
@@ -186,6 +193,7 @@ class Mage_Catalog_Block_Product_View_Options extends Mage_Core_Block_Template
      * Get option html block
      *
      * @param Mage_Catalog_Model_Product_Option $option
+     * @return string
      */
     public function getOptionHtml(Mage_Catalog_Model_Product_Option $option)
     {

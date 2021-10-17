@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Downloadable
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 
@@ -47,7 +47,7 @@ class Mage_Downloadable_Model_Resource_Link extends Mage_Core_Model_Resource_Db_
      * Save title and price of link item
      *
      * @param Mage_Downloadable_Model_Link $linkObject
-     * @return Mage_Downloadable_Model_Resource_Link
+     * @return $this
      */
     public function saveItemTitleAndPrice($linkObject)
     {
@@ -71,13 +71,16 @@ class Mage_Downloadable_Model_Resource_Link extends Mage_Core_Model_Resource_Db_
             );
             if ($linkObject->getUseDefaultTitle()) {
                 $writeAdapter->delete(
-                    $linkTitleTable, $where);
+                    $linkTitleTable,
+                    $where
+                );
             } else {
                 $insertData = array('title' => $linkObject->getTitle());
                 $writeAdapter->update(
                     $linkTitleTable,
                     $insertData,
-                    $where);
+                    $where
+                );
             }
         } else {
             if (!$linkObject->getUseDefaultTitle()) {
@@ -87,7 +90,8 @@ class Mage_Downloadable_Model_Resource_Link extends Mage_Core_Model_Resource_Db_
                         'link_id'   => $linkObject->getId(),
                         'store_id'  => (int)$linkObject->getStoreId(),
                         'title'     => $linkObject->getTitle(),
-                    ));
+                    )
+                );
             }
         }
 
@@ -105,12 +109,15 @@ class Mage_Downloadable_Model_Resource_Link extends Mage_Core_Model_Resource_Db_
             );
             if ($linkObject->getUseDefaultPrice()) {
                 $writeAdapter->delete(
-                    $linkPriceTable, $where);
+                    $linkPriceTable,
+                    $where
+                );
             } else {
                 $writeAdapter->update(
                     $linkPriceTable,
                     array('price' => $linkObject->getPrice()),
-                    $where);
+                    $where
+                );
             }
         } else {
             if (!$linkObject->getUseDefaultPrice()) {
@@ -154,7 +161,7 @@ class Mage_Downloadable_Model_Resource_Link extends Mage_Core_Model_Resource_Db_
      * Delete data by item(s)
      *
      * @param Mage_Downloadable_Model_Link|array|int $items
-     * @return Mage_Downloadable_Model_Resource_Link
+     * @return $this
      */
     public function deleteItems($items)
     {
@@ -169,11 +176,17 @@ class Mage_Downloadable_Model_Resource_Link extends Mage_Core_Model_Resource_Db_
         }
         if ($where) {
             $writeAdapter->delete(
-                $this->getMainTable(), $where);
+                $this->getMainTable(),
+                $where
+            );
             $writeAdapter->delete(
-                $this->getTable('downloadable/link_title'), $where);
+                $this->getTable('downloadable/link_title'),
+                $where
+            );
             $writeAdapter->delete(
-                $this->getTable('downloadable/link_price'), $where);
+                $this->getTable('downloadable/link_price'),
+                $where
+            );
         }
         return $this;
     }
@@ -194,11 +207,13 @@ class Mage_Downloadable_Model_Resource_Link extends Mage_Core_Model_Resource_Db_
             ->join(
                 array('s' => $this->getTable('downloadable/link_title')),
                 's.link_id=m.link_id AND s.store_id=0',
-                array())
+                array()
+            )
             ->joinLeft(
                 array('st' => $this->getTable('downloadable/link_title')),
                 'st.link_id=m.link_id AND st.store_id=:store_id',
-                array('title' => $ifNullDefaultTitle))
+                array('title' => $ifNullDefaultTitle)
+            )
             ->where('m.product_id=:product_id');
         $bind = array(
             ':store_id'   => (int)$storeId,

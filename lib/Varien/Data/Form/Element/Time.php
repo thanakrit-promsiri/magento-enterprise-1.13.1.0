@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Varien
  * @package     Varien_Data
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 /**
@@ -33,12 +33,19 @@
  */
 class Varien_Data_Form_Element_Time extends Varien_Data_Form_Element_Abstract
 {
+    /**
+     * Varien_Data_Form_Element_Time constructor.
+     * @param array $attributes
+     */
     public function __construct($attributes=array())
     {
         parent::__construct($attributes);
         $this->setType('time');
     }
 
+    /**
+     * @return string
+     */
     public function getName()
     {
         $name = parent::getName();
@@ -48,6 +55,9 @@ class Varien_Data_Form_Element_Time extends Varien_Data_Form_Element_Abstract
         return $name;
     }
 
+    /**
+     * @return string
+     */
     public function getElementHtml()
     {
         $this->addClass('select');
@@ -58,7 +68,7 @@ class Varien_Data_Form_Element_Time extends Varien_Data_Form_Element_Abstract
 
         if( $value = $this->getValue() ) {
             $values = explode(',', $value);
-            if( is_array($values) && count($values) == 3 ) {
+            if ( is_array($values) && count($values) == 3 ) {
                 $value_hrs = $values[0];
                 $value_min = $values[1];
                 $value_sec = $values[2];

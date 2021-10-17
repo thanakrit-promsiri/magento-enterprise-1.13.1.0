@@ -15,15 +15,10 @@
  * @category   Zend
  * @package    Zend_Service_WindowsAzure
  * @subpackage Storage
- * @copyright  Copyright (c) 2005-2010 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
- * @version    $Id: QueueMessage.php 22773 2010-08-03 07:18:27Z maartenba $
+ * @version    $Id$
  */
-
-/**
- * @see Zend_Service_WindowsAzure_Exception
- */
-#require_once 'Zend/Service/WindowsAzure/Exception.php';
 
 /**
  * @see Zend_Service_WindowsAzure_Storage_StorageEntityAbstract
@@ -34,9 +29,9 @@
  * @category   Zend
  * @package    Zend_Service_WindowsAzure
  * @subpackage Storage
- * @copyright  Copyright (c) 2005-2010 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
- *   
+ *
  * @property string $MessageId         Message ID
  * @property string $InsertionTime     Insertion time
  * @property string $ExpirationTime    Expiration time
@@ -50,7 +45,7 @@ class Zend_Service_WindowsAzure_Storage_QueueMessage
 {
     /**
      * Constructor
-     * 
+     *
      * @param string $messageId         Message ID
      * @param string $insertionTime     Insertion time
      * @param string $expirationTime    Expiration time
@@ -59,7 +54,7 @@ class Zend_Service_WindowsAzure_Storage_QueueMessage
      * @param int    $dequeueCount      Number of times the message has been dequeued. This value is incremented each time the message is subsequently dequeued.
      * @param string $messageText       Message text
      */
-    public function __construct($messageId, $insertionTime, $expirationTime, $popReceipt, $timeNextVisible, $dequeueCount, $messageText) 
+    public function __construct($messageId, $insertionTime, $expirationTime, $popReceipt, $timeNextVisible, $dequeueCount, $messageText)
     {
         $this->_data = array(
             'messageid'       => $messageId,

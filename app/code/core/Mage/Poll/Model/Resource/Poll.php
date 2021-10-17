@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Poll
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 
@@ -46,7 +46,7 @@ class Mage_Poll_Model_Resource_Poll extends Mage_Core_Model_Resource_Db_Abstract
     /**
      * Initialize unique fields
      *
-     * @return Mage_Poll_Model_Resource_Poll
+     * @return $this
      */
     protected function _initUniqueFields()
     {
@@ -61,7 +61,7 @@ class Mage_Poll_Model_Resource_Poll extends Mage_Core_Model_Resource_Db_Abstract
      * Get select object for not closed poll ids
      *
      * @param Mage_Poll_Model_Poll $object
-     * @return
+     * @return Varien_Db_Select
      */
     protected function _getSelectIds($object)
     {
@@ -134,7 +134,7 @@ class Mage_Poll_Model_Resource_Poll extends Mage_Core_Model_Resource_Db_Abstract
      * If poll id is not empty, it will look only for records with specified value
      *
      * @param string $ipAddress
-     * @param int $pollId
+     * @param int|false $pollId
      * @return array
      */
     public function getVotedPollIdsByIp($ipAddress, $pollId = false)
@@ -148,13 +148,11 @@ class Mage_Poll_Model_Resource_Poll extends Mage_Core_Model_Resource_Db_Abstract
         $select = $this->_getReadAdapter()->select()
             ->distinct()
             ->from($this->getTable('poll_vote'), 'poll_id')
-            ->where('ip_address = :ip_address');
-        $bind = array(':ip_address' => ip2long($ipAddress));
+            ->where('ip_address = ?', inet_pton($ipAddress));
         if (!empty($pollId)) {
-            $select->where('poll_id = :poll_id');
-            $bind[':poll_id'] = $pollId;
+            $select->where('poll_id = ?', $pollId);
         }
-        $result = $this->_getReadAdapter()->fetchCol($select, $bind);
+        $result = $this->_getReadAdapter()->fetchCol($select);
         if (empty($result)) {
             $result = array();
         }
@@ -200,7 +198,7 @@ class Mage_Poll_Model_Resource_Poll extends Mage_Core_Model_Resource_Db_Abstract
      * Delete current poll from the table poll_store and then
      * insert to update "poll to store" relations
      *
-     * @param Mage_Core_Model_Abstract $object
+     * @param Mage_Core_Model_Abstract|Mage_Poll_Model_Poll $object
      */
     public function _afterSave(Mage_Core_Model_Abstract $object)
     {

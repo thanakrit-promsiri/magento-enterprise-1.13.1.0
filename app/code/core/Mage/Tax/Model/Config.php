@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Tax
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 /**
@@ -57,6 +57,7 @@ class Mage_Tax_Model_Config
     const CONFIG_XML_PATH_APPLY_AFTER_DISCOUNT = 'tax/calculation/apply_after_discount';
     const CONFIG_XML_PATH_DISCOUNT_TAX = 'tax/calculation/discount_tax';
     const XML_PATH_ALGORITHM = 'tax/calculation/algorithm';
+    const CONFIG_XML_PATH_CROSS_BORDER_TRADE_ENABLED = 'tax/calculation/cross_border_trade_enabled';
     /**#@-*/
 
     /**#@+
@@ -144,7 +145,7 @@ class Mage_Tax_Model_Config
     protected $_needUseShippingExcludeTax = false;
 
     /**
-     * @var $_shippingPriceIncludeTax bool
+     * @var bool $_shippingPriceIncludeTax
      */
     protected $_shippingPriceIncludeTax = null;
 
@@ -163,7 +164,7 @@ class Mage_Tax_Model_Config
     /**
      * Check if product prices inputed include tax
      *
-     * @param   mix $store
+     * @param   mixed $store
      * @return  bool
      */
     public function priceIncludesTax($store = null)
@@ -202,8 +203,8 @@ class Mage_Tax_Model_Config
     /**
      * Get configuration setting "Apply Discount On Prices Including Tax" value
      *
-     * @param   null|int $store
-     * @return  0|1
+     * @param null|int $store
+     * @return bool 0|1
      */
     public function discountTax($store = null)
     {
@@ -283,7 +284,7 @@ class Mage_Tax_Model_Config
     /**
      * Get defined tax calculation agorithm
      *
-     * @param   store $store
+     * @param   mixed $store
      * @return  string
      */
     public function getAlgorithm($store = null)
@@ -294,7 +295,7 @@ class Mage_Tax_Model_Config
     /**
      * Get tax class id specified for shipping tax estimation
      *
-     * @param   store $store
+     * @param   mixed $store
      * @return  int
      */
     public function getShippingTaxClass($store = null)
@@ -305,7 +306,7 @@ class Mage_Tax_Model_Config
     /**
      * Get shipping methods prices display type
      *
-     * @param   store $store
+     * @param   mixed $store
      * @return  int
      */
     public function getShippingPriceDisplayType($store = null)
@@ -316,7 +317,7 @@ class Mage_Tax_Model_Config
     /**
      * Check if shipping prices include tax
      *
-     * @param   store $store
+     * @param   mixed $store
      * @return  bool
      */
     public function shippingPriceIncludesTax($store = null)
@@ -333,7 +334,7 @@ class Mage_Tax_Model_Config
     /**
      * Declare shipping prices type
      * @param bool $flag
-     * @return Mage_Tax_Model_Config
+     * @return $this
      */
     public function setShippingPriceIncludeTax($flag)
     {
@@ -752,5 +753,16 @@ class Mage_Tax_Model_Config
     public function checkDiscountSettings($store = null)
     {
         return $this->applyTaxAfterDiscount($store);
+    }
+
+    /**
+     * Return the config value for self::CONFIG_XML_PATH_CROSS_BORDER_TRADE_ENABLED
+     *
+     * @param int|null $store
+     * @return int
+     */
+    public function crossBorderTradeEnabled($store = null)
+    {
+        return $this->_getStoreConfig(self::CONFIG_XML_PATH_CROSS_BORDER_TRADE_ENABLED, $store);
     }
 }

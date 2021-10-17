@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_ProductAlert
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 
@@ -111,7 +111,7 @@ class Mage_ProductAlert_Model_Email extends Mage_Core_Model_Abstract
      * Set website model
      *
      * @param Mage_Core_Model_Website $website
-     * @return Mage_ProductAlert_Model_Email
+     * @return $this
      */
     public function setWebsite(Mage_Core_Model_Website $website)
     {
@@ -123,7 +123,7 @@ class Mage_ProductAlert_Model_Email extends Mage_Core_Model_Abstract
      * Set website id
      *
      * @param int $websiteId
-     * @return Mage_ProductAlert_Model_Email
+     * @return $this
      */
     public function setWebsiteId($websiteId)
     {
@@ -135,7 +135,7 @@ class Mage_ProductAlert_Model_Email extends Mage_Core_Model_Abstract
      * Set customer by id
      *
      * @param int $customerId
-     * @return Mage_ProductAlert_Model_Email
+     * @return $this
      */
     public function setCustomerId($customerId)
     {
@@ -147,7 +147,7 @@ class Mage_ProductAlert_Model_Email extends Mage_Core_Model_Abstract
      * Set customer model
      *
      * @param Mage_Customer_Model_Customer $customer
-     * @return Mage_ProductAlert_Model_Email
+     * @return $this
      */
     public function setCustomer(Mage_Customer_Model_Customer $customer)
     {
@@ -158,7 +158,7 @@ class Mage_ProductAlert_Model_Email extends Mage_Core_Model_Abstract
     /**
      * Clean data
      *
-     * @return Mage_ProductAlert_Model_Email
+     * @return $this
      */
     public function clean()
     {
@@ -173,7 +173,7 @@ class Mage_ProductAlert_Model_Email extends Mage_Core_Model_Abstract
      * Add product (price change) to collection
      *
      * @param Mage_Catalog_Model_Product $product
-     * @return Mage_ProductAlert_Model_Email
+     * @return $this
      */
     public function addPriceProduct(Mage_Catalog_Model_Product $product)
     {
@@ -185,7 +185,7 @@ class Mage_ProductAlert_Model_Email extends Mage_Core_Model_Abstract
      * Add product (back in stock) to collection
      *
      * @param Mage_Catalog_Model_Product $product
-     * @return Mage_ProductAlert_Model_Email
+     * @return $this
      */
     public function addStockProduct(Mage_Catalog_Model_Product $product)
     {
@@ -231,14 +231,16 @@ class Mage_ProductAlert_Model_Email extends Mage_Core_Model_Abstract
         if (is_null($this->_website) || is_null($this->_customer)) {
             return false;
         }
-        if (($this->_type == 'price' && count($this->_priceProducts) == 0) || ($this->_type == 'stock' && count($this->_stockProducts) == 0)) {
+        if (($this->_type == 'price' && count($this->_priceProducts) == 0)
+            || ($this->_type == 'stock' && count($this->_stockProducts) == 0)
+        ) {
             return false;
         }
         if (!$this->_website->getDefaultGroup() || !$this->_website->getDefaultGroup()->getDefaultStore()) {
             return false;
         }
 
-        $store      = $this->_website->getDefaultStore();
+        $store      = Mage::getModel('core/store')->load($this->_customer->getStoreId());
         $storeId    = $store->getId();
 
         if ($this->_type == 'price' && !Mage::getStoreConfig(self::XML_PATH_EMAIL_PRICE_TEMPLATE, $storeId)) {

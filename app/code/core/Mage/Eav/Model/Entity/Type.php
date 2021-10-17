@@ -1,58 +1,60 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Eav
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
-
 
 /**
  * Entity type model
  *
  * @method Mage_Eav_Model_Resource_Entity_Type _getResource()
  * @method Mage_Eav_Model_Resource_Entity_Type getResource()
- * @method Mage_Eav_Model_Entity_Type setEntityTypeCode(string $value)
+ * @method Mage_Eav_Model_Resource_Entity_Type_Collection getCollection()
+ *
+ * @method $this setEntityTypeCode(string $value)
  * @method string getEntityModel()
- * @method Mage_Eav_Model_Entity_Type setEntityModel(string $value)
- * @method Mage_Eav_Model_Entity_Type setAttributeModel(string $value)
- * @method Mage_Eav_Model_Entity_Type setEntityTable(string $value)
- * @method Mage_Eav_Model_Entity_Type setValueTablePrefix(string $value)
- * @method Mage_Eav_Model_Entity_Type setEntityIdField(string $value)
+ * @method $this setEntityModel(string $value)
+ * @method $this setAttributeModel(string $value)
+ * @method $this setEntityTable(string $value)
+ * @method $this setValueTablePrefix(string $value)
+ * @method $this setEntityIdField(string $value)
  * @method int getIsDataSharing()
- * @method Mage_Eav_Model_Entity_Type setIsDataSharing(int $value)
+ * @method $this setIsDataSharing(int $value)
  * @method string getDataSharingKey()
- * @method Mage_Eav_Model_Entity_Type setDataSharingKey(string $value)
- * @method Mage_Eav_Model_Entity_Type setDefaultAttributeSetId(int $value)
+ * @method $this setDataSharingKey(string $value)
+ * @method $this setDefaultAttributeSetId(int $value)
  * @method string getIncrementModel()
- * @method Mage_Eav_Model_Entity_Type setIncrementModel(string $value)
+ * @method $this setIncrementModel(string $value)
  * @method int getIncrementPerStore()
- * @method Mage_Eav_Model_Entity_Type setIncrementPerStore(int $value)
+ * @method $this setIncrementPerStore(int $value)
  * @method int getIncrementPadLength()
- * @method Mage_Eav_Model_Entity_Type setIncrementPadLength(int $value)
+ * @method $this setIncrementPadLength(int $value)
  * @method string getIncrementPadChar()
- * @method Mage_Eav_Model_Entity_Type setIncrementPadChar(string $value)
+ * @method $this setIncrementPadChar(string $value)
  * @method string getAdditionalAttributeTable()
- * @method Mage_Eav_Model_Entity_Type setAdditionalAttributeTable(string $value)
- * @method Mage_Eav_Model_Entity_Type setEntityAttributeCollection(string $value)
+ * @method $this setAdditionalAttributeTable(string $value)
+ * @method $this setEntityAttributeCollection(string $value)
+ * @method $this setAttributeCodes(array $value)
  *
  * @category    Mage
  * @package     Mage_Eav
@@ -93,7 +95,7 @@ class Mage_Eav_Model_Entity_Type extends Mage_Core_Model_Abstract
      * Load type by code
      *
      * @param string $code
-     * @return Mage_Eav_Model_Entity_Type
+     * @return $this
      */
     public function loadByCode($code)
     {
@@ -131,7 +133,7 @@ class Mage_Eav_Model_Entity_Type extends Mage_Core_Model_Abstract
     /**
      * Init and retreive attribute collection
      *
-     * @return Mage_Eav_Model_Mysql4_Entity_Attribute_Collection
+     * @return Mage_Core_Model_Mysql4_Collection_Abstract|object
      */
     protected function _getAttributeCollection()
     {
@@ -163,6 +165,7 @@ class Mage_Eav_Model_Entity_Type extends Mage_Core_Model_Abstract
      *
      * @param int $storeId
      * @return string
+     * @throws Exception
      */
     public function fetchNewIncrementId($storeId = null)
     {
@@ -180,35 +183,41 @@ class Mage_Eav_Model_Entity_Type extends Mage_Core_Model_Abstract
         // Start transaction to run SELECT ... FOR UPDATE
         $this->_getResource()->beginTransaction();
 
-        $entityStoreConfig = Mage::getModel('eav/entity_store')
-            ->loadByEntityStore($this->getId(), $storeId);
+        try {
+            $entityStoreConfig = Mage::getModel('eav/entity_store')
+                ->loadByEntityStore($this->getId(), $storeId);
 
-        if (!$entityStoreConfig->getId()) {
-            $entityStoreConfig
-                ->setEntityTypeId($this->getId())
-                ->setStoreId($storeId)
-                ->setIncrementPrefix($storeId)
-                ->save();
+            if (!$entityStoreConfig->getId()) {
+                $entityStoreConfig
+                    ->setEntityTypeId($this->getId())
+                    ->setStoreId($storeId)
+                    ->setIncrementPrefix($storeId)
+                    ->save();
+            }
+
+            /** @var Mage_Eav_Model_Entity_Increment_Abstract $incrementInstance */
+            $incrementInstance = Mage::getModel($this->getIncrementModel())
+                ->setPrefix($entityStoreConfig->getIncrementPrefix())
+                ->setPadLength($this->getIncrementPadLength())
+                ->setPadChar($this->getIncrementPadChar())
+                ->setLastId($entityStoreConfig->getIncrementLastId())
+                ->setEntityTypeId($entityStoreConfig->getEntityTypeId())
+                ->setStoreId($entityStoreConfig->getStoreId());
+
+            /**
+             * do read lock on eav/entity_store to solve potential timing issues
+             * (most probably already done by beginTransaction of entity save)
+             */
+            $incrementId = $incrementInstance->getNextId();
+            $entityStoreConfig->setIncrementLastId($incrementId);
+            $entityStoreConfig->save();
+
+            // Commit increment_last_id changes
+            $this->_getResource()->commit();
+        } catch (Exception $e) {
+            $this->_getResource()->rollBack();
+            throw $e;
         }
-
-        $incrementInstance = Mage::getModel($this->getIncrementModel())
-            ->setPrefix($entityStoreConfig->getIncrementPrefix())
-            ->setPadLength($this->getIncrementPadLength())
-            ->setPadChar($this->getIncrementPadChar())
-            ->setLastId($entityStoreConfig->getIncrementLastId())
-            ->setEntityTypeId($entityStoreConfig->getEntityTypeId())
-            ->setStoreId($entityStoreConfig->getStoreId());
-
-        /**
-         * do read lock on eav/entity_store to solve potential timing issues
-         * (most probably already done by beginTransaction of entity save)
-         */
-        $incrementId = $incrementInstance->getNextId();
-        $entityStoreConfig->setIncrementLastId($incrementId);
-        $entityStoreConfig->save();
-
-        // Commit increment_last_id changes
-        $this->_getResource()->commit();
 
         return $incrementId;
     }
@@ -263,7 +272,7 @@ class Mage_Eav_Model_Entity_Type extends Mage_Core_Model_Abstract
 
         return $tablePrefix;
     }
-    
+
     /**
      * Get default attribute set identifier for etity type
      *

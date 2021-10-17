@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Tax
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 /**
@@ -35,7 +35,15 @@ class Mage_Tax_Block_Sales_Order_Tax extends Mage_Core_Block_Template
      * @var Mage_Tax_Model_Config
      */
     protected $_config;
+
+    /**
+     * @var Mage_Sales_Model_Order
+     */
     protected $_order;
+
+    /**
+     * @var Mage_Sales_Model_Order_Invoice
+     */
     protected $_source;
 
     /**
@@ -69,11 +77,11 @@ class Mage_Tax_Block_Sales_Order_Tax extends Mage_Core_Block_Template
     /**
      * Initialize all order totals relates with tax
      *
-     * @return Mage_Tax_Block_Sales_Order_Tax
+     * @return $this
      */
     public function initTotals()
     {
-        /** @var $parent Mage_Adminhtml_Block_Sales_Order_Invoice_Totals */
+        /** @var Mage_Adminhtml_Block_Sales_Order_Invoice_Totals $parent */
         $parent = $this->getParentBlock();
         $this->_order   = $parent->getOrder();
         $this->_source  = $parent->getSource();
@@ -96,9 +104,9 @@ class Mage_Tax_Block_Sales_Order_Tax extends Mage_Core_Block_Template
      * Add tax total string
      *
      * @param string $after
-     * @return Mage_Tax_Block_Sales_Order_Tax
+     * @return $this
      */
-    protected function _addTax($after='discount')
+    protected function _addTax($after = 'discount')
     {
         $taxTotal = new Varien_Object(array(
             'code'      => 'tax',
@@ -118,6 +126,9 @@ class Mage_Tax_Block_Sales_Order_Tax extends Mage_Core_Block_Template
         return $this->_order->getStore();
     }
 
+    /**
+     * @return $this
+     */
     protected function _initSubtotal()
     {
         $store  = $this->getStore();
@@ -190,6 +201,9 @@ class Mage_Tax_Block_Sales_Order_Tax extends Mage_Core_Block_Template
         return $this;
     }
 
+    /**
+     * @return $this
+     */
     protected function _initShipping()
     {
         $store  = $this->getStore();
@@ -256,6 +270,9 @@ class Mage_Tax_Block_Sales_Order_Tax extends Mage_Core_Block_Template
 //        }
     }
 
+    /**
+     * @return $this
+     */
     protected function _initGrandTotal()
     {
         $store  = $this->getStore();
@@ -293,16 +310,25 @@ class Mage_Tax_Block_Sales_Order_Tax extends Mage_Core_Block_Template
         return $this;
     }
 
+    /**
+     * @return mixed
+     */
     public function getOrder()
     {
         return $this->_order;
     }
 
+    /**
+     * @return mixed
+     */
     public function getLabelProperties()
     {
         return $this->getParentBlock()->getLabelProperties();
     }
 
+    /**
+     * @return mixed
+     */
     public function getValueProperties()
     {
         return $this->getParentBlock()->getValueProperties();

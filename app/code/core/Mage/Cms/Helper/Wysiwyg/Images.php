@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Cms
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 /**
@@ -29,10 +29,9 @@
  */
 class Mage_Cms_Helper_Wysiwyg_Images extends Mage_Core_Helper_Abstract
 {
-
     /**
      * Current directory path
-     * @var string
+     * @var string|false
      */
     protected $_currentPath;
 
@@ -49,11 +48,17 @@ class Mage_Cms_Helper_Wysiwyg_Images extends Mage_Core_Helper_Abstract
      */
     protected $_storeId = null;
 
+    /**
+     * Image Storage root directory
+     * @var string|false
+     */
+    protected $_storageRoot;
 
     /**
      * Set a specified store ID value
      *
-     * @param <type> $store
+     * @param int $store
+     * @return $this
      */
     public function setStoreId($store)
     {
@@ -68,8 +73,16 @@ class Mage_Cms_Helper_Wysiwyg_Images extends Mage_Core_Helper_Abstract
      */
     public function getStorageRoot()
     {
-        return Mage::getConfig()->getOptions()->getMediaDir() . DS . Mage_Cms_Model_Wysiwyg_Config::IMAGE_DIRECTORY
-            . DS;
+        if (!$this->_storageRoot) {
+            $path = Mage::getConfig()->getOptions()->getMediaDir()
+                . DS . Mage_Cms_Model_Wysiwyg_Config::IMAGE_DIRECTORY;
+            $this->_storageRoot = realpath($path);
+            if (!$this->_storageRoot) {
+                $this->_storageRoot = $path;
+            }
+            $this->_storageRoot .= DS;
+        }
+        return $this->_storageRoot;
     }
 
     /**
@@ -79,7 +92,7 @@ class Mage_Cms_Helper_Wysiwyg_Images extends Mage_Core_Helper_Abstract
      */
     public function getBaseUrl()
     {
-        return Mage::getBaseUrl('media') . '/';
+        return Mage::getBaseUrl('media');
     }
 
     /**
@@ -100,7 +113,8 @@ class Mage_Cms_Helper_Wysiwyg_Images extends Mage_Core_Helper_Abstract
      */
     public function convertPathToId($path)
     {
-        $path = str_replace($this->getStorageRoot(), '', $path);
+        $storageRoot = realpath($this->getStorageRoot());
+        $path = str_replace($storageRoot, '', $path);
         return $this->idEncode($path);
     }
 
@@ -113,8 +127,9 @@ class Mage_Cms_Helper_Wysiwyg_Images extends Mage_Core_Helper_Abstract
     public function convertIdToPath($id)
     {
         $path = $this->idDecode($id);
-        if (!strstr($path, $this->getStorageRoot())) {
-            $path = $this->getStorageRoot() . $path;
+        $storageRoot = realpath($this->getStorageRoot());
+        if (!strstr($path, $storageRoot)) {
+            $path = $storageRoot . DS . $path;
         }
         return $path;
     }
@@ -153,7 +168,7 @@ class Mage_Cms_Helper_Wysiwyg_Images extends Mage_Core_Helper_Abstract
      */
     public function isUsingStaticUrlsAllowed()
     {
-        $checkResult = new StdClass;
+        $checkResult = new stdClass;
         $checkResult->isAllowed = false;
         Mage::dispatchEvent('cms_wysiwyg_images_static_urls_allowed', array(
             'result'   => $checkResult,
@@ -192,12 +207,12 @@ class Mage_Cms_Helper_Wysiwyg_Images extends Mage_Core_Helper_Abstract
      * Try to create target directory if it doesn't exist
      *
      * @throws Mage_Core_Exception
-     * @return string
+     * @return string|false
      */
     public function getCurrentPath()
     {
         if (!$this->_currentPath) {
-            $currentPath = realpath($this->getStorageRoot());
+            $currentPath = $this->getStorageRoot();
             $node = $this->_getRequest()->getParam($this->getTreeNodeName());
             if ($node) {
                 $path = realpath($this->convertIdToPath($node));
@@ -207,7 +222,10 @@ class Mage_Cms_Helper_Wysiwyg_Images extends Mage_Core_Helper_Abstract
             }
             $io = new Varien_Io_File();
             if (!$io->isWriteable($currentPath) && !$io->mkdir($currentPath)) {
-                $message = Mage::helper('cms')->__('The directory %s is not writable by server.',$currentPath);
+                $message = Mage::helper('cms')->__(
+                    'The directory %s is not writable by server.',
+                    $io->getFilteredPath($currentPath)
+                );
                 Mage::throwException($message);
             }
             $this->_currentPath = $currentPath;
@@ -223,7 +241,8 @@ class Mage_Cms_Helper_Wysiwyg_Images extends Mage_Core_Helper_Abstract
     public function getCurrentUrl()
     {
         if (!$this->_currentUrl) {
-            $path = str_replace(Mage::getConfig()->getOptions()->getMediaDir(), '', $this->getCurrentPath());
+            $mediaPath = realpath(Mage::getConfig()->getOptions()->getMediaDir());
+            $path = str_replace($mediaPath, '', $this->getCurrentPath());
             $path = trim($path, DS);
             $this->_currentUrl = Mage::app()->getStore($this->_storeId)->getBaseUrl('media') .
                                  $this->convertPathToUrl($path) . '/';
@@ -234,7 +253,7 @@ class Mage_Cms_Helper_Wysiwyg_Images extends Mage_Core_Helper_Abstract
     /**
      * Storage model singleton
      *
-     * @return Mage_Cms_Model_Page_Wysiwyg_Images_Storage
+     * @return Mage_Cms_Model_Wysiwyg_Images_Storage
      */
     public function getStorage()
     {
@@ -256,7 +275,7 @@ class Mage_Cms_Helper_Wysiwyg_Images extends Mage_Core_Helper_Abstract
      * Revert opration to idEncode
      *
      * @param string $string
-     * @return string
+     * @return string|false
      */
     public function idDecode($string)
     {

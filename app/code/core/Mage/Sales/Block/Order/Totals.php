@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Sales
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 class Mage_Sales_Block_Order_Totals extends Mage_Core_Block_Template
 {
@@ -39,7 +39,7 @@ class Mage_Sales_Block_Order_Totals extends Mage_Core_Block_Template
     /**
      * Initialize self totals and children blocks totals before html building
      *
-     * @return Mage_Sales_Block_Order_Totals
+     * @inheritDoc
      */
     protected function _beforeToHtml()
     {
@@ -71,6 +71,10 @@ class Mage_Sales_Block_Order_Totals extends Mage_Core_Block_Template
         return $this->_order;
     }
 
+    /**
+     * @param Mage_Sales_Model_Order $order
+     * @return $this
+     */
     public function setOrder($order)
     {
         $this->_order = $order;
@@ -90,7 +94,7 @@ class Mage_Sales_Block_Order_Totals extends Mage_Core_Block_Template
     /**
      * Initialize order totals array
      *
-     * @return Mage_Sales_Block_Order_Totals
+     * @return $this
      */
     protected function _initTotals()
     {
@@ -107,8 +111,7 @@ class Mage_Sales_Block_Order_Totals extends Mage_Core_Block_Template
         /**
          * Add shipping
          */
-        if (!$source->getIsVirtual() && ((float) $source->getShippingAmount() || $source->getShippingDescription()))
-        {
+        if (!$source->getIsVirtual() && ((float) $source->getShippingAmount() || $source->getShippingDescription())) {
             $this->_totals['shipping'] = new Varien_Object(array(
                 'code'  => 'shipping',
                 'field' => 'shipping_amount',
@@ -160,10 +163,10 @@ class Mage_Sales_Block_Order_Totals extends Mage_Core_Block_Template
      * Add new total to totals array after specific total or before last total by default
      *
      * @param   Varien_Object $total
-     * @param   null|string|last|first $after
+     * @param   null|string $after accepted values: 'first', 'last'
      * @return  Mage_Sales_Block_Order_Totals
      */
-    public function addTotal(Varien_Object $total, $after=null)
+    public function addTotal(Varien_Object $total, $after = null)
     {
         if ($after !== null && $after != 'last' && $after != 'first') {
             $totals = array();
@@ -181,9 +184,9 @@ class Mage_Sales_Block_Order_Totals extends Mage_Core_Block_Template
                 $totals[$last->getCode()] = $last;
             }
             $this->_totals = $totals;
-        } elseif ($after=='last')  {
+        } elseif ($after=='last') {
             $this->_totals[$total->getCode()] = $total;
-        } elseif ($after=='first')  {
+        } elseif ($after=='first') {
             $totals = array($total->getCode()=>$total);
             $this->_totals = array_merge($totals, $this->_totals);
         } else {
@@ -197,11 +200,11 @@ class Mage_Sales_Block_Order_Totals extends Mage_Core_Block_Template
     /**
      * Add new total to totals array before specific total or after first total by default
      *
-     * @param   Varien_Object $total
-     * @param   null|string $after
+     * @param Varien_Object $total
+     * @param null|array|string $before
      * @return  Mage_Sales_Block_Order_Totals
      */
-    public function addTotalBefore(Varien_Object $total, $before=null)
+    public function addTotalBefore(Varien_Object $total, $before = null)
     {
         if ($before !== null) {
             if (!is_array($before)) {
@@ -235,7 +238,8 @@ class Mage_Sales_Block_Order_Totals extends Mage_Core_Block_Template
     /**
      * Get Total object by code
      *
-     * @@return Varien_Object
+     * @param string $code
+     * @return Varien_Object|false
      */
     public function getTotal($code)
     {
@@ -276,9 +280,10 @@ class Mage_Sales_Block_Order_Totals extends Mage_Core_Block_Template
     /**
      * get totals array for visualization
      *
+     * @param null|string $area
      * @return array
      */
-    public function getTotals($area=null)
+    public function getTotals($area = null)
     {
         $totals = array();
         if ($area === null) {

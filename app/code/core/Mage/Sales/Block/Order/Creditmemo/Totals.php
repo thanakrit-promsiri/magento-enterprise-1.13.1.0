@@ -1,32 +1,35 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Sales
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 class Mage_Sales_Block_Order_Creditmemo_Totals extends Mage_Sales_Block_Order_Totals
 {
     protected $_creditmemo = null;
 
+    /**
+     * @return mixed|null
+     */
     public function getCreditmemo()
     {
         if ($this->_creditmemo === null) {
@@ -41,6 +44,10 @@ class Mage_Sales_Block_Order_Creditmemo_Totals extends Mage_Sales_Block_Order_To
         return $this->_creditmemo;
     }
 
+    /**
+     * @param Mage_Sales_Model_Order_Creditmemo $creditmemo
+     * @return $this
+     */
     public function setCreditmemo($creditmemo)
     {
         $this->_creditmemo = $creditmemo;
@@ -88,22 +95,20 @@ class Mage_Sales_Block_Order_Creditmemo_Totals extends Mage_Sales_Block_Order_To
             <td colspan="6" class="a-right"><strong><?php echo $this->__('Total Paid') ?></strong></td>
             <td class="last a-right"><strong><?php echo $_order->formatPrice($_creditmemo->getTotalPaid()) ?></strong></td>
         </tr>
-        <?php endif; ?>
+        <?php endif ?>
         <?php if ($this->getCanDisplayTotalRefunded()): ?>
         <tr>
             <td colspan="6" class="a-right"><strong><?php echo $this->__('Total Refunded') ?></strong></td>
             <td class="last a-right"><strong><?php echo $_order->formatPrice($_creditmemo->getTotalRefunded()) ?></strong></td>
         </tr>
-        <?php endif; ?>
+        <?php endif ?>
         <?php if ($this->getCanDisplayTotalDue()): ?>
         <tr>
             <td colspan="6" class="a-right"><strong><?php echo $this->__('Total Due') ?></strong></td>
             <td class="last a-right"><strong><?php echo $_order->formatPrice($_creditmemo->getTotalDue()) ?></strong></td>
         </tr>
-        <?php endif; ?>
+        <?php endif ?>
          */
         return $this;
     }
-
-
 }

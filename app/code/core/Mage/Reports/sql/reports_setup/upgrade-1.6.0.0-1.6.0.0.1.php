@@ -1,30 +1,30 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Reports
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
-/** @var $installer Mage_Core_Model_Resource_Setup */
+/** @var Mage_Core_Model_Resource_Setup $installer */
 $installer = $this;
 /*
  * Prepare database for tables install
@@ -81,17 +81,27 @@ for ($i = 0; $i < 3; ++$i) {
                 array('period', 'store_id', 'product_id'),
                 Varien_Db_Adapter_Interface::INDEX_TYPE_UNIQUE
             ),
-            array('period', 'store_id', 'product_id'), array('type' => Varien_Db_Adapter_Interface::INDEX_TYPE_UNIQUE))
+            array('period', 'store_id', 'product_id'),
+            array('type' => Varien_Db_Adapter_Interface::INDEX_TYPE_UNIQUE)
+        )
         ->addIndex($installer->getIdxName($aggregationTables[$i], array('store_id')), array('store_id'))
         ->addIndex($installer->getIdxName($aggregationTables[$i], array('product_id')), array('product_id'))
         ->addForeignKey(
             $installer->getFkName($aggregationTables[$i], 'store_id', 'core/store', 'store_id'),
-            'store_id', $installer->getTable('core/store'), 'store_id',
-            Varien_Db_Ddl_Table::ACTION_CASCADE, Varien_Db_Ddl_Table::ACTION_CASCADE)
+            'store_id',
+            $installer->getTable('core/store'),
+            'store_id',
+            Varien_Db_Ddl_Table::ACTION_CASCADE,
+            Varien_Db_Ddl_Table::ACTION_CASCADE
+        )
         ->addForeignKey(
             $installer->getFkName($aggregationTables[$i], 'product_id', 'catalog/product', 'entity_id'),
-            'product_id', $installer->getTable('catalog/product'), 'entity_id',
-            Varien_Db_Ddl_Table::ACTION_CASCADE, Varien_Db_Ddl_Table::ACTION_CASCADE)
+            'product_id',
+            $installer->getTable('catalog/product'),
+            'entity_id',
+            Varien_Db_Ddl_Table::ACTION_CASCADE,
+            Varien_Db_Ddl_Table::ACTION_CASCADE
+        )
         ->setComment($aggregationTableComments[$i]);
     $installer->getConnection()->createTable($table);
 }

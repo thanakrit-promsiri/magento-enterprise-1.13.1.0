@@ -1,29 +1,28 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Catalog
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
-
 
 /**
  * Product options text type block
@@ -31,9 +30,10 @@
  * @category   Mage
  * @package    Mage_Catalog
  * @author     Magento Core Team <core@magentocommerce.com>
+ *
+ * @method bool getSkipJsReloadPrice()
  */
-class Mage_Catalog_Block_Product_View_Options_Type_Select
-    extends Mage_Catalog_Block_Product_View_Options_Abstract
+class Mage_Catalog_Block_Product_View_Options_Type_Select extends Mage_Catalog_Block_Product_View_Options_Abstract
 {
     /**
      * Return html for control element
@@ -56,10 +56,10 @@ class Mage_Catalog_Block_Product_View_Options_Type_Select
                     'class' => $require.' product-custom-option'
                 ));
             if ($_option->getType() == Mage_Catalog_Model_Product_Option::OPTION_TYPE_DROP_DOWN) {
-                $select->setName('options['.$_option->getid().']')
+                $select->setName('options['.$_option->getId().']')
                     ->addOption('', $this->__('-- Please Select --'));
             } else {
-                $select->setName('options['.$_option->getid().'][]');
+                $select->setName('options['.$_option->getId().'][]');
                 $select->setClass('multiselect'.$require.' product-custom-option');
             }
             foreach ($_option->getValues() as $_value) {
@@ -135,7 +135,7 @@ class Mage_Catalog_Block_Product_View_Options_Type_Select
                     . '_' . $count . '" value="' . $htmlValue . '" ' . $checked . ' price="'
                     . $this->helper('core')->currencyByStore($_value->getPrice(true), $store, false) . '" />'
                     . '<span class="label"><label for="options_' . $_option->getId() . '_' . $count . '">'
-                    . $_value->getTitle() . ' ' . $priceStr . '</label></span>';
+                    . $this->escapeHtml($_value->getTitle()) . ' ' . $priceStr . '</label></span>';
                 if ($_option->getIsRequire()) {
                     $selectHtml .= '<script type="text/javascript">' . '$(\'options_' . $_option->getId() . '_'
                     . $count . '\').advaiceContainer = \'options-' . $_option->getId() . '-container\';'
@@ -149,5 +149,4 @@ class Mage_Catalog_Block_Product_View_Options_Type_Select
             return $selectHtml;
         }
     }
-
 }

@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Shell
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 require_once 'abstract.php';
@@ -84,6 +84,7 @@ class Mage_Shell_Compiler extends Mage_Shell_Abstract
      */
     public function run()
     {
+        $_SESSION = array();
         if ($this->getArg('info')) {
             $processes = $this->_parseIndexerString('all');
             foreach ($processes as $process) {
@@ -151,7 +152,7 @@ class Mage_Shell_Compiler extends Mage_Shell_Abstract
                     echo $e . "\n";
                 }
             }
-        } else if ($this->getArg('reindex') || $this->getArg('reindexall')) {
+        } else if ($this->getArg('reindex') || $this->getArg('reindexall') || $this->getArg('reindexallrequired')) {
             if ($this->getArg('reindex')) {
                 $processes = $this->_parseIndexerString($this->getArg('reindex'));
             } else {
@@ -161,11 +162,18 @@ class Mage_Shell_Compiler extends Mage_Shell_Abstract
             try {
                 Mage::dispatchEvent('shell_reindex_init_process');
                 foreach ($processes as $process) {
+                    //reindex only if required
+                    if( $this->getArg('reindexallrequired') && $process->getStatus() == Mage_Index_Model_Process::STATUS_PENDING ) {
+                        continue;
+                    }
                     /* @var $process Mage_Index_Model_Process */
                     try {
+                        $startTime = microtime(true);
                         $process->reindexEverything();
+                        $resultTime = microtime(true) - $startTime;
                         Mage::dispatchEvent($process->getIndexerCode() . '_shell_reindex_after');
-                        echo $process->getIndexer()->getName() . " index was rebuilt successfully\n";
+                        echo $process->getIndexer()->getName()
+                            . " index was rebuilt successfully in " . gmdate('H:i:s', $resultTime) . "\n";
                     } catch (Mage_Core_Exception $e) {
                         echo $e->getMessage() . "\n";
                     } catch (Exception $e) {
@@ -200,6 +208,7 @@ Usage:  php -f indexer.php -- [options]
   --reindex <indexer>           Reindex Data
   info                          Show allowed indexers
   reindexall                    Reindex Data by all indexers
+  reindexallrequired            Reindex Data only if required by all indexers
   help                          This help
 
   <indexer>     Comma separated indexer codes or value "all" for all indexers

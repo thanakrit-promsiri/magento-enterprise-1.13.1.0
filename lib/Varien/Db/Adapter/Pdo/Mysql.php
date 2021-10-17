@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Varien
  * @package     Varien_Db
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 /**
@@ -47,6 +47,14 @@ class Varien_Db_Adapter_Pdo_Mysql extends Zend_Db_Adapter_Pdo_Mysql implements V
     const LENGTH_TABLE_NAME     = 64;
     const LENGTH_INDEX_NAME     = 64;
     const LENGTH_FOREIGN_NAME   = 64;
+
+    /**
+     * Those constants are defining the possible address types
+     */
+    const ADDRESS_TYPE_HOSTNAME     = 'hostname';
+    const ADDRESS_TYPE_UNIX_SOCKET  = 'unix_socket';
+    const ADDRESS_TYPE_IPV4_ADDRESS = 'ipv4';
+    const ADDRESS_TYPE_IPV6_ADDRESS = 'ipv6';
 
     /**
      * MEMORY engine type for MySQL tables
@@ -242,7 +250,9 @@ class Varien_Db_Adapter_Pdo_Mysql extends Zend_Db_Adapter_Pdo_Mysql implements V
             parent::commit();
             $this->_debugStat(self::DEBUG_TRANSACTION, 'COMMIT');
         }
-        --$this->_transactionLevel;
+        if ($this->_transactionLevel > 0) {
+            --$this->_transactionLevel;
+        }
         return $this;
     }
 
@@ -255,10 +265,12 @@ class Varien_Db_Adapter_Pdo_Mysql extends Zend_Db_Adapter_Pdo_Mysql implements V
     {
         if ($this->_transactionLevel === 1) {
             $this->_debugTimer();
-            parent::rollback();
+            parent::rollBack();
             $this->_debugStat(self::DEBUG_TRANSACTION, 'ROLLBACK');
         }
-        --$this->_transactionLevel;
+        if ($this->_transactionLevel > 0) {
+            --$this->_transactionLevel;
+        }
         return $this;
     }
 
@@ -295,6 +307,61 @@ class Varien_Db_Adapter_Pdo_Mysql extends Zend_Db_Adapter_Pdo_Mysql implements V
     }
 
     /**
+     * Parse a source hostname and generate a host info
+     * @param $hostName
+     *
+     * @return Varien_Object
+     */
+    protected function _getHostInfo($hostName)
+    {
+        $hostInfo = new Varien_Object();
+        $matches = array();
+        if (strpos($hostName, '/') !== false) {
+            $hostInfo->setAddressType(self::ADDRESS_TYPE_UNIX_SOCKET)
+                ->setUnixSocket($hostName);
+        } elseif (
+            preg_match(
+                '/^\[(([0-9a-f]{1,4})?(:([0-9a-f]{1,4})?){1,}:([0-9a-f]{1,4}))(%[0-9a-z]+)?\](:([0-9]+))?$/i',
+                $hostName,
+                $matches
+            )
+        ) {
+            $hostName = isset($matches[1]) ? $matches[1] : null;
+            !is_null($hostName) && isset($matches[6]) && ($hostName .= $matches[6]);
+            $hostInfo->setAddressType(self::ADDRESS_TYPE_IPV6_ADDRESS)
+                ->setHostName($hostName)
+                ->setPort(isset($matches[8]) ? $matches[8] : null);
+        } elseif (
+            preg_match(
+                '/^(([0-9a-f]{1,4})?(:([0-9a-f]{1,4})?){1,}:([0-9a-f]{1,4}))(%[0-9a-z]+)?$/i',
+                $hostName,
+                $matches
+            )
+        ) {
+            $hostName = isset($matches[1]) ? $matches[1] : null;
+            !is_null($hostName) && isset($matches[6]) && ($hostName .= $matches[6]);
+            $hostInfo->setAddressType(self::ADDRESS_TYPE_IPV6_ADDRESS)
+                ->setHostName($hostName);
+        } elseif (strpos($hostName, ':') !== false) {
+            list($hostAddress, $hostPort) = explode(':', $hostName);
+            $hostInfo->setAddressType(
+                filter_var($hostAddress, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)
+                    ? self::ADDRESS_TYPE_IPV4_ADDRESS
+                    : self::ADDRESS_TYPE_HOSTNAME
+            )->setHostName($hostAddress)
+                ->setPort($hostPort);
+        } else {
+            $hostInfo->setAddressType(
+                filter_var($hostName, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)
+                    ? self::ADDRESS_TYPE_IPV4_ADDRESS
+                    : self::ADDRESS_TYPE_HOSTNAME
+            )->setHostName($hostName);
+        }
+
+        return $hostInfo;
+    }
+
+    /**
      * Creates a PDO object and connects to the database.
      *
      * @throws Zend_Db_Adapter_Exception
@@ -309,11 +376,24 @@ class Varien_Db_Adapter_Pdo_Mysql extends Zend_Db_Adapter_Pdo_Mysql implements V
             throw new Zend_Db_Adapter_Exception('pdo_mysql extension is not installed');
         }
 
-        if (strpos($this->_config['host'], '/') !== false) {
-            $this->_config['unix_socket'] = $this->_config['host'];
-            unset($this->_config['host']);
-        } else if (strpos($this->_config['host'], ':') !== false) {
-            list($this->_config['host'], $this->_config['port']) = explode(':', $this->_config['host']);
+
+        $hostInfo = $this->_getHostInfo(isset($this->_config['host']) ? $this->_config['host'] : (isset($this->_config['unix_socket']) ? $this->_config['unix_socket'] : NULL));
+
+        switch ($hostInfo->getAddressType()) {
+            case self::ADDRESS_TYPE_UNIX_SOCKET:
+                $this->_config['unix_socket'] = $hostInfo->getUnixSocket();
+                unset($this->_config['host']);
+                break;
+            case self::ADDRESS_TYPE_IPV6_ADDRESS: // break intentionally omitted
+            case self::ADDRESS_TYPE_IPV4_ADDRESS: // break intentionally omitted
+            case self::ADDRESS_TYPE_HOSTNAME:
+                $this->_config['host'] = $hostInfo->getHostName();
+                if ($hostInfo->getPort()) {
+                    $this->_config['port'] = $hostInfo->getPort();
+                }
+                break;
+            default:
+                break;
         }
 
         $this->_debugTimer();
@@ -428,6 +508,19 @@ class Varien_Db_Adapter_Pdo_Mysql extends Zend_Db_Adapter_Pdo_Mysql implements V
             $result = parent::query($sql, $bind);
         } catch (Exception $e) {
             $this->_debugStat(self::DEBUG_QUERY, $sql, $bind);
+
+            // Detect implicit rollback - MySQL SQLSTATE: ER_LOCK_WAIT_TIMEOUT or ER_LOCK_DEADLOCK
+            if( $this->_transactionLevel > 0
+                && $e->getPrevious() && isset($e->getPrevious()->errorInfo[1])
+                && in_array($e->getPrevious()->errorInfo[1], [1205, 1213])
+            ) {
+                if ($this->_debug) {
+                    $this->_debugWriteToFile('IMPLICIT ROLLBACK AFTER SQLSTATE: '.$e->getPrevious()->errorInfo[1]);
+                }
+                $this->_transactionLevel = 1; // Deadlock rolls back entire transaction
+                $this->rollBack();
+            }
+
             $this->_debugException($e);
         }
         $this->_debugStat(self::DEBUG_QUERY, $sql, $bind, $result);
@@ -630,7 +723,7 @@ class Varien_Db_Adapter_Pdo_Mysql extends Zend_Db_Adapter_Pdo_Mysql implements V
     /**
      * Split multi statement query
      *
-     * @param $sql string
+     * @param string $sql
      * @return array
      */
     protected function _splitMultiQuery($sql)
@@ -771,9 +864,9 @@ class Varien_Db_Adapter_Pdo_Mysql extends Zend_Db_Adapter_Pdo_Mysql implements V
      * @deprecated since 1.4.0.1
      * @param string $fkName foreign key name
      * @param string $tableName main table name
-     * @param string $keyName main table field name
+     * @param string $columnName main table field name
      * @param string $refTableName refered table name
-     * @param string $refKeyName refered table field name
+     * @param string $refColumnName refered table field name
      * @param string $onUpdate on update statement
      * @param string $onDelete on delete statement
      * @param bool $purge
@@ -1413,8 +1506,8 @@ class Varien_Db_Adapter_Pdo_Mysql extends Zend_Db_Adapter_Pdo_Mysql implements V
      * Method revrited for handle empty arrays in value param
      *
      * @param string  $text  The text with a placeholder.
-     * @param mixed   $value The value to quote.
-     * @param string  $type  OPTIONAL SQL datatype
+     * @param Zend_Db_Select|Zend_Db_Expr|array|null|int|string|float $value OPTIONAL A single value to quote into the condition.
+     * @param null|string|int $type  OPTIONAL The type of the given value e.g. Zend_Db::INT_TYPE, "INT"
      * @param integer $count OPTIONAL count of placeholders to replace
      * @return string An SQL-safe quoted value placed into the orignal text.
      */
@@ -1471,7 +1564,7 @@ class Varien_Db_Adapter_Pdo_Mysql extends Zend_Db_Adapter_Pdo_Mysql implements V
             $cacheId = $this->_getCacheId($tableCacheKey, $ddlType);
             $data = $this->_cacheAdapter->load($cacheId);
             if ($data !== false) {
-                $data = unserialize($data);
+                $data = unserialize($data, ['allowed_classes' => false]);
                 $this->_ddlCache[$ddlType][$tableCacheKey] = $data;
             }
             return $data;
@@ -1561,6 +1654,23 @@ class Varien_Db_Adapter_Pdo_Mysql extends Zend_Db_Adapter_Pdo_Mysql implements V
     }
 
     /**
+     * Decorate a table info by detecting and parsing the binary/varbinary fields
+     * @param $tableColumnInfo
+     *
+     * @return mixed
+     */
+    public function decorateTableInfo($tableColumnInfo)
+    {
+        $matches = array();
+        if (preg_match('/^((?:var)?binary)\((\d+)\)/', $tableColumnInfo['DATA_TYPE'], $matches)) {
+            list ($fieldFullDescription, $fieldType, $fieldLength) = $matches;
+            $tableColumnInfo['DATA_TYPE'] = $fieldType;
+            $tableColumnInfo['LENGTH'] = $fieldLength;
+        }
+        return $tableColumnInfo;
+    }
+
+    /**
      * Returns the column descriptions for a table.
      *
      * The return value is an associative array keyed by the column name,
@@ -1593,7 +1703,13 @@ class Varien_Db_Adapter_Pdo_Mysql extends Zend_Db_Adapter_Pdo_Mysql implements V
         $cacheKey = $this->_getTableName($tableName, $schemaName);
         $ddl = $this->loadDdlCache($cacheKey, self::DDL_DESCRIBE);
         if ($ddl === false) {
-            $ddl = parent::describeTable($tableName, $schemaName);
+            $ddl = array_map(
+                array(
+                     $this,
+                     'decorateTableInfo'
+                ),
+                parent::describeTable($tableName, $schemaName)
+            );
             /**
              * Remove bug in some MySQL versions, when int-column without default value is described as:
              * having default empty string value
@@ -1768,12 +1884,16 @@ class Varien_Db_Adapter_Pdo_Mysql extends Zend_Db_Adapter_Pdo_Mysql implements V
             case 'longblob':
                 return Varien_Db_Ddl_Table::TYPE_BLOB;
             case 'tinyint':
+            case 'tinyint unsigned':
             case 'smallint':
+            case 'smallint unsigned':
                 return Varien_Db_Ddl_Table::TYPE_SMALLINT;
             case 'mediumint':
             case 'int':
+            case 'int unsigned':
                 return Varien_Db_Ddl_Table::TYPE_INTEGER;
             case 'bigint':
+            case 'bigint unsigned':
                 return Varien_Db_Ddl_Table::TYPE_BIGINT;
             case 'datetime':
                 return Varien_Db_Ddl_Table::TYPE_DATETIME;
@@ -1786,6 +1906,9 @@ class Varien_Db_Adapter_Pdo_Mysql extends Zend_Db_Adapter_Pdo_Mysql implements V
             case 'decimal':
             case 'numeric':
                 return Varien_Db_Ddl_Table::TYPE_DECIMAL;
+            case 'varbinary':
+                return Varien_Db_Ddl_Table::TYPE_VARBINARY;
+                break;
         }
     }
 
@@ -2507,7 +2630,22 @@ class Varien_Db_Adapter_Pdo_Mysql extends Zend_Db_Adapter_Pdo_Mysql implements V
      */
     public function isTableExists($tableName, $schemaName = null)
     {
-        return $this->showTableStatus($tableName, $schemaName) !== false;
+        $fromDbName = 'DATABASE()';
+        if ($schemaName !== null) {
+            $fromDbName = $this->quote($schemaName);
+        }
+
+        $sql = sprintf(
+            'SELECT COUNT(1) AS tbl_exists FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = %s AND TABLE_SCHEMA = %s',
+            $this->quote($tableName),
+            $fromDbName
+        );
+        $ddl = $this->raw_FetchRow($sql, 'tbl_exists');
+        if ($ddl) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -2834,10 +2972,6 @@ class Varien_Db_Adapter_Pdo_Mysql extends Zend_Db_Adapter_Pdo_Mysql implements V
 
         $query = '';
         if (is_array($condition)) {
-            if (isset($condition['field_expr'])) {
-                $fieldName = str_replace('#?', $this->quoteIdentifier($fieldName), $condition['field_expr']);
-                unset($condition['field_expr']);
-            }
             $key = key(array_intersect_key($condition, $conditionKeyMap));
 
             if (isset($condition['from']) || isset($condition['to'])) {
@@ -2849,7 +2983,7 @@ class Varien_Db_Adapter_Pdo_Mysql extends Zend_Db_Adapter_Pdo_Mysql implements V
                 if (isset($condition['to'])) {
                     $query .= empty($query) ? '' : ' AND ';
                     $to     = $this->_prepareSqlDateCondition($condition, 'to');
-                    $query = $this->_prepareQuotedSqlCondition($query . $conditionKeyMap['to'], $to, $fieldName);
+                    $query = $query . $this->_prepareQuotedSqlCondition($conditionKeyMap['to'], $to, $fieldName);
                 }
             } elseif (array_key_exists($key, $conditionKeyMap)) {
                 $value = $condition[$key];
@@ -2875,16 +3009,15 @@ class Varien_Db_Adapter_Pdo_Mysql extends Zend_Db_Adapter_Pdo_Mysql implements V
     /**
      * Prepare Sql condition
      *
-     * @param  $text Condition value
+     * @param  string $text Condition value
      * @param  mixed $value
      * @param  string $fieldName
      * @return string
      */
     protected function _prepareQuotedSqlCondition($text, $value, $fieldName)
     {
-        $sql = $this->quoteInto($text, $value);
-        $sql = str_replace('{{fieldName}}', $fieldName, $sql);
-        return $sql;
+      $text = str_replace('{{fieldName}}', $fieldName, $text);
+      return $this->quoteInto($text, $value);
     }
 
     /**
@@ -2996,6 +3129,7 @@ class Varien_Db_Adapter_Pdo_Mysql extends Zend_Db_Adapter_Pdo_Mysql implements V
      * @param Zend_Db_Expr|Zend_Db_Select|string $expression
      * @param string $true  true value
      * @param string $false false value
+     * @return Zend_Db_Expr
      */
     public function getCheckSql($expression, $true, $false)
     {
@@ -3012,7 +3146,7 @@ class Varien_Db_Adapter_Pdo_Mysql extends Zend_Db_Adapter_Pdo_Mysql implements V
      * Returns valid IFNULL expression
      *
      * @param Zend_Db_Expr|Zend_Db_Select|string $expression
-     * @param string $value OPTIONAL. Applies when $expression is NULL
+     * @param string|int $value OPTIONAL. Applies when $expression is NULL
      * @return Zend_Db_Expr
      */
     public function getIfNullSql($expression, $value = 0)
@@ -3630,7 +3764,7 @@ class Varien_Db_Adapter_Pdo_Mysql extends Zend_Db_Adapter_Pdo_Mysql implements V
      *
      * @param array|string $tableNames array of tables names | table name
      * @param string $schemaName schema name
-     * @return arrray
+     * @return array
      */
     public function getTablesChecksum($tableNames, $schemaName = null)
     {

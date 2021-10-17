@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_CatalogInventory
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 
@@ -47,7 +47,7 @@ class Mage_CatalogInventory_Model_Resource_Stock_Item_Collection extends Mage_Co
      * Add stock filter to collection
      *
      * @param mixed $stock
-     * @return Mage_CatalogInventory_Model_Resource_Stock_Item_Collection
+     * @return $this
      */
     public function addStockFilter($stock)
     {
@@ -62,8 +62,8 @@ class Mage_CatalogInventory_Model_Resource_Stock_Item_Collection extends Mage_Co
     /**
      * Add product filter to collection
      *
-     * @param array $products
-     * @return Mage_CatalogInventory_Model_Resource_Stock_Item_Collection
+     * @param array|Mage_Catalog_Model_Product[] $products
+     * @return $this
      */
     public function addProductsFilter($products)
     {
@@ -87,14 +87,14 @@ class Mage_CatalogInventory_Model_Resource_Stock_Item_Collection extends Mage_Co
      * Join Stock Status to collection
      *
      * @param int $storeId
-     * @return Mage_CatalogInventory_Model_Resource_Stock_Item_Collection
+     * @return $this
      */
     public function joinStockStatus($storeId = null)
     {
         $websiteId = Mage::app()->getStore($storeId)->getWebsiteId();
         $this->getSelect()->joinLeft(
             array('status_table' => $this->getTable('cataloginventory/stock_status')),
-                'main_table.product_id=status_table.product_id'
+            'main_table.product_id=status_table.product_id'
                 . ' AND main_table.stock_id=status_table.stock_id'
                 . $this->getConnection()->quoteInto(' AND status_table.website_id=?', $websiteId),
             array('stock_status')
@@ -107,7 +107,7 @@ class Mage_CatalogInventory_Model_Resource_Stock_Item_Collection extends Mage_Co
      * Add Managed Stock products filter to collection
      *
      * @param boolean $isStockManagedInConfig
-     * @return Mage_CatalogInventory_Model_Resource_Stock_Item_Collection
+     * @return $this
      */
     public function addManagedFilter($isStockManagedInConfig)
     {
@@ -125,7 +125,7 @@ class Mage_CatalogInventory_Model_Resource_Stock_Item_Collection extends Mage_Co
      *
      * @param string $comparsionMethod
      * @param float $qty
-     * @return Mage_CatalogInventory_Model_Resource_Stock_Item_Collection
+     * @return $this
      */
     public function addQtyFilter($comparsionMethod, $qty)
     {
@@ -149,7 +149,7 @@ class Mage_CatalogInventory_Model_Resource_Stock_Item_Collection extends Mage_Co
     /**
      * Initialize select object
      *
-     * @return Mage_CatalogInventory_Model_Resource_Stock_Item_Collection
+     * @return Varien_Db_Select
      */
     protected function _initSelect()
     {

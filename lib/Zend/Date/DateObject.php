@@ -14,8 +14,8 @@
  *
  * @category   Zend
  * @package    Zend_Date
- * @copyright  Copyright (c) 2005-2010 Zend Technologies USA Inc. (http://www.zend.com)
- * @version    $Id: DateObject.php 22712 2010-07-29 08:24:28Z thomas $
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
+ * @version    $Id$
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
 
@@ -23,7 +23,7 @@
  * @category   Zend
  * @package    Zend_Date
  * @subpackage Zend_Date_DateObject
- * @copyright  Copyright (c) 2005-2010 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
 abstract class Zend_Date_DateObject {
@@ -312,6 +312,13 @@ abstract class Zend_Date_DateObject {
         }
 
         if (abs($timestamp) <= 0x7FFFFFFF) {
+            // See ZF-11992
+            // "o" will sometimes resolve to the previous year (see
+            // http://php.net/date ; it's part of the ISO 8601
+            // standard). However, this is not desired, so replacing
+            // all occurrences of "o" not preceded by a backslash
+            // with "Y"
+            $format = preg_replace('/(?<!\\\\)o/', 'Y', $format);
             $result = ($gmt) ? @gmdate($format, $timestamp) : @date($format, $timestamp);
             date_default_timezone_set($oldzone);
             return $result;
@@ -634,7 +641,7 @@ abstract class Zend_Date_DateObject {
 
         // gregorian correction
         $correction = 0;
-        if (($year < 1582) or (($year == 1582) and (($month < 10) or (($month == 10) && ($day < 15))))) {
+        if (($year < 1582) || (($year == 1582) and (($month < 10) || (($month == 10) && ($day < 15))))) {
             $correction = 3;
         }
 
@@ -865,7 +872,7 @@ abstract class Zend_Date_DateObject {
 
         $dayofweek = self::dayOfWeek($year, $month, $day);
         $firstday  = self::dayOfWeek($year, 1, 1);
-        if (($month == 1) and (($firstday < 1) or ($firstday > 4)) and ($day < 4)) {
+        if (($month == 1) and (($firstday < 1) || ($firstday > 4)) and ($day < 4)) {
             $firstday  = self::dayOfWeek($year - 1, 1, 1);
             $month     = 12;
             $day       = 31;
@@ -1026,7 +1033,7 @@ abstract class Zend_Date_DateObject {
         }
         date_default_timezone_set($oldzone);
 
-        if (($zone == 'UTC') or ($zone == 'GMT')) {
+        if (($zone == 'UTC') || ($zone == 'GMT')) {
             $this->_dst = false;
         } else {
             $this->_dst = true;

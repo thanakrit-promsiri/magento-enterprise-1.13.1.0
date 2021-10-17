@@ -1,29 +1,28 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Newsletter
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
-
 
 /**
  * Newsletter problems collection
@@ -31,6 +30,11 @@
  * @category    Mage
  * @package     Mage_Newsletter
  * @author      Magento Core Team <core@magentocommerce.com>
+ *
+ * @method Mage_Newsletter_Model_Problem[] getItems()
+ * @method Mage_Newsletter_Model_Problem[] getItemsByColumnValue(string $column, string $value)
+ * @method $this setCustomerFirstName(string $value)
+ * @method $this setCustomerLastName(string $value)
  */
 class Mage_Newsletter_Model_Resource_Problem_Collection extends Mage_Core_Model_Resource_Db_Collection_Abstract
 {
@@ -60,11 +64,12 @@ class Mage_Newsletter_Model_Resource_Problem_Collection extends Mage_Core_Model_
     /**
      * Adds subscribers info
      *
-     * @return Mage_Newsletter_Model_Resource_Problem_Collection
+     * @return $this
      */
     public function addSubscriberInfo()
     {
-        $this->getSelect()->joinLeft(array('subscriber'=>$this->getTable('newsletter/subscriber')),
+        $this->getSelect()->joinLeft(
+            array('subscriber'=>$this->getTable('newsletter/subscriber')),
             'main_table.subscriber_id = subscriber.subscriber_id',
             array('subscriber_email','customer_id','subscriber_status')
         );
@@ -77,15 +82,18 @@ class Mage_Newsletter_Model_Resource_Problem_Collection extends Mage_Core_Model_
     /**
      * Adds queue info
      *
-     * @return Mage_Newsletter_Model_Resource_Problem_Collection
+     * @return $this
      */
     public function addQueueInfo()
     {
-        $this->getSelect()->joinLeft(array('queue'=>$this->getTable('newsletter/queue')),
+        $this->getSelect()->joinLeft(
+            array('queue'=>$this->getTable('newsletter/queue')),
             'main_table.queue_id = queue.queue_id',
             array('queue_start_at', 'queue_finish_at')
         )
-        ->joinLeft(array('template'=>$this->getTable('newsletter/template')), 'queue.template_id = template.template_id',
+        ->joinLeft(
+            array('template'=>$this->getTable('newsletter/template')),
+            'queue.template_id = template.template_id',
             array('template_subject','template_code','template_sender_name','template_sender_email')
         );
         return $this;
@@ -130,7 +138,7 @@ class Mage_Newsletter_Model_Resource_Problem_Collection extends Mage_Core_Model_
      *
      * @param bool $printQuery
      * @param bool $logQuery
-     * @return Mage_Newsletter_Model_Resource_Problem_Collection
+     * @return $this
      */
     public function load($printQuery = false, $logQuery = false)
     {

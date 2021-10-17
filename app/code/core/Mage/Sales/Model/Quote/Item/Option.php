@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Sales
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 /**
@@ -29,21 +29,26 @@
  *
  * @method Mage_Sales_Model_Resource_Quote_Item_Option _getResource()
  * @method Mage_Sales_Model_Resource_Quote_Item_Option getResource()
+ * @method Mage_Sales_Model_Resource_Quote_Item_Option_Collection getCollection()
+ *
+ * @method $this setBackorders(float $value)
+ * @method $this setHasError(bool $value)
+ * @method $this setHasQtyOptionUpdate(bool $value)
  * @method int getItemId()
- * @method Mage_Sales_Model_Quote_Item_Option setItemId(int $value)
+ * @method $this setItemId(int $value)
  * @method int getProductId()
- * @method Mage_Sales_Model_Quote_Item_Option setProductId(int $value)
+ * @method $this setMessage(string $value)
+ * @method $this setProductId(int $value)
+ * @method $this setIsQtyDecimal(bool $value)
  * @method string getCode()
- * @method Mage_Sales_Model_Quote_Item_Option setCode(string $value)
- * @method string getValue()
- * @method Mage_Sales_Model_Quote_Item_Option setValue(string $value)
+ * @method $this setCode(string $value)
+ * @method $this setValue(string $value)
  *
  * @category    Mage
  * @package     Mage_Sales
  * @author      Magento Core Team <core@magentocommerce.com>
  */
-class Mage_Sales_Model_Quote_Item_Option extends Mage_Core_Model_Abstract
-    implements Mage_Catalog_Model_Product_Configuration_Item_Option_Interface
+class Mage_Sales_Model_Quote_Item_Option extends Mage_Core_Model_Abstract implements Mage_Catalog_Model_Product_Configuration_Item_Option_Interface
 {
     protected $_item;
     protected $_product;
@@ -74,7 +79,7 @@ class Mage_Sales_Model_Quote_Item_Option extends Mage_Core_Model_Abstract
      * Set quote item
      *
      * @param   Mage_Sales_Model_Quote_Item $item
-     * @return  Mage_Sales_Model_Quote_Item_Option
+     * @return  $this
      */
     public function setItem($item)
     {
@@ -97,7 +102,7 @@ class Mage_Sales_Model_Quote_Item_Option extends Mage_Core_Model_Abstract
      * Set option product
      *
      * @param   Mage_Catalog_Model_Product $product
-     * @return  Mage_Sales_Model_Quote_Item_Option
+     * @return  $this
      */
     public function setProduct($product)
     {
@@ -129,7 +134,7 @@ class Mage_Sales_Model_Quote_Item_Option extends Mage_Core_Model_Abstract
     /**
      * Initialize item identifier before save data
      *
-     * @return Mage_Sales_Model_Quote_Item_Option
+     * @inheritDoc
      */
     protected function _beforeSave()
     {
@@ -142,7 +147,7 @@ class Mage_Sales_Model_Quote_Item_Option extends Mage_Core_Model_Abstract
     /**
      * Clone option object
      *
-     * @return Mage_Sales_Model_Quote_Item_Option
+     * @return $this
      */
     public function __clone()
     {

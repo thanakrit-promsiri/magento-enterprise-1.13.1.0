@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Catalog
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 
@@ -127,7 +127,12 @@ class Mage_Catalog_Model_Resource_Layer_Filter_Price extends Mage_Core_Model_Res
 
         // processing WHERE part
         $wherePart = $select->getPart(Zend_Db_Select::WHERE);
+        $excludedWherePart = Mage_Catalog_Model_Resource_Product_Collection::MAIN_TABLE_ALIAS . '.status';
         foreach ($wherePart as $key => $wherePartItem) {
+            if (strpos($wherePartItem, $excludedWherePart) !== false) {
+                $wherePart[$key] = new Zend_Db_Expr('1=1');
+                continue;
+            }
             $wherePart[$key] = $this->_replaceTableAlias($wherePartItem);
         }
         $select->setPart(Zend_Db_Select::WHERE, $wherePart);
@@ -225,9 +230,11 @@ class Mage_Catalog_Model_Resource_Layer_Filter_Price extends Mage_Core_Model_Res
     {
         $currencyRate = $filter->getLayer()->getProductCollection()->getCurrencyRate();
         if ($decrease) {
-            return ($price - (self::MIN_POSSIBLE_PRICE / 2)) / $currencyRate;
+            $result = ($price - (self::MIN_POSSIBLE_PRICE / 2)) / $currencyRate;
+        } else {
+            $result = ($price + (self::MIN_POSSIBLE_PRICE / 2)) / $currencyRate;
         }
-        return ($price + (self::MIN_POSSIBLE_PRICE / 2)) / $currencyRate;
+        return sprintf('%F', $result);
     }
 
     /**
@@ -264,12 +271,13 @@ class Mage_Catalog_Model_Resource_Layer_Filter_Price extends Mage_Core_Model_Res
         }
         $countExpr = new Zend_Db_Expr('COUNT(*)');
         $rangeExpr = new Zend_Db_Expr("FLOOR(({$priceExpression}) / {$range}) + 1");
+        $rangeOrderExpr = new Zend_Db_Expr("FLOOR(({$priceExpression}) / {$range}) + 1 ASC");
 
         $select->columns(array(
             'range' => $rangeExpr,
             'count' => $countExpr
         ));
-        $select->group($rangeExpr)->order("$rangeExpr ASC");
+        $select->group($rangeExpr)->order($rangeOrderExpr);
 
         return $this->_getReadAdapter()->fetchPairs($select);
     }
@@ -281,7 +289,7 @@ class Mage_Catalog_Model_Resource_Layer_Filter_Price extends Mage_Core_Model_Res
      * @param Mage_Catalog_Model_Layer_Filter_Price $filter
      * @param int $range
      * @param int $index    the range factor
-     * @return Mage_Catalog_Model_Resource_Layer_Filter_Price
+     * @return $this
      */
     public function applyFilterToCollection($filter, $range, $index)
     {
@@ -329,6 +337,7 @@ class Mage_Catalog_Model_Resource_Layer_Filter_Price extends Mage_Core_Model_Res
      * @param Mage_Catalog_Model_Layer_Filter_Price $filter
      * @param float $price
      * @param int $index
+     * @param null $lowerPrice
      * @return array|false
      */
     public function loadPreviousPrices($filter, $price, $index, $lowerPrice = null)
@@ -354,7 +363,7 @@ class Mage_Catalog_Model_Resource_Layer_Filter_Price extends Mage_Core_Model_Res
      * @param float $price
      * @param int $rightIndex
      * @param null|int $upperPrice
-     * @return array
+     * @return array|false
      */
     public function loadNextPrices($filter, $price, $rightIndex, $upperPrice = null)
     {
@@ -389,7 +398,7 @@ class Mage_Catalog_Model_Resource_Layer_Filter_Price extends Mage_Core_Model_Res
      * Apply price range filter to product collection
      *
      * @param Mage_Catalog_Model_Layer_Filter_Price $filter
-     * @return Mage_Catalog_Model_Resource_Layer_Filter_Price
+     * @return $this
      */
     public function applyPriceRange($filter)
     {
@@ -421,6 +430,5 @@ class Mage_Catalog_Model_Resource_Layer_Filter_Price extends Mage_Core_Model_Res
         }
 
         return $this;
-
     }
 }

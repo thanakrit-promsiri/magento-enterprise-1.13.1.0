@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_CatalogInventory
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 
@@ -32,14 +32,13 @@
  * @package     Mage_CatalogInventory
  * @author      Magento Core Team <core@magentocommerce.com>
  */
-class Mage_CatalogInventory_Model_Resource_Indexer_Stock_Configurable
-    extends Mage_CatalogInventory_Model_Resource_Indexer_Stock_Default
+class Mage_CatalogInventory_Model_Resource_Indexer_Stock_Configurable extends Mage_CatalogInventory_Model_Resource_Indexer_Stock_Default
 {
     /**
      * Reindex stock data for defined configurable product ids
      *
      * @param int|array $entityIds
-     * @return Mage_CatalogInventory_Model_Resource_Indexer_Stock_Configurable
+     * @return $this
      */
     public function reindexEntity($entityIds)
     {
@@ -66,23 +65,28 @@ class Mage_CatalogInventory_Model_Resource_Indexer_Stock_Configurable
             ->join(
                 array('cis' => $this->getTable('cataloginventory/stock')),
                 '',
-                array('stock_id'))
+                array('stock_id')
+            )
             ->joinLeft(
                 array('cisi' => $this->getTable('cataloginventory/stock_item')),
                 'cisi.stock_id = cis.stock_id AND cisi.product_id = e.entity_id',
-                array())
+                array()
+            )
             ->joinLeft(
                 array('l' => $this->getTable('catalog/product_super_link')),
                 'l.parent_id = e.entity_id',
-                array())
+                array()
+            )
             ->join(
                 array('le' => $this->getTable('catalog/product')),
                 'le.entity_id = l.product_id',
-                array())
+                array()
+            )
             ->joinLeft(
                 array('i' => $idxTable),
                 'i.product_id = l.product_id AND cw.website_id = i.website_id AND cis.stock_id = i.stock_id',
-                array())
+                array()
+            )
             ->columns(array('qty' => new Zend_Db_Expr('0')))
             ->where('cw.website_id != 0')
             ->where('e.type_id = ?', $this->getTypeId())
@@ -92,11 +96,17 @@ class Mage_CatalogInventory_Model_Resource_Indexer_Stock_Configurable
         $psCond = $adapter->quoteInto($psExpr . '=?', Mage_Catalog_Model_Product_Status::STATUS_ENABLED);
 
         if ($this->_isManageStock()) {
-            $statusExpr = $adapter->getCheckSql('cisi.use_config_manage_stock = 0 AND cisi.manage_stock = 0',
-                1, 'cisi.is_in_stock');
+            $statusExpr = $adapter->getCheckSql(
+                'cisi.use_config_manage_stock = 0 AND cisi.manage_stock = 0',
+                1,
+                'cisi.is_in_stock'
+            );
         } else {
-            $statusExpr = $adapter->getCheckSql('cisi.use_config_manage_stock = 0 AND cisi.manage_stock = 1',
-                'cisi.is_in_stock', 1);
+            $statusExpr = $adapter->getCheckSql(
+                'cisi.use_config_manage_stock = 0 AND cisi.manage_stock = 1',
+                'cisi.is_in_stock',
+                1
+            );
         }
 
         $optExpr = $adapter->getCheckSql("{$psCond} AND le.required_options = 0", 'i.stock_status', 0);

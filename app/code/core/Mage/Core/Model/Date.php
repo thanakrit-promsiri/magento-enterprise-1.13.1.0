@@ -1,29 +1,28 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Core
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
-
 
 /**
  * Date conversion model
@@ -77,16 +76,16 @@ class Mage_Core_Model_Date
         $result = true;
         $offset = 0;
 
-        if (!is_null($timezone)){
+        if (!is_null($timezone)) {
             $oldzone = @date_default_timezone_get();
             $result = date_default_timezone_set($timezone);
         }
 
         if ($result === true) {
-            $offset = gmmktime(0, 0, 0, 1, 2, 1970) - mktime(0, 0, 0, 1, 2, 1970);
+            $offset = (int)date('Z');
         }
 
-        if (!is_null($timezone)){
+        if (!is_null($timezone)) {
             date_default_timezone_set($oldzone);
         }
 
@@ -144,7 +143,7 @@ class Mage_Core_Model_Date
     {
         if (is_null($input)) {
             return gmdate('U');
-        } else if (is_numeric($input)) {
+        } elseif (is_numeric($input)) {
             $result = $input;
         } else {
             $result = strtotime($input);
@@ -160,7 +159,6 @@ class Mage_Core_Model_Date
 
         unset($date);
         return $timestamp;
-
     }
 
     /**
@@ -174,7 +172,7 @@ class Mage_Core_Model_Date
     {
         if (is_null($input)) {
             $result = $this->gmtTimestamp();
-        } else if (is_numeric($input)) {
+        } elseif (is_numeric($input)) {
             $result = $input;
         } else {
             $result = strtotime($input);
@@ -213,7 +211,14 @@ class Mage_Core_Model_Date
     }
 
     /**
-     * Deprecated since 1.1.7
+     * @param int $year
+     * @param int $month
+     * @param int $day
+     * @param int $hour
+     * @param int $minute
+     * @param int $second
+     * @return bool
+     * @deprecated since 1.1.7
      */
     public function checkDateTime($year, $month, $day, $hour = 0, $minute = 0, $second = 0)
     {
@@ -230,7 +235,11 @@ class Mage_Core_Model_Date
     }
 
     /**
-     * Deprecated since 1.1.7
+     * @param string $dateTimeString
+     * @param string $dateTimeFormat
+     * @return array
+     * @throws Mage_Core_Exception
+     * @deprecated since 1.1.7
      */
     public function parseDateTime($dateTimeString, $dateTimeFormat)
     {

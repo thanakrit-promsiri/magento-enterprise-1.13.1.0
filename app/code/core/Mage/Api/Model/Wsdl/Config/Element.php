@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Api
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 
@@ -33,13 +33,18 @@
  */
 class Mage_Api_Model_Wsdl_Config_Element extends Varien_Simplexml_Element
 {
-    public function extend($source, $overwrite=false)
+    /**
+     * @param Varien_Simplexml_Element $source
+     * @param bool $overwrite
+     * @return $this|Varien_Simplexml_Element
+     */
+    public function extend($source, $overwrite = false)
     {
         if (!$source instanceof Varien_Simplexml_Element) {
             return $this;
         }
 
-        foreach ($this->getChildren($source) as $namespace => $children) {
+        foreach (self::_getChildren($source) as $namespace => $children) {
             foreach ($children as $child) {
                 $this->extendChild($child, $overwrite, $namespace);
             }
@@ -53,9 +58,10 @@ class Mage_Api_Model_Wsdl_Config_Element extends Varien_Simplexml_Element
      *
      * @param Varien_Simplexml_Element $source
      * @param boolean $overwrite
+     * @param string $elmNamespace
      * @return Varien_Simplexml_Element
      */
-    public function extendChild($source, $overwrite=false, $elmNamespace = '')
+    public function extendChild($source, $overwrite = false, $elmNamespace = '')
     {
         // this will be our new target node
         $targetChild = null;
@@ -64,7 +70,7 @@ class Mage_Api_Model_Wsdl_Config_Element extends Varien_Simplexml_Element
         $sourceName = $source->getName();
 
         // here we have children of our source node
-        $sourceChildren = $this->getChildren($source);
+        $sourceChildren = self::_getChildren($source);
 
         if ($elmNamespace == '') {
             $elmNamespace = null;
@@ -74,9 +80,8 @@ class Mage_Api_Model_Wsdl_Config_Element extends Varien_Simplexml_Element
             // handle string node
             $elm = $this->getElementByName($source, $elmNamespace);
             if (!is_null($elm)) {
-
                 // if target already has children return without regard
-                if ($this->getChildren($elm)) {
+                if (self::_getChildren($elm)) {
                     return $this;
                 }
                 if ($overwrite) {
@@ -144,6 +149,7 @@ class Mage_Api_Model_Wsdl_Config_Element extends Varien_Simplexml_Element
      * )
      *
      * @param Varien_Simplexml_Element $source
+     * @param null|string $namespace
      * @return array
      */
     public function getAttributes($source, $namespace = null)
@@ -165,11 +171,23 @@ class Mage_Api_Model_Wsdl_Config_Element extends Varien_Simplexml_Element
     }
 
     /**
+     * @deprecated due to conflict with PHP8 parent class update
+     * @param Varien_Simplexml_Element $source
+     * @return array
+     */
+    public function getChildren($source = null)
+    {
+        Mage::log('Use of deprecated method: '.__METHOD__);
+        return self::_getChildren($source);
+    }
+
+    /**
      * Return children of all namespaces
      *
      * @param Varien_Simplexml_Element $source
+     * @return array
      */
-    public function getChildren($source)
+    protected static function _getChildren($source)
     {
         $children = array();
         $namespaces = $source->getNamespaces(true);
@@ -193,12 +211,12 @@ class Mage_Api_Model_Wsdl_Config_Element extends Varien_Simplexml_Element
      */
     public function hasChildren()
     {
-        if (!$this->getChildren($this)) {
+        if (!self::_getChildren($this)) {
             return false;
         }
 
         // simplexml bug: @attributes is in children() but invisible in foreach
-        foreach ($this->getChildren($this) as $namespace => $children) {
+        foreach (self::_getChildren($this) as $namespace => $children) {
             foreach ($children as $k => $child) {
                 return true;
             }
@@ -210,8 +228,8 @@ class Mage_Api_Model_Wsdl_Config_Element extends Varien_Simplexml_Element
      * Return element by tag name, and checking attributes with namespaces
      *
      * @param Varien_Simplexml_Element $source
-     * @param string $namespace
-     * @return null|Varien_Simplexml_Element
+     * @param string $elmNamespace
+     * @return SimpleXMLElement|Varien_Simplexml_Element|null
      */
     public function getElementByName($source, $elmNamespace = '')
     {
@@ -255,11 +273,13 @@ class Mage_Api_Model_Wsdl_Config_Element extends Varien_Simplexml_Element
     /**
      * Returns attribute value by attribute name
      *
-     * @return string
+     * @param string $name
+     * @param string $namespace
+     * @return string|null
      */
-    public function getAttribute($name, $namespace = ''){
+    public function getAttribute($name, $namespace = '')
+    {
         $attrs = $this->attributes($namespace);
         return isset($attrs[$name]) ? (string)$attrs[$name] : null;
     }
-
 }

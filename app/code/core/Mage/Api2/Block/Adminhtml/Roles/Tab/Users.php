@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Api2
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 /**
@@ -35,8 +35,7 @@
  * @method Mage_Api2_Block_Adminhtml_Roles_Tab_Users setUsers(array $users)
  * @method Mage_Admin_Model_Resource_User_Collection getCollection()
  */
-class Mage_Api2_Block_Adminhtml_Roles_Tab_Users extends Mage_Adminhtml_Block_Widget_Grid
-    implements Mage_Adminhtml_Block_Widget_Tab_Interface
+class Mage_Api2_Block_Adminhtml_Roles_Tab_Users extends Mage_Adminhtml_Block_Widget_Grid implements Mage_Adminhtml_Block_Widget_Tab_Interface
 {
     /**
      * Construct grid block
@@ -55,11 +54,11 @@ class Mage_Api2_Block_Adminhtml_Roles_Tab_Users extends Mage_Adminhtml_Block_Wid
     /**
      * Prepare collection
      *
-     * @return Mage_Api2_Block_Adminhtml_Roles_Tab_Users
+     * @return $this
      */
     protected function _prepareCollection()
     {
-        /** @var $collection Mage_Admin_Model_Resource_User_Collection */
+        /** @var Mage_Admin_Model_Resource_User_Collection $collection */
         $collection = Mage::getModel('admin/user')->getCollection();
         $collection->getSelect()->joinLeft(
             array('acl' => $collection->getTable('api2/acl_user')),
@@ -78,7 +77,7 @@ class Mage_Api2_Block_Adminhtml_Roles_Tab_Users extends Mage_Adminhtml_Block_Wid
     /**
      * Prepare columns
      *
-     * @return Mage_Api2_Block_Adminhtml_Roles_Tab_Users
+     * @inheritDoc
      */
     protected function _prepareColumns()
     {
@@ -186,7 +185,7 @@ class Mage_Api2_Block_Adminhtml_Roles_Tab_Users extends Mage_Adminhtml_Block_Wid
 
     /**
      * @param Mage_Adminhtml_Block_Widget_Grid_Column $column
-     * @return Mage_Api2_Block_Adminhtml_Roles_Tab_Users
+     * @return $this
      */
     protected function _addColumnFilterToCollection($column)
     {
@@ -199,7 +198,7 @@ class Mage_Api2_Block_Adminhtml_Roles_Tab_Users extends Mage_Adminhtml_Block_Wid
             if ($column->getFilter()->getValue()) {
                 $this->getCollection()->addFieldToFilter('user_id', array('in' => $inRoleIds));
             } else {
-                if($inRoleIds) {
+                if ($inRoleIds) {
                     $this->getCollection()->addFieldToFilter('user_id', array('nin' => $inRoleIds));
                 }
             }
@@ -224,10 +223,10 @@ class Mage_Api2_Block_Adminhtml_Roles_Tab_Users extends Mage_Adminhtml_Block_Wid
                 return '{}';
             }
             $jsonUsers = array();
-            foreach($users as $usrId) {
+            foreach ($users as $usrId) {
                 $jsonUsers[$usrId] = 0;
             }
-            /** @var $helper Mage_Core_Helper_Data */
+            /** @var Mage_Core_Helper_Data $helper */
             $helper = Mage::helper('core');
             $result = $helper->jsonEncode((object) $jsonUsers);
         } else {

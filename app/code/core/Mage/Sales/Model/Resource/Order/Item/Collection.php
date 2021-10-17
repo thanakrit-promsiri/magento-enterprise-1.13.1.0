@@ -1,27 +1,27 @@
 <?php
 /**
- * Magento Enterprise Edition
+ * Magento
  *
  * NOTICE OF LICENSE
  *
- * This source file is subject to the Magento Enterprise Edition License
- * that is bundled with this package in the file LICENSE_EE.txt.
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
- * http://www.magentocommerce.com/license/enterprise-edition
+ * http://opensource.org/licenses/osl-3.0.php
  * If you did not receive a copy of the license and are unable to
  * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
+ * to license@magento.com so we can send you a copy immediately.
  *
  * DISCLAIMER
  *
  * Do not edit or add to this file if you wish to upgrade Magento to newer
  * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
+ * needs please refer to http://www.magento.com for more information.
  *
  * @category    Mage
  * @package     Mage_Sales
- * @copyright   Copyright (c) 2013 Magento Inc. (http://www.magentocommerce.com)
- * @license     http://www.magentocommerce.com/license/enterprise-edition
+ * @copyright  Copyright (c) 2006-2020 Magento, Inc. (http://www.magento.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 
@@ -67,7 +67,7 @@ class Mage_Sales_Model_Resource_Order_Item_Collection extends Mage_Sales_Model_R
     /**
      * Assign parent items on after collection load
      *
-     * @return Mage_Sales_Model_Resource_Order_Item_Collection
+     * @return $this
      */
     protected function _afterLoad()
     {
@@ -86,7 +86,7 @@ class Mage_Sales_Model_Resource_Order_Item_Collection extends Mage_Sales_Model_R
     /**
      * Set random items order
      *
-     * @return Mage_Sales_Model_Resource_Order_Item_Collection
+     * @return $this
      */
     public function setRandomOrder()
     {
@@ -98,7 +98,7 @@ class Mage_Sales_Model_Resource_Order_Item_Collection extends Mage_Sales_Model_R
      * Set filter by item id
      *
      * @param mixed $item
-     * @return Mage_Sales_Model_Resource_Order_Item_Collection
+     * @return $this
      */
     public function addIdFilter($item)
     {
@@ -116,7 +116,7 @@ class Mage_Sales_Model_Resource_Order_Item_Collection extends Mage_Sales_Model_R
      * Filter collection by specified product types
      *
      * @param array $typeIds
-     * @return Mage_Sales_Model_Resource_Order_Item_Collection
+     * @return $this
      */
     public function filterByTypes($typeIds)
     {
@@ -128,7 +128,7 @@ class Mage_Sales_Model_Resource_Order_Item_Collection extends Mage_Sales_Model_R
      * Filter collection by parent_item_id
      *
      * @param int $parentId
-     * @return Mage_Sales_Model_Resource_Order_Item_Collection
+     * @return $this
      */
     public function filterByParent($parentId = null)
     {
@@ -137,6 +137,37 @@ class Mage_Sales_Model_Resource_Order_Item_Collection extends Mage_Sales_Model_R
         } else {
             $this->addFieldToFilter('parent_item_id', $parentId);
         }
+        return $this;
+    }
+
+    /**
+     * Filter only available items.
+     *
+     * @return $this
+     */
+    public function addAvailableFilter()
+    {
+        $fieldExpression = '(qty_shipped - qty_returned)';
+        $resultCondition = $this->_getConditionSql($fieldExpression, array("gt" => 0));
+        $this->getSelect()->where($resultCondition);
+        return $this;
+    }
+
+    /**
+     * Filter by customerId
+     *
+     * @param int|array $customerId
+     * @return $this
+     */
+    public function addFilterByCustomerId($customerId)
+    {
+        $this->getSelect()->joinInner(
+            array('order' => $this->getTable('sales/order')),
+            'main_table.order_id = order.entity_id',
+            array()
+        )
+            ->where('order.customer_id IN(?)', $customerId);
+
         return $this;
     }
 }
